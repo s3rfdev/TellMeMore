@@ -52,7 +52,8 @@ class DeepgramStream {
   final _errors = StreamController<String>.broadcast();
 
   int? _firstSpeaker;
-  String _interim = '';
+  String _buffer = '';
+  Speaker? _bufferSpeaker;
 
   Stream<DeepgramTurnEvent> get events => _events.stream;
   Stream<String> get errors => _errors.stream;
@@ -125,47 +126,60 @@ class DeepgramStream {
   }
 
   /// v1 + diarize: спикера определяет Deepgram по голосу.
+  /// v1 шлёт речь фрагментами (is_final=true после каждой паузе endpointing),
+  /// speech_final=true — конец реплики. Накапливаем фрагменты в буфер и
+  /// отдаём готовую реплику одним событием; спикер — по первому фрагменту.
   void _handleV1Results(Map<String, dynamic> j) {
     if (j['type'] != 'Results') return;
     final alt =
         (((j['channel'] as Map?)?['alternatives'] as List?) ?? const [])[0];
     if (alt is! Map) return;
     final transcript = ((alt['transcript'] as String?) ?? '').trim();
-    final words = (alt['words'] as List?) ?? const [];
-    int? spk;
-    for (final w in words) {
-      if (w is Map && w['speaker'] is int) {
-        spk = w['speaker'] as int;
-        break;
+    final isFinal = j['is_final'] == true;
+    final speechFinal = j['speech_final'] == true;
+    if (!isFinal) {
+      // Промежуточный (незаконченный) фрагмент — показываем как interim.
+      if (transcript.isNotEmpty) {
+        _events.add(DeepgramTurnEvent(
+          source: _bufferSpeaker ?? Speaker.me,
+          phase: TurnPhase.update,
+          turnIndex: 0,
+          transcript: _buffer + transcript,
+        ));
       }
+      return;
     }
-    Speaker sp = source;
-    if (spk != null) {
-      _firstSpeaker ??= spk;
-      sp = spk == _firstSpeaker ? Speaker.me : Speaker.them;
+
+    // Готовый фрагмент — в буфер.
+    if (transcript.isNotEmpty) {
+      final words = (alt['words'] as List?) ?? const [];
+      int? spk;
+      for (final w in words) {
+        if (w is Map && w['speaker'] is int) {
+          spk = w['speaker'] as int;
+          break;
+        }
+      }
+      if (spk != null) {
+        _firstSpeaker ??= spk;
+        _bufferSpeaker ??= spk == _firstSpeaker ? Speaker.me : Speaker.them;
+      }
+      _buffer =
+          _buffer.isEmpty ? transcript : '$_buffer $transcript';
     }
-    final isUtteranceEnd =
-        (j['is_final'] == true) && (j['speech_final'] == true);
-    if (isUtteranceEnd) {
-      final text = transcript.isNotEmpty ? transcript : _interim;
-      _interim = '';
+
+    if (speechFinal) {
+      final text = _buffer;
+      final sp = _bufferSpeaker ?? Speaker.me;
+      _buffer = '';
+      _bufferSpeaker = null;
       if (text.isNotEmpty) {
-        debugPrint('[DG diarize] END spk=$spk($sp) "$text"');
+        debugPrint('[DG diarize] END $sp "$text"');
         _events.add(DeepgramTurnEvent(
           source: sp,
           phase: TurnPhase.end,
           turnIndex: 0,
           transcript: text,
-        ));
-      }
-    } else {
-      _interim = transcript;
-      if (transcript.isNotEmpty) {
-        _events.add(DeepgramTurnEvent(
-          source: sp,
-          phase: TurnPhase.update,
-          turnIndex: 0,
-          transcript: transcript,
         ));
       }
     }
