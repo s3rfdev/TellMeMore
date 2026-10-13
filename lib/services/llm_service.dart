@@ -121,7 +121,7 @@ class LlmService {
                 ],
               },
             ],
-            'generationConfig': {'temperature': 0.4, 'maxOutputTokens': 300},
+            'generationConfig': {'temperature': 0.4, 'maxOutputTokens': 1500},
           }),
         )
         .timeout(_timeout);
