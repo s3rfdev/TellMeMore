@@ -30,7 +30,8 @@ class AppConfig {
     this.hintColor = 0xFFE8EAED,
     this.fontSize = 14.0,
     this.boldText = false,
-    this.titlebarTransparent = true,
+    this.titlebarMode = 'transparent',
+    this.themDeviceId = '',
   }) : customModels = customModels ?? {};
 
   static const defaultDeepgramToken =
@@ -85,8 +86,11 @@ class AppConfig {
   /// Жирный шрифт текста.
   bool boldText;
 
-  /// Прозрачная шапка окна (титлбар).
-  bool titlebarTransparent;
+  /// Шапка окна: 'transparent' | 'opaque' | 'hidden' (свои кнопки закрытия).
+  String titlebarMode;
+
+  /// Входное аудиоустройство для голоса собеседника ('' = выключено).
+  String themDeviceId;
 
   String modelFor(LlmProvider p) => switch (p) {
         LlmProvider.gemini => geminiModel,
@@ -157,7 +161,8 @@ class AppConfig {
         hintColor: hintColor,
         fontSize: fontSize,
         boldText: boldText,
-        titlebarTransparent: titlebarTransparent,
+        titlebarMode: titlebarMode,
+        themDeviceId: themDeviceId,
       );
 
   Map<String, dynamic> toJson() => {
@@ -184,7 +189,8 @@ class AppConfig {
         'hintColor': hintColor,
         'fontSize': fontSize,
         'boldText': boldText,
-        'titlebarTransparent': titlebarTransparent,
+        'titlebarMode': titlebarMode,
+        'themDeviceId': themDeviceId,
       };
 
   factory AppConfig.fromJson(Map<String, dynamic> j) => AppConfig(
@@ -218,7 +224,11 @@ class AppConfig {
         hintColor: (j['hintColor'] as int?) ?? 0xFFE8EAED,
         fontSize: ((j['fontSize'] as num?) ?? 14.0).toDouble().clamp(12.0, 20.0),
         boldText: (j['boldText'] as bool?) ?? false,
-        titlebarTransparent: (j['titlebarTransparent'] as bool?) ?? true,
+        titlebarMode: (j['titlebarMode'] as String?) ??
+            (((j['titlebarTransparent'] as bool?) ?? true)
+                ? 'transparent'
+                : 'opaque'),
+        themDeviceId: (j['themDeviceId'] as String?) ?? '',
       );
 
   static File get _file =>

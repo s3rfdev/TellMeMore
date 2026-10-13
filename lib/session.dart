@@ -33,8 +33,11 @@ class Session extends ChangeNotifier {
   String? helpError;
 
   AudioRecorder? _recorder;
+  AudioRecorder? _themRecorder;
   DeepgramStream? _micStream;
+  DeepgramStream? _themStream;
   StreamSubscription<Uint8List>? _audioSub;
+  StreamSubscription<Uint8List>? _themAudioSub;
   final _eventSubs = <StreamSubscription<dynamic>>[];
 
   bool get isStreaming =>
@@ -52,13 +55,26 @@ class Session extends ChangeNotifier {
     applyTitlebar();
   }
 
-  /// Синхронизирует прозрачность нативной шапки окна с настройкой.
+  /// Синхронизирует шапку окна с настройкой: прозрачная / плотная / скрытая
+  /// (в скрытом режиме нативные кнопки убираются, в приложении — свои).
   void applyTitlebar() {
     try {
-      if (config.titlebarTransparent) {
-        WindowManipulator.makeTitlebarTransparent();
-      } else {
-        WindowManipulator.makeTitlebarOpaque();
+      switch (config.titlebarMode) {
+        case 'hidden':
+          WindowManipulator.makeTitlebarTransparent();
+          WindowManipulator.hideCloseButton();
+          WindowManipulator.hideMiniaturizeButton();
+          WindowManipulator.hideZoomButton();
+        case 'opaque':
+          WindowManipulator.makeTitlebarOpaque();
+          WindowManipulator.showCloseButton();
+          WindowManipulator.showMiniaturizeButton();
+          WindowManipulator.showZoomButton();
+        default:
+          WindowManipulator.makeTitlebarTransparent();
+          WindowManipulator.showCloseButton();
+          WindowManipulator.showMiniaturizeButton();
+          WindowManipulator.showZoomButton();
       }
     } catch (_) {}
   }
@@ -116,6 +132,43 @@ class Session extends ChangeNotifier {
         (chunk) => _micStream?.send(chunk),
         onError: (Object e) => onStreamError('Микрофон: $e'),
       );
+
+      // Второй поток — голос собеседника (системный звук, напр. BlackHole).
+      if (config.themDeviceId.isNotEmpty) {
+        try {
+          _themStream = DeepgramStream(
+            source: Speaker.them,
+            token: config.deepgramToken,
+            model: config.deepgramModel,
+            languageHint: config.languageHint,
+          );
+          _eventSubs.add(_themStream!.events.listen(onTurnEvent));
+          _eventSubs.add(_themStream!.errors.listen(onStreamError));
+          await _themStream!.start();
+          _themRecorder = AudioRecorder();
+          final themAudio = await _themRecorder!.startStream(RecordConfig(
+            encoder: AudioEncoder.pcm16bits,
+            sampleRate: 16000,
+            numChannels: 1,
+            device: InputDevice(id: config.themDeviceId, label: config.themDeviceId),
+          ));
+          _themAudioSub = themAudio.listen(
+            (chunk) => _themStream?.send(chunk),
+            onError: (Object e) => onStreamError('Собеседник: $e'),
+          );
+        } catch (e) {
+          // Источник собеседника недоступен — продолжаем только с микрофоном.
+          statusMessage = 'Собеседник: $e';
+          try {
+            await _themAudioSub?.cancel();
+            await _themStream?.stop();
+            await _themRecorder?.dispose();
+          } catch (_) {}
+          _themAudioSub = null;
+          _themStream = null;
+          _themRecorder = null;
+        }
+      }
       status = SessionStatus.listening;
     } catch (e) {
       status = SessionStatus.error;
@@ -135,8 +188,12 @@ class Session extends ChangeNotifier {
   Future<void> _teardown() async {
     await _audioSub?.cancel();
     _audioSub = null;
+    await _themAudioSub?.cancel();
+    _themAudioSub = null;
     await _micStream?.stop();
     _micStream = null;
+    await _themStream?.stop();
+    _themStream = null;
     for (final s in _eventSubs) {
       await s.cancel();
     }
@@ -146,6 +203,12 @@ class Session extends ChangeNotifier {
     } finally {
       await _recorder?.dispose();
       _recorder = null;
+    }
+    try {
+      await _themRecorder?.stop();
+    } finally {
+      await _themRecorder?.dispose();
+      _themRecorder = null;
     }
   }
 

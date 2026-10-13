@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
+import 'package:record/record.dart';
 
 import '../l10n.dart';
 import '../services/config_store.dart';
@@ -35,8 +36,25 @@ class _SettingsDialogState extends State<SettingsDialog> {
       TextEditingController(text: widget.session.config.goals);
 
   bool _addingCustom = false;
+  bool _checking = false;
+  List<InputDevice> _themDevices = [];
 
   AppConfig get c => widget.session.config;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDevices();
+  }
+
+  Future<void> _loadDevices() async {
+    try {
+      final rec = AudioRecorder();
+      final devices = await rec.listInputDevices();
+      await rec.dispose();
+      if (mounted) setState(() => _themDevices = devices);
+    } catch (_) {}
+  }
 
   void _touch() {
     widget.session.changed();
@@ -210,7 +228,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
         children: [
           _dropdownRow(),
           const SizedBox(height: 12),
-          _field(_key, _providerKeyLabel(p), obscure: true),
+          _keyFieldWithCheck(p),
           const SizedBox(height: 12),
           _modelRow(p),
           if (_addingCustom) ...[
@@ -220,6 +238,53 @@ class _SettingsDialogState extends State<SettingsDialog> {
           const SizedBox(height: 14),
           _section(S.t('sectionAudio')),
           _field(_deepgram, S.t('deepgramToken'), obscure: true),
+          const SizedBox(height: 12),
+          _themSourceRow(),
+        ],
+      ),
+    );
+  }
+
+  /// Источник голоса собеседника: входное аудиоустройство (напр. BlackHole).
+  Widget _themSourceRow() {
+    final items = <DropdownMenuItem<String>>[
+      DropdownMenuItem(
+          value: '',
+          child: Text(S.t('deviceOff'), style: const TextStyle(fontSize: 13))),
+      for (final d in _themDevices)
+        DropdownMenuItem(
+            value: d.id,
+            child: Text(d.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 13))),
+      if (c.themDeviceId.isNotEmpty &&
+          !_themDevices.any((d) => d.id == c.themDeviceId))
+        DropdownMenuItem(
+            value: c.themDeviceId,
+            child: Text('${c.themDeviceId} — нет в системе',
+                style: const TextStyle(fontSize: 13, color: Palette.sec))),
+    ];
+    return Tooltip(
+      message: S.t('startTooltip'),
+      child: Row(
+        children: [
+          Text(S.t('themSource'),
+              style: const TextStyle(fontSize: 12, color: Palette.sec)),
+          const Spacer(),
+          DropdownButton<String>(
+            value: c.themDeviceId,
+            underline: const SizedBox.shrink(),
+            dropdownColor: const Color(0xFF22262C),
+            borderRadius: BorderRadius.circular(10),
+            style: const TextStyle(fontSize: 13, color: Palette.pri),
+            items: items,
+            onChanged: (v) {
+              if (v == null) return;
+              c.themDeviceId = v;
+              _touch();
+            },
+          ),
         ],
       ),
     );
@@ -234,10 +299,13 @@ class _SettingsDialogState extends State<SettingsDialog> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _opacityRow(),
-          const SizedBox(height: 4),
-          _switchRow(S.t('titlebarTransparent'), c.titlebarTransparent,
-              (v) {
-            c.titlebarTransparent = v;
+          const SizedBox(height: 10),
+          _segmentRow(S.t('titlebarMode'), c.titlebarMode, [
+            ('transparent', S.t('tbTransparent')),
+            ('opaque', S.t('tbOpaque')),
+            ('hidden', S.t('tbHidden')),
+          ], (v) {
+            c.titlebarMode = v;
             widget.session.applyTitlebar();
             _touch();
           }),
@@ -261,6 +329,114 @@ class _SettingsDialogState extends State<SettingsDialog> {
         LlmProvider.openai => S.t('openaiKey'),
         LlmProvider.anthropic => S.t('anthropicKey'),
       };
+
+  /// Поле ключа с микро-кнопкой проверки «ключ + модель».
+  Widget _keyFieldWithCheck(LlmProvider p) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(_providerKeyLabel(p),
+                style: const TextStyle(fontSize: 12, color: Palette.sec)),
+            const Spacer(),
+            SizedBox(
+              height: 22,
+              child: _checking
+                  ? const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 8),
+                      child: SizedBox(
+                          width: 12,
+                          height: 12,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 1.6, color: Palette.green)),
+                    )
+                  : Tooltip(
+                      message: S.t('checkModel'),
+                      child: InkWell(
+                        onTap: _checkModel,
+                        borderRadius: BorderRadius.circular(6),
+                        child: const Padding(
+                          padding: EdgeInsets.all(3),
+                          child: Icon(Icons.verified_outlined,
+                              size: 15, color: Palette.green),
+                        ),
+                      ),
+                    ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 5),
+        _input(_key, obscure: true),
+      ],
+    );
+  }
+
+  /// Живой мини-запрос к выбранному провайдеру: ключ и модель рабочие?
+  Future<void> _checkModel() async {
+    if (_checking) return;
+    setState(() => _checking = true);
+    String? error;
+    try {
+      final reply = await LlmService.ask(
+        provider: c.provider,
+        apiKey: _key.text.trim(),
+        model: c.modelFor(c.provider),
+        prompt: 'Ответь ровно одним словом: OK',
+      );
+      if (reply.trim().isEmpty) error = 'Пустой ответ';
+    } catch (e) {
+      error = e.toString();
+    }
+    if (!mounted) return;
+    setState(() => _checking = false);
+    _showCheckResult(error);
+  }
+
+  void _showCheckResult(String? error) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Palette.dialogBg,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: const BorderSide(color: Palette.border),
+        ),
+        contentPadding: const EdgeInsets.fromLTRB(18, 16, 18, 6),
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 400),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                error == null
+                    ? Icons.check_circle_outline
+                    : Icons.error_outline,
+                size: 16,
+                color: error == null ? Palette.green : Palette.red,
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: SingleChildScrollView(
+                  child: SelectableText(
+                    error == null
+                        ? S.t('checkOk')
+                        : '${S.t('checkFail')}: $error',
+                    style: TextStyle(
+                        fontSize: 11,
+                        height: 1.4,
+                        color:
+                            error == null ? Palette.pri : Palette.red),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   Widget _dropdownRow() {
     return Row(
@@ -509,6 +685,39 @@ class _SettingsDialogState extends State<SettingsDialog> {
                   ),
                 ),
             ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _segmentRow(String label, String value,
+      List<(String, String)> options, ValueChanged<String> onSelected) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+            style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.1,
+                color: Palette.sec)),
+        const SizedBox(height: 6),
+        SizedBox(
+          width: double.infinity,
+          child: SegmentedButton<String>(
+            segments: [
+              for (final (v, l) in options)
+                ButtonSegment(
+                    value: v,
+                    label: Text(l, style: const TextStyle(fontSize: 12))),
+            ],
+            selected: {value},
+            onSelectionChanged: (sel) => onSelected(sel.first),
+            style: const ButtonStyle(
+              visualDensity: VisualDensity.compact,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
           ),
         ),
       ],

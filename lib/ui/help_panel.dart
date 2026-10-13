@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:macos_window_utils/macos_window_utils.dart';
 
 import '../l10n.dart';
 import '../services/llm_service.dart';
@@ -41,10 +42,24 @@ class HelpPanel extends StatelessWidget {
     final hasKey = session.config.keyFor(p).trim().isNotEmpty;
     return Row(
       children: [
-        // Левая треть: заголовок + чип провайдера
+        // Левая треть: свои кнопки окна (если шапка скрыта), заголовок, чип
         Expanded(
           child: Row(
             children: [
+              if (session.config.titlebarMode == 'hidden') ...[
+                _winButton(
+                  icon: Icons.remove,
+                  tooltip: S.t('winMinimize'),
+                  onTap: () => WindowManipulator.miniaturizeWindow(),
+                ),
+                const SizedBox(width: 6),
+                _winButton(
+                  icon: Icons.close,
+                  tooltip: S.t('winClose'),
+                  onTap: () => WindowManipulator.closeWindow(),
+                ),
+                const SizedBox(width: 10),
+              ],
               Text(S.t('helpTitle'),
                   style: const TextStyle(
                       fontSize: 11,
@@ -111,6 +126,29 @@ class HelpPanel extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _winButton({
+    required IconData icon,
+    required String tooltip,
+    required VoidCallback onTap,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(6),
+        child: Container(
+          width: 18,
+          height: 18,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: Palette.border),
+          ),
+          child: Icon(icon, size: 10, color: Palette.sec),
+        ),
+      ),
     );
   }
 
