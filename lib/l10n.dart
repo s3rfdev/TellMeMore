@@ -85,7 +85,10 @@ const Map<String, Map<String, String>> _d = {
   'winMinimize': {'ru': 'Свернуть', 'en': 'Minimize'},
   'winClose': {'ru': 'Закрыть', 'en': 'Close'},
   'themSource': {'ru': 'Голос собеседника', 'en': 'Interviewer voice'},
-  'deviceOff': {'ru': 'Выключен (только микрофон)', 'en': 'Off (mic only)'},
+  'deviceOff': {
+    'ru': 'Авто: по голосам (один микрофон)',
+    'en': 'Auto: by voice (single mic)',
+  },
   'checkModel': {'ru': 'Проверить ключ и модель', 'en': 'Test key & model'},
   'checkOk': {'ru': 'Работает', 'en': 'Works'},
   'checkRunning': {'ru': 'Проверяю…', 'en': 'Checking…'},

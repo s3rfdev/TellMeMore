@@ -196,9 +196,14 @@ class _TranscriptPanelState extends State<TranscriptPanel> {
   }
 
   Widget _footer(Session s) {
-    final themLabel = s.config.themDeviceId.isNotEmpty
-        ? (s.themActive ? 'Собеседник: вкл' : 'Собеседник: выкл')
-        : 'Собеседник: не выбран';
+    final String themLabel;
+    if (s.themActive) {
+      themLabel = 'Собеседник: устройство';
+    } else if (s.config.themDeviceId.isEmpty) {
+      themLabel = s.isStreaming ? 'Собеседник: авто (по голосам)' : 'Собеседник: авто';
+    } else {
+      themLabel = 'Собеседник: выкл';
+    }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
       decoration:

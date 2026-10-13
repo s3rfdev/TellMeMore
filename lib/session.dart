@@ -123,6 +123,9 @@ class Session extends ChangeNotifier {
         token: config.deepgramToken,
         model: config.deepgramModel,
         languageHint: config.languageHint,
+        // Простой режим (устройство собеседника не выбрано): один микрофон,
+        // спикеров разделяет диаризация Deepgram (v1, nova-3).
+        diarize: config.themDeviceId.isEmpty,
       );
       _eventSubs.add(_micStream!.events.listen(onTurnEvent));
       _eventSubs.add(_micStream!.errors.listen(onStreamError));
@@ -133,8 +136,16 @@ class Session extends ChangeNotifier {
         sampleRate: 16000,
         numChannels: 1,
       ));
+      var micChunks = 0;
+      debugPrint('[AUDIO me] stream started');
       _audioSub = audio.listen(
-        (chunk) => _micStream?.send(chunk),
+        (chunk) {
+          micChunks++;
+          if (micChunks % 50 == 1) {
+            debugPrint('[AUDIO me] chunk #$micChunks ${chunk.length}B');
+          }
+          _micStream?.send(chunk);
+        },
         onError: (Object e) => onStreamError('Микрофон: $e'),
       );
 
