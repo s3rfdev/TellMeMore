@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:record/record.dart';
 
 import '../l10n.dart';
@@ -123,9 +124,18 @@ class _SettingsDialogState extends State<SettingsDialog> {
       titlePadding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
       contentPadding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
       actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
-      title: Text(
-        S.t('settingsTitle'),
-        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+      title: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(5),
+            child: SvgPicture.asset('assets/logo.svg', width: 20, height: 20),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            S.t('settingsTitle'),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          ),
+        ],
       ),
       content: SizedBox(
         width: 520,

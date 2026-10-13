@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Background Gradients -->
+    <radialGradient id="bgGlow" cx="50%" cy="40%" r="65%">
+      <stop offset="0%" stop-color="#0c2419" />
+      <stop offset="60%" stop-color="#08140f" />
+      <stop offset="100%" stop-color="#040806" />
+    </radialGradient>
+    <linearGradient id="borderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00ff9d" stop-opacity="0.8" />
+      <stop offset="50%" stop-color="#059669" stop-opacity="0.3" />
+      <stop offset="100%" stop-color="#00ff9d" stop-opacity="0.6" />
+    </linearGradient>
+
+    <!-- Neon Glow Filters -->
+    <filter id="neonGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="7" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <!-- Glass Gradients -->
+    <linearGradient id="glassLeft" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00ff9d" stop-opacity="0.25" />
+      <stop offset="100%" stop-color="#064e3b" stop-opacity="0.10" />
+    </linearGradient>
+    <linearGradient id="glassRight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10b981" stop-opacity="0.22" />
+      <stop offset="100%" stop-color="#022c22" stop-opacity="0.12" />
+    </linearGradient>
+
+    <linearGradient id="greenNeon" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00ffc4" />
+      <stop offset="100%" stop-color="#00e676" />
+    </linearGradient>
+  </defs>
+
+  <!-- Base Icon Squircle (macOS / iOS / Android Adaptive) -->
+  <rect x="16" y="16" width="480" height="480" rx="112" fill="url(#bgGlow)" stroke="url(#borderGrad)" stroke-width="4" />
+
+  <!-- Ambient Internal Glow -->
+  <circle cx="256" cy="230" r="140" fill="#00ff9d" opacity="0.08" filter="url(#neonGlow)" />
+
+  <!-- 1. Right Speech Bubble: Interlocutor / Sherlock Profile -->
+  <g transform="translate(40, -10)">
+    <!-- Bubble Body -->
+    <path d="M 220 150 C 220 110, 370 110, 370 150 C 370 210, 370 230, 340 260 L 350 295 L 300 270 C 230 270, 220 220, 220 150 Z" 
+          fill="url(#glassRight)" stroke="#00ff9d" stroke-width="3" stroke-opacity="0.6" filter="url(#softGlow)"/>
+    
+    <!-- Target / Profile Scan Matrix (Sherlock / AI Scan) -->
+    <circle cx="295" cy="180" r="28" fill="none" stroke="#00ff9d" stroke-width="2" stroke-opacity="0.4" stroke-dasharray="4 3"/>
+    <!-- Head Silhouette -->
+    <path d="M 285 174 A 10 10 0 1 1 305 174 A 10 10 0 1 1 285 174 Z" fill="none" stroke="#00ff9d" stroke-width="2.5" stroke-opacity="0.8"/>
+    <!-- Shoulder Curve -->
+    <path d="M 275 200 C 275 188, 315 188, 315 200" fill="none" stroke="#00ff9d" stroke-width="2.5" stroke-opacity="0.8"/>
+    <!-- Scanning Crosshair Beams -->
+    <line x1="295" y1="145" x2="295" y2="152" stroke="#00ff9d" stroke-width="2.5" />
+    <line x1="295" y1="208" x2="295" y2="215" stroke="#00ff9d" stroke-width="2.5" />
+    <line x1="260" y1="180" x2="267" y2="180" stroke="#00ff9d" stroke-width="2.5" />
+    <line x1="323" y1="180" x2="330" y2="180" stroke="#00ff9d" stroke-width="2.5" />
+  </g>
+
+  <!-- 2. Left Foreground Speech Bubble: Candidate / TellMeMore Audio Hub -->
+  <g>
+    <!-- Bubble Body -->
+    <path d="M 90 220 C 90 145, 270 145, 270 220 C 270 295, 250 310, 195 310 L 140 345 L 150 310 C 105 305, 90 270, 90 220 Z" 
+          fill="url(#glassLeft)" stroke="#00ffa3" stroke-width="3.5" filter="url(#neonGlow)"/>
+
+    <!-- TMM Brand Wordmark -->
+    <text x="180" y="215" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" 
+          font-weight="900" font-size="28" letter-spacing="3" fill="#ffffff" text-anchor="middle">
+      TMM
+    </text>
+
+    <!-- Dynamic Audio Waveform underneath TMM -->
+    <g stroke="url(#greenNeon)" stroke-width="3.5" stroke-linecap="round">
+      <line x1="135" y1="245" x2="135" y2="255" />
+      <line x1="146" y1="238" x2="146" y2="262" />
+      <line x1="158" y1="230" x2="158" y2="270" stroke-width="4" />
+      <line x1="169" y1="235" x2="169" y2="265" />
+      <line x1="180" y1="225" x2="180" y2="275" stroke-width="4.5" />
+      <line x1="191" y1="235" x2="191" y2="265" />
+      <line x1="203" y1="230" x2="203" y2="270" stroke-width="4" />
+      <line x1="214" y1="238" x2="214" y2="262" />
+      <line x1="225" y1="245" x2="225" y2="255" />
+    </g>
+  </g>
+
+  <!-- 3. Bottom Prompt Trigger Action Pill (The Quick Response Button) -->
+  <g transform="translate(136, 385)">
+    <!-- Capsule Button Shell -->
+    <rect x="0" y="0" width="240" height="48" rx="24" fill="#041a12" stroke="#00ff9d" stroke-width="2.5" stroke-opacity="0.9" />
+    
+    <!-- Neon Pulsing Core -->
+    <circle cx="34" cy="24" r="7" fill="#00ff9d" filter="url(#neonGlow)" />
+    <circle cx="34" cy="24" r="3.5" fill="#ffffff" />
+    
+    <!-- Button Label Text -->
+    <text x="135" y="30" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" 
+          font-weight="700" font-size="15" letter-spacing="2.5" fill="#e2fdf1" text-anchor="middle">
+      TELL ME MORE
+    </text>
+  </g>
+</svg>

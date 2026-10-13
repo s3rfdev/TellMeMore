@@ -19,7 +19,29 @@ class MainFlutterWindow: NSWindow {
     flutterViewController.view.wantsLayer = true
     flutterViewController.view.layer?.backgroundColor = NSColor.clear.cgColor
 
+    // Без тени: плавающее окно без лишних рамок и теней
+    self.hasShadow = false
+    self.isMovableByWindowBackground = true
+
     RegisterGeneratedPlugins(registry: flutterViewController)
+
+    // Канал управления окном (перетаскивание окна по кастомным элементам шапки)
+    let windowChannel = FlutterMethodChannel(
+      name: "tellmemo/window",
+      binaryMessenger: flutterViewController.engine.binaryMessenger)
+    windowChannel.setMethodCallHandler { [weak self] (call, result) in
+      guard let self = self else { result(nil); return }
+      if call.method == "dragWindow" {
+        if let event = NSApp.currentEvent {
+          self.performDrag(with: event)
+          result(nil)
+        } else {
+          result(FlutterError(code: "NO_EVENT", message: "No event", details: nil))
+        }
+      } else {
+        result(FlutterMethodNotImplemented)
+      }
+    }
 
     // Канал захвата системного звука (ScreenCaptureKit, macOS 13+).
     if #available(macOS 13.0, *) {

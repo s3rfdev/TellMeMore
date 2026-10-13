@@ -18,8 +18,8 @@ const Map<String, Map<String, String>> _d = {
   'thinking': {'ru': 'Думаю…', 'en': 'Thinking…'},
   'hintPlaceholder': {
     'ru':
-        'Нажмите «Tell Memo» — получите короткую подсказку, что сказать дальше.',
-    'en': 'Press "Tell Memo" for a short hint on what to say next.',
+        'Нажмите «Get answer» — получите короткую подсказку, что сказать дальше.',
+    'en': 'Press "Get answer" for a short hint on what to say next.',
   },
   'settings': {'ru': 'Настройки', 'en': 'Settings'},
 

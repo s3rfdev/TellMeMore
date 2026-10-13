@@ -17,6 +17,7 @@ Future<void> main() async {
   try {
     WindowManipulator.initialize();
     WindowManipulator.makeWindowFullyTransparent();
+    WindowManipulator.disableShadow();
   } catch (_) {
     /* без прозрачности приложение работает как раньше */
   }

@@ -64,19 +64,23 @@ class Session extends ChangeNotifier {
   /// (в скрытом режиме нативные кнопки убираются, в приложении — свои).
   void applyTitlebar() {
     try {
+      WindowManipulator.disableShadow();
       switch (config.titlebarMode) {
         case 'hidden':
           WindowManipulator.makeTitlebarTransparent();
+          WindowManipulator.hideTitle();
           WindowManipulator.hideCloseButton();
           WindowManipulator.hideMiniaturizeButton();
           WindowManipulator.hideZoomButton();
         case 'opaque':
           WindowManipulator.makeTitlebarOpaque();
+          WindowManipulator.showTitle();
           WindowManipulator.showCloseButton();
           WindowManipulator.showMiniaturizeButton();
           WindowManipulator.showZoomButton();
         default:
           WindowManipulator.makeTitlebarTransparent();
+          WindowManipulator.hideTitle();
           WindowManipulator.showCloseButton();
           WindowManipulator.showMiniaturizeButton();
           WindowManipulator.showZoomButton();
