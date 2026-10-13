@@ -198,7 +198,7 @@ class _TranscriptPanelState extends State<TranscriptPanel> {
     final label = isMe ? S.t('you') : S.t('interviewer');
     final alpha = finalText ? 1.0 : 0.55;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5),
+      padding: EdgeInsets.symmetric(vertical: c.turnSpacing),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

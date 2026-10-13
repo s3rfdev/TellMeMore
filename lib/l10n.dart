@@ -162,4 +162,22 @@ const Map<String, Map<String, String>> _d = {
   },
   'cancel': {'ru': 'Отмена', 'en': 'Cancel'},
   'save': {'ru': 'Сохранить', 'en': 'Save'},
+  'turnSpacing': {
+    'ru': 'Отступ между репликами',
+    'en': 'Spacing between turns',
+  },
+  'checkAction': {'ru': 'Тест', 'en': 'Test'},
+  'checkSuccessTitle': {
+    'ru': 'Проверка успешна',
+    'en': 'Check successful',
+  },
+  'checkErrorTitle': {
+    'ru': 'Ошибка проверки',
+    'en': 'Check failed',
+  },
+  'checkSuccessDesc': {
+    'ru': 'Ключ и выбранная модель работают корректно. Ответ получен.',
+    'en': 'API key and model are working properly. Response received.',
+  },
+  'closeDialog': {'ru': 'Закрыть', 'en': 'Close'},
 };

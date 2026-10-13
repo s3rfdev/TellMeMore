@@ -480,6 +480,8 @@ class _SettingsDialogState extends State<SettingsDialog> {
           const SizedBox(height: 10),
           _section(S.t('sectionText')),
           _fontSizeRow(),
+          const SizedBox(height: 8),
+          _turnSpacingRow(),
           _switchRow(S.t('boldText'), c.boldText, (v) {
             c.boldText = v;
             _touch();
@@ -532,28 +534,76 @@ class _SettingsDialogState extends State<SettingsDialog> {
               height: 22,
               child:
                   _checking
-                      ? const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 8),
-                        child: SizedBox(
-                          width: 12,
-                          height: 12,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 1.6,
-                            color: Palette.green,
+                      ? Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 9,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Palette.green.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(11),
+                          border: Border.all(
+                            color: Palette.green.withValues(alpha: 0.45),
                           ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const SizedBox(
+                              width: 10,
+                              height: 10,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 1.5,
+                                color: Palette.green,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              S.t('checkRunning'),
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: Palette.green,
+                              ),
+                            ),
+                          ],
                         ),
                       )
                       : Tooltip(
                         message: S.t('checkModel'),
                         child: InkWell(
                           onTap: _checkModel,
-                          borderRadius: BorderRadius.circular(6),
-                          child: const Padding(
-                            padding: EdgeInsets.all(3),
-                            child: Icon(
-                              Icons.verified_outlined,
-                              size: 15,
-                              color: Palette.green,
+                          borderRadius: BorderRadius.circular(11),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 9,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Palette.green.withValues(alpha: 0.10),
+                              borderRadius: BorderRadius.circular(11),
+                              border: Border.all(
+                                color: Palette.green.withValues(alpha: 0.35),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.play_arrow_rounded,
+                                  size: 13,
+                                  color: Palette.green,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  S.t('checkAction'),
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: Palette.green,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
@@ -596,45 +646,111 @@ class _SettingsDialogState extends State<SettingsDialog> {
   }
 
   void _showCheckResult(String? error) {
+    final isSuccess = error == null;
     showDialog(
       context: context,
       builder:
-          (ctx) => AlertDialog(
+          (ctx) => Dialog(
             backgroundColor: Palette.dialogBg,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: const BorderSide(color: Palette.border),
+              borderRadius: BorderRadius.circular(14),
+              side: BorderSide(
+                color:
+                    isSuccess
+                        ? Palette.green.withValues(alpha: 0.4)
+                        : Palette.red.withValues(alpha: 0.4),
+              ),
             ),
-            contentPadding: const EdgeInsets.fromLTRB(18, 16, 18, 6),
-            content: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 400),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(
-                    error == null
-                        ? Icons.check_circle_outline
-                        : Icons.error_outline,
-                    size: 16,
-                    color: error == null ? Palette.green : Palette.red,
-                  ),
-                  const SizedBox(width: 8),
-                  Flexible(
-                    child: SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: Padding(
+                padding: const EdgeInsets.all(18),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Заголовок со статусом и мини-кнопкой закрытия [x]
+                    Row(
+                      children: [
+                        Container(
+                          width: 28,
+                          height: 28,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: (isSuccess ? Palette.green : Palette.red)
+                                .withValues(alpha: 0.15),
+                          ),
+                          child: Icon(
+                            isSuccess
+                                ? Icons.check_circle_rounded
+                                : Icons.error_rounded,
+                            size: 16,
+                            color: isSuccess ? Palette.green : Palette.red,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            isSuccess
+                                ? S.t('checkSuccessTitle')
+                                : S.t('checkErrorTitle'),
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: Palette.pri,
+                            ),
+                          ),
+                        ),
+                        InkWell(
+                          onTap: () => Navigator.of(ctx).pop(),
+                          borderRadius: BorderRadius.circular(6),
+                          child: const Padding(
+                            padding: EdgeInsets.all(4),
+                            child: Icon(
+                              Icons.close_rounded,
+                              size: 16,
+                              color: Palette.sec,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    // Тело сообщения в карточке
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.25),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: (isSuccess ? Palette.green : Palette.red)
+                              .withValues(alpha: 0.2),
+                        ),
+                      ),
                       child: SelectableText(
-                        error == null
-                            ? S.t('checkOk')
-                            : '${S.t('checkFail')}: $error',
+                        error ?? S.t('checkSuccessDesc'),
                         style: TextStyle(
-                          fontSize: 11,
-                          height: 1.4,
-                          color: error == null ? Palette.pri : Palette.red,
+                          fontSize: 12,
+                          height: 1.45,
+                          color:
+                              isSuccess ? Palette.pri : const Color(0xFFFF8A80),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 16),
+                    // Нижняя кнопка закрытия
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: GradientButton(
+                        icon: Icons.check_rounded,
+                        label: S.t('closeDialog'),
+                        height: 30,
+                        fontSize: 12,
+                        onTap: () => Navigator.of(ctx).pop(),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -846,9 +962,9 @@ class _SettingsDialogState extends State<SettingsDialog> {
           child: SliderTheme(
             data: _sliderTheme(context),
             child: Slider(
-              value: c.fontSize.clamp(12.0, 20.0),
-              min: 12.0,
-              max: 20.0,
+              value: c.fontSize.clamp(6.0, 24.0),
+              min: 6.0,
+              max: 24.0,
               onChanged: (v) {
                 setState(() => c.fontSize = v);
                 widget.session.changed();
@@ -862,6 +978,42 @@ class _SettingsDialogState extends State<SettingsDialog> {
           width: 38,
           child: Text(
             '${c.fontSize.round()}',
+            textAlign: TextAlign.end,
+            style: const TextStyle(fontSize: 12, color: Palette.sec),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _turnSpacingRow() {
+    return Row(
+      children: [
+        Text(
+          S.t('turnSpacing'),
+          style: const TextStyle(fontSize: 12, color: Palette.sec),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: SliderTheme(
+            data: _sliderTheme(context),
+            child: Slider(
+              value: c.turnSpacing.clamp(0.0, 20.0),
+              min: 0.0,
+              max: 20.0,
+              onChanged: (v) {
+                setState(() => c.turnSpacing = v);
+                widget.session.changed();
+              },
+              onChangeEnd: (_) => widget.session.saveConfig(),
+            ),
+          ),
+        ),
+        const SizedBox(width: 6),
+        SizedBox(
+          width: 38,
+          child: Text(
+            '${c.turnSpacing.round()} px',
             textAlign: TextAlign.end,
             style: const TextStyle(fontSize: 12, color: Palette.sec),
           ),

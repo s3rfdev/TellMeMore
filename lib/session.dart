@@ -331,43 +331,79 @@ class Session extends ChangeNotifier {
     final buf = StringBuffer();
     final recent = turns.length > 30 ? turns.sublist(turns.length - 30) : turns;
     for (final t in recent) {
-      buf.writeln(
-        '${t.speaker == Speaker.me ? 'Speaker 1 (я, кандидат)' : 'Speaker 2 (собеседник)'}: ${t.text}',
-      );
+      final speakerTag = t.speaker == Speaker.me ? 'candidate' : 'interviewer';
+      buf.writeln('  <turn speaker="$speakerTag">${t.text}</turn>');
     }
     final live = interimMe.trim();
     if (live.isNotEmpty) {
       buf.writeln(
-        'Speaker 1 (я, кандидат) — говорит прямо сейчас, фразу не закончил: $live',
+        '  <turn speaker="candidate" status="speaking_now">$live</turn>',
       );
     }
-    return buf.toString().trim();
+    return buf.toString().trimRight();
   }
 
   String _buildPrompt() {
-    final lastLine = switch (lastSpeaker) {
+    final situation = switch (lastSpeaker) {
       Speaker.me =>
-        'Последнюю реплику говорил я (кандидат) — помоги закончить мысль и продолжить ответ.',
+        'Последнюю реплику говорил я (кандидат). Помоги мне развить мысль, закончить формулировку или дополнить ответ сильными аргументами.',
       Speaker.them =>
-        'Последним говорил собеседник — подскажи, что мне ответить.',
-      null => 'Разговор только начался.',
+        'Последним говорил собеседник / интервьюер (задал вопрос или сделал реплику). Подскажи мне точный, сильный и выигрышный ответ от моего лица.',
+      null =>
+        'Разговор только начинается. Помоги кандидату уверенно начать диалог.',
     };
+
     final my = config.myProfile.trim();
     final them = config.interviewerProfile.trim();
-    // Язык подсказки = язык интерфейса (переключается кнопкой RU/EN в шапке).
-    final answerLine =
-        config.uiLang == 'en' ? 'Отвечай по-английски.' : 'Отвечай по-русски.';
-    return 'Ты — ассистент кандидата на живом собеседовании (идёт звонок, отвечать нужно мгновенно).\n'
-        'Speaker 1 — это я (кандидат). Speaker 2 — собеседник.\n'
-        '$lastLine\n'
-        'Мои цели и критерии: ${config.goals.trim()}\n'
-        '${my.isNotEmpty ? 'Информация обо мне (кандидате): $my\n' : ''}'
-        '${them.isNotEmpty ? 'Информация о собеседнике: $them\n' : ''}'
-        'Учитывай информацию обо мне и о собеседнике, если она есть.\n\n'
-        'Дай краткую подсказку (1–3 предложения, можно с готовой фразой, которую я сразу произнесу). '
-        'Без преамбулы и рассуждений — сразу суть. $answerLine\n\n'
-        'СТЕНОГРАММА:\n${_transcriptForPrompt()}';
+    final goals = config.goals.trim();
+
+    final languageInstruction = switch (config.answerLang) {
+      'ru' => 'Отвечай строго на русском языке.',
+      'en' => 'Answer strictly in English.',
+      _ =>
+        config.uiLang == 'en'
+            ? 'Answer in the same language as the conversation (English if in English, Russian if in Russian).'
+            : 'Отвечай на том же языке, на котором говорит собеседник в диалоге (если собеседник говорит по-русски — отвечай по-русски, если по-английски — по-английски).',
+    };
+
+    return '''
+<system_role>
+Ты — интеллектуальный ко-пилот и персональный суфлёр кандидата на живом собеседовании в реальном времени. Твоя задача — мгновенно вооружать кандидата чёткими, уверенными и профессиональными ответами прямо во время разговора.
+</system_role>
+
+<candidate_profile>
+${my.isNotEmpty ? my : 'Профиль кандидата не указан (опирайся на контекст диалога).'}
+</candidate_profile>
+
+<interviewer_profile>
+${them.isNotEmpty ? them : 'Профиль собеседника не указан.'}
+</interviewer_profile>
+
+<interview_goals>
+${goals.isNotEmpty ? goals : 'Пройти собеседование успешно, отвечать уверенно и структурированно.'}
+</interview_goals>
+
+<live_transcript>
+${_transcriptForPrompt()}
+</live_transcript>
+
+<current_situation>
+$situation
+</current_situation>
+
+<instructions>
+1. Отвечай от первого лица ("я"), голосом кандидата — так, чтобы кандидат мог сразу вслух произнести твою подсказку.
+2. Строго опирайся на навыки и опыт из <candidate_profile>, если он указан. Не противоречь опыту кандидата и не выдумывай несуществующие факты.
+3. Учитывай цели из <interview_goals> и особенности собеседника из <interviewer_profile>.
+4. Формат подсказки: предельно ёмко, 1–3 предложения (или 2–3 коротких ключевых тезиса с готовой речевой фразой).
+5. Никаких преамбул, мета-комментариев и вступлений (ЗАПРЕЩЕНО писать: "Вот что вам сказать:", "Вы можете ответить:"). Сразу давай готовую реплику / суть ответа!
+6. $languageInstruction
+</instructions>
+'''.trim();
   }
+
+  @visibleForTesting
+  String buildPrompt() => _buildPrompt();
 
   Future<void> getHelp() async {
     if (helpLoading) return;

@@ -34,6 +34,7 @@ class AppConfig {
     this.hintColor = 0xFFE8EAED,
     this.fontSize = 14.0,
     this.boldText = false,
+    this.turnSpacing = 5.0,
     this.titlebarMode = 'transparent',
     this.myDeviceId = '',
     this.themDeviceId = '',
@@ -90,6 +91,9 @@ class AppConfig {
 
   /// Жирный шрифт текста.
   bool boldText;
+
+  /// Отступ между репликами в пикселях (0–20).
+  double turnSpacing;
 
   /// Шапка окна: 'transparent' | 'opaque' | 'hidden' (свои кнопки закрытия).
   String titlebarMode;
@@ -171,6 +175,7 @@ class AppConfig {
     hintColor: hintColor,
     fontSize: fontSize,
     boldText: boldText,
+    turnSpacing: turnSpacing,
     titlebarMode: titlebarMode,
     myDeviceId: myDeviceId,
     themDeviceId: themDeviceId,
@@ -200,6 +205,7 @@ class AppConfig {
     'hintColor': hintColor,
     'fontSize': fontSize,
     'boldText': boldText,
+    'turnSpacing': turnSpacing,
     'titlebarMode': titlebarMode,
     'myDeviceId': myDeviceId,
     'themDeviceId': themDeviceId,
@@ -232,8 +238,10 @@ class AppConfig {
     ),
     splitRatio: ((j['splitRatio'] as num?) ?? 0.34).toDouble().clamp(0.2, 0.8),
     hintColor: (j['hintColor'] as int?) ?? 0xFFE8EAED,
-    fontSize: ((j['fontSize'] as num?) ?? 14.0).toDouble().clamp(12.0, 20.0),
+    fontSize: ((j['fontSize'] as num?) ?? 14.0).toDouble().clamp(6.0, 24.0),
     boldText: (j['boldText'] as bool?) ?? false,
+    turnSpacing:
+        ((j['turnSpacing'] as num?) ?? 5.0).toDouble().clamp(0.0, 20.0),
     titlebarMode:
         (j['titlebarMode'] as String?) ??
         (((j['titlebarTransparent'] as bool?) ?? true)
