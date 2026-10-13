@@ -152,6 +152,7 @@ class Session extends ChangeNotifier {
       // Второй поток — голос собеседника (системный звук, напр. BlackHole).
       if (config.themDeviceId.isNotEmpty) {
         try {
+          debugPrint('[THEM] init: device=${config.themDeviceId}');
           _themStream = DeepgramStream(
             source: Speaker.them,
             token: config.deepgramToken,
@@ -161,6 +162,9 @@ class Session extends ChangeNotifier {
           _eventSubs.add(_themStream!.events.listen(onTurnEvent));
           _eventSubs.add(_themStream!.errors.listen(onStreamError));
           await _themStream!.start();
+          // Внимание: WebSocket-клиент соединяется лениво; реальный статус
+          // покажут события DG them или ошибка в статусе.
+          debugPrint('[THEM] ws requested');
           _themRecorder = AudioRecorder();
           final themAudio = await _themRecorder!.startStream(RecordConfig(
             encoder: AudioEncoder.pcm16bits,
@@ -168,12 +172,21 @@ class Session extends ChangeNotifier {
             numChannels: 1,
             device: InputDevice(id: config.themDeviceId, label: config.themDeviceId),
           ));
+          debugPrint('[THEM] recorder ok');
+          var themChunks = 0;
           _themAudioSub = themAudio.listen(
-            (chunk) => _themStream?.send(chunk),
+            (chunk) {
+              themChunks++;
+              if (themChunks % 50 == 1) {
+                debugPrint('[AUDIO them] chunk #$themChunks ${chunk.length}B');
+              }
+              _themStream?.send(chunk);
+            },
             onError: (Object e) => onStreamError('Собеседник: $e'),
           );
         } catch (e) {
           // Источник собеседника недоступен — продолжаем только с микрофоном.
+          debugPrint('[THEM] FAILED: $e');
           themError = '$e';
           try {
             await _themAudioSub?.cancel();

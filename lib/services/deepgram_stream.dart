@@ -59,21 +59,14 @@ class DeepgramStream {
   Stream<String> get errors => _errors.stream;
 
   Future<void> start() async {
-    final Uri uri;
-    if (diarize) {
-      final lang = languageHint == 'en' ? 'en' : 'multi';
-      uri = Uri.parse('wss://api.deepgram.com/v1/listen'
-          '?model=nova-3&language=$lang'
-          '&diarize=true&interim_results=true&endpointing=500'
-          '&encoding=linear16&sample_rate=16000');
-    } else {
-      uri = Uri.parse('wss://api.deepgram.com/v2/listen'
-          '?model=$model'
-          '&language_hint=$languageHint'
-          '&eot_threshold=0.7'
-          '&eot_timeout_ms=5000'
-          '&encoding=linear16&sample_rate=16000');
-    }
+    // Все потоки ходят в v1 nova-3 (стабильно работает с ключами без v2-скоупа).
+    // diarize=true добавляет разделение спикеров по голосам (простой режим).
+    final lang = languageHint == 'en' ? 'en' : 'multi';
+    final uri = Uri.parse('wss://api.deepgram.com/v1/listen'
+        '?model=nova-3&language=$lang'
+        '&diarize=${diarize ? 'true' : 'false'}'
+        '&interim_results=true&endpointing=500'
+        '&encoding=linear16&sample_rate=16000');
     final channel =
         IOWebSocketChannel.connect(uri, headers: {'Authorization': 'Token $token'});
     _channel = channel;
@@ -87,11 +80,7 @@ class DeepgramStream {
         } on FormatException {
           return;
         }
-        if (diarize) {
-          _handleV1Results(j);
-        } else {
-          _handleV2TurnInfo(j);
-        }
+        _handleV1Results(j);
       },
       onError: (Object e) {
         debugPrint('[DG $source] ERROR: $e');
@@ -102,27 +91,6 @@ class DeepgramStream {
         if (!_errors.isClosed) _errors.add(S.t('errDgClosed'));
       },
     );
-  }
-
-  /// v2 Flux: события TurnInfo.
-  void _handleV2TurnInfo(Map<String, dynamic> j) {
-    if (j['type'] != 'TurnInfo') return;
-    final phase = switch (j['event']) {
-      'StartOfTurn' => TurnPhase.start,
-      'EndOfTurn' => TurnPhase.end,
-      _ => TurnPhase.update,
-    };
-    final t = (j['transcript'] as String?) ?? '';
-    if (t.trim().isNotEmpty || phase != TurnPhase.update) {
-      debugPrint('[DG $source] $phase "$t"');
-    }
-    _events.add(DeepgramTurnEvent(
-      source: source,
-      phase: phase,
-      turnIndex: (j['turn_index'] as num?)?.toInt() ?? 0,
-      transcript: t,
-      eotConfidence: (j['end_of_turn_confidence'] as num?)?.toDouble(),
-    ));
   }
 
   /// v1 + diarize: спикера определяет Deepgram по голосу.
