@@ -300,10 +300,10 @@ class _SettingsDialogState extends State<SettingsDialog> {
         children: [
           _opacityRow(),
           const SizedBox(height: 10),
-          _segmentRow(S.t('titlebarMode'), c.titlebarMode, [
-            ('transparent', S.t('tbTransparent')),
-            ('opaque', S.t('tbOpaque')),
-            ('hidden', S.t('tbHidden')),
+          _miniChoiceRow(S.t('titlebarMode'), c.titlebarMode, [
+            ('transparent', Icons.blur_on, S.t('tbTransparent')),
+            ('opaque', Icons.dock, S.t('tbOpaque')),
+            ('hidden', Icons.visibility_off, S.t('tbHidden')),
           ], (v) {
             c.titlebarMode = v;
             widget.session.applyTitlebar();
@@ -691,33 +691,70 @@ class _SettingsDialogState extends State<SettingsDialog> {
     );
   }
 
-  Widget _segmentRow(String label, String value,
-      List<(String, String)> options, ValueChanged<String> onSelected) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  /// Микро-переключатель: серые иконки+текст, активный подсвечен зелёным.
+  Widget _miniChoiceRow(
+      String label,
+      String value,
+      List<(String, IconData, String)> options,
+      ValueChanged<String> onSelected) {
+    return Row(
       children: [
-        Text(label,
-            style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 1.1,
-                color: Palette.sec)),
-        const SizedBox(height: 6),
-        SizedBox(
-          width: double.infinity,
-          child: SegmentedButton<String>(
-            segments: [
-              for (final (v, l) in options)
-                ButtonSegment(
-                    value: v,
-                    label: Text(l, style: const TextStyle(fontSize: 12))),
+        Text(label, style: const TextStyle(fontSize: 12, color: Palette.sec)),
+        const Spacer(),
+        Container(
+          padding: const EdgeInsets.all(2),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(9),
+            border: Border.all(color: Palette.border),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (var i = 0; i < options.length; i++) ...[
+                InkWell(
+                  onTap: () => onSelected(options[i].$1),
+                  borderRadius: BorderRadius.circular(7),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 120),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 7, vertical: 3),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(7),
+                      color: value == options[i].$1
+                          ? Palette.green.withValues(alpha: 0.14)
+                          : Colors.transparent,
+                      border: value == options[i].$1
+                          ? Border.all(
+                              color: Palette.green.withValues(alpha: 0.55))
+                          : null,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          options[i].$2,
+                          size: 11,
+                          color: value == options[i].$1
+                              ? Palette.green
+                              : Palette.sec,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          options[i].$3,
+                          style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: value == options[i].$1
+                                  ? Palette.green
+                                  : Palette.sec),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                if (i < options.length - 1) const SizedBox(width: 2),
+              ],
             ],
-            selected: {value},
-            onSelectionChanged: (sel) => onSelected(sel.first),
-            style: const ButtonStyle(
-              visualDensity: VisualDensity.compact,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
           ),
         ),
       ],

@@ -15,12 +15,12 @@ class HelpPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final opacity = session.config.windowOpacity;
+    // Без собственной заливки: фон всего окна уже красит Scaffold,
+    // дополнительный слой делал верхнюю панель темнее нижней.
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 8, 10, 10),
-      decoration: BoxDecoration(
-        color: Palette.bg.withValues(alpha: opacity),
-        border: const Border(bottom: BorderSide(color: Palette.border)),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: Palette.border)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
