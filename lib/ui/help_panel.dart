@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:macos_window_utils/macos_window_utils.dart';
 
 import '../l10n.dart';
 import '../services/llm_service.dart';
+import '../services/window_service.dart';
 import '../session.dart';
 import 'settings_dialog.dart';
 import 'theme.dart';
@@ -15,12 +15,8 @@ class _WindowDragArea extends StatelessWidget {
 
   final Widget? child;
 
-  static const _channel = MethodChannel('tellmemo/window');
-
   static void _drag() {
-    try {
-      _channel.invokeMethod('dragWindow');
-    } catch (_) {}
+    WindowService.drag();
   }
 
   @override
@@ -82,15 +78,15 @@ class HelpPanel extends StatelessWidget {
               children: [
                 if (session.config.titlebarMode == 'hidden') ...[
                   _winButton(
-                    icon: Icons.remove,
-                    tooltip: S.t('winMinimize'),
-                    onTap: () => WindowManipulator.miniaturizeWindow(),
-                  ),
-                  const SizedBox(width: 6),
-                  _winButton(
                     icon: Icons.close,
                     tooltip: S.t('winClose'),
                     onTap: () => WindowManipulator.closeWindow(),
+                  ),
+                  const SizedBox(width: 6),
+                  _winButton(
+                    icon: Icons.remove,
+                    tooltip: S.t('winMinimize'),
+                    onTap: () => WindowManipulator.miniaturizeWindow(),
                   ),
                   const SizedBox(width: 10),
                 ],

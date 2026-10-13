@@ -9,6 +9,7 @@ import 'services/config_store.dart';
 import 'services/deepgram_stream.dart';
 import 'services/llm_service.dart';
 import 'services/system_audio.dart';
+import 'services/window_service.dart';
 
 enum SessionStatus { idle, connecting, listening, error }
 
@@ -52,12 +53,21 @@ class Session extends ChangeNotifier {
     config = await AppConfig.load();
     S.lang = config.uiLang;
     notifyListeners();
+    applyTitlebar();
+    await applyWindowSettings();
   }
 
   Future<void> saveConfig() async {
     await config.save();
     notifyListeners();
     applyTitlebar();
+    await applyWindowSettings();
+  }
+
+  /// Применяет настройки нативного окна: скрытие от захвата экрана и поверх всех окон
+  Future<void> applyWindowSettings() async {
+    await WindowService.setScreenShareHidden(config.hideFromScreenShare);
+    await WindowService.setAlwaysOnTop(config.alwaysOnTop);
   }
 
   /// Синхронизирует шапку окна с настройкой: прозрачная / плотная / скрытая
@@ -103,6 +113,7 @@ class Session extends ChangeNotifier {
     S.lang = c.uiLang;
     notifyListeners();
     applyTitlebar();
+    applyWindowSettings();
   }
 
   void updateSplitRatio(double r) {

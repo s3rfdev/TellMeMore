@@ -180,4 +180,20 @@ const Map<String, Map<String, String>> _d = {
     'en': 'API key and model are working properly. Response received.',
   },
   'closeDialog': {'ru': 'Закрыть', 'en': 'Close'},
+  'hideFromScreenShare': {
+    'ru': 'Скрыть от демонстрации экрана',
+    'en': 'Hide from screen sharing',
+  },
+  'hideFromScreenShareSub': {
+    'ru': 'Невидимо в Zoom, Meet, Teams и скриншотах, но видно вам',
+    'en': 'Invisible in Zoom, Meet, Teams and screenshots, visible to you',
+  },
+  'alwaysOnTop': {
+    'ru': 'Поверх всех окон',
+    'en': 'Always on top',
+  },
+  'alwaysOnTopSub': {
+    'ru': 'Окно остаётся поверх браузера и других приложений',
+    'en': 'Keeps window above browser and other apps',
+  },
 };

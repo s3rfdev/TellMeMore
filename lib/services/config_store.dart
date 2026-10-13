@@ -35,13 +35,14 @@ class AppConfig {
     this.fontSize = 14.0,
     this.boldText = false,
     this.turnSpacing = 5.0,
+    this.hideFromScreenShare = false,
+    this.alwaysOnTop = false,
     this.titlebarMode = 'transparent',
     this.myDeviceId = '',
     this.themDeviceId = '',
   }) : customModels = customModels ?? {};
 
-  static const defaultDeepgramToken =
-      '817f989e50be9d805f2f9b84d561f48732a9c663';
+  static const defaultDeepgramToken = '';
   static const defaultDeepgramModel = 'flux-general-multi';
   static const defaultLanguageHint = 'ru';
   static const defaultGoals =
@@ -94,6 +95,12 @@ class AppConfig {
 
   /// Отступ между репликами в пикселях (0–20).
   double turnSpacing;
+
+  /// Скрыть окно от демонстрации экрана и скриншотов (NSWindow.SharingType.none).
+  bool hideFromScreenShare;
+
+  /// Держать окно поверх всех остальных окон (NSWindow.Level.floating).
+  bool alwaysOnTop;
 
   /// Шапка окна: 'transparent' | 'opaque' | 'hidden' (свои кнопки закрытия).
   String titlebarMode;
@@ -176,6 +183,8 @@ class AppConfig {
     fontSize: fontSize,
     boldText: boldText,
     turnSpacing: turnSpacing,
+    hideFromScreenShare: hideFromScreenShare,
+    alwaysOnTop: alwaysOnTop,
     titlebarMode: titlebarMode,
     myDeviceId: myDeviceId,
     themDeviceId: themDeviceId,
@@ -206,6 +215,8 @@ class AppConfig {
     'fontSize': fontSize,
     'boldText': boldText,
     'turnSpacing': turnSpacing,
+    'hideFromScreenShare': hideFromScreenShare,
+    'alwaysOnTop': alwaysOnTop,
     'titlebarMode': titlebarMode,
     'myDeviceId': myDeviceId,
     'themDeviceId': themDeviceId,
@@ -242,6 +253,8 @@ class AppConfig {
     boldText: (j['boldText'] as bool?) ?? false,
     turnSpacing:
         ((j['turnSpacing'] as num?) ?? 5.0).toDouble().clamp(0.0, 20.0),
+    hideFromScreenShare: (j['hideFromScreenShare'] as bool?) ?? false,
+    alwaysOnTop: (j['alwaysOnTop'] as bool?) ?? false,
     titlebarMode:
         (j['titlebarMode'] as String?) ??
         (((j['titlebarTransparent'] as bool?) ?? true)

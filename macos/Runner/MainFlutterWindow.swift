@@ -11,7 +11,7 @@ class MainFlutterWindow: NSWindow {
     self.setFrame(NSRect(x: 0, y: 0, width: 1040, height: 760), display: true)
     self.center()
     self.minSize = NSSize(width: 720, height: 520)
-    self.title = "Tell Memo"
+    self.title = "TellMeMore"
 
     // Прозрачное окно: фон рисует Flutter (альфа задаётся в настройках приложения).
     self.isOpaque = false
@@ -25,20 +25,30 @@ class MainFlutterWindow: NSWindow {
 
     RegisterGeneratedPlugins(registry: flutterViewController)
 
-    // Канал управления окном (перетаскивание окна по кастомным элементам шапки)
+    // Канал управления окном (перетаскивание, скрытие при шаринге, поверх всех окон)
     let windowChannel = FlutterMethodChannel(
       name: "tellmemo/window",
       binaryMessenger: flutterViewController.engine.binaryMessenger)
     windowChannel.setMethodCallHandler { [weak self] (call, result) in
       guard let self = self else { result(nil); return }
-      if call.method == "dragWindow" {
+      switch call.method {
+      case "dragWindow":
         if let event = NSApp.currentEvent {
           self.performDrag(with: event)
           result(nil)
         } else {
           result(FlutterError(code: "NO_EVENT", message: "No event", details: nil))
         }
-      } else {
+      case "setScreenShareHidden":
+        let hidden = (call.arguments as? [String: Any])?["hidden"] as? Bool ?? false
+        // NSWindow.SharingType: .none исключает окно из захвата экрана (Zoom, Meet, Teams, скриншоты)
+        self.sharingType = hidden ? .none : .readOnly
+        result(nil)
+      case "setAlwaysOnTop":
+        let onTop = (call.arguments as? [String: Any])?["alwaysOnTop"] as? Bool ?? false
+        self.level = onTop ? .floating : .normal
+        result(nil)
+      default:
         result(FlutterMethodNotImplemented)
       }
     }

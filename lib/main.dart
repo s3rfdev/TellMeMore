@@ -22,6 +22,7 @@ Future<void> main() async {
     /* без прозрачности приложение работает как раньше */
   }
   session.applyTitlebar();
+  await session.applyWindowSettings();
   runApp(SobesApp(session: session));
 }
 
@@ -33,7 +34,7 @@ class SobesApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Tell Memo',
+      title: 'TellMeMore',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,

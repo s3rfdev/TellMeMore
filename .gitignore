@@ -43,3 +43,12 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Security & Secrets protection
+*.env
+*.env.*
+*.key
+*.token
+*.pem
+.sobes_helper.json
+dist/

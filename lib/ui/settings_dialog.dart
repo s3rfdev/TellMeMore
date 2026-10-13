@@ -478,6 +478,28 @@ class _SettingsDialogState extends State<SettingsDialog> {
             },
           ),
           const SizedBox(height: 10),
+          _switchRow(
+            S.t('hideFromScreenShare'),
+            c.hideFromScreenShare,
+            (v) {
+              c.hideFromScreenShare = v;
+              widget.session.applyWindowSettings();
+              _touch();
+            },
+            subtitle: S.t('hideFromScreenShareSub'),
+          ),
+          const SizedBox(height: 4),
+          _switchRow(
+            S.t('alwaysOnTop'),
+            c.alwaysOnTop,
+            (v) {
+              c.alwaysOnTop = v;
+              widget.session.applyWindowSettings();
+              _touch();
+            },
+            subtitle: S.t('alwaysOnTopSub'),
+          ),
+          const SizedBox(height: 10),
           _section(S.t('sectionText')),
           _fontSizeRow(),
           const SizedBox(height: 8),
@@ -1034,21 +1056,53 @@ class _SettingsDialogState extends State<SettingsDialog> {
     );
   }
 
-  Widget _switchRow(String label, bool value, ValueChanged<bool> onChanged) {
-    return Row(
-      children: [
-        Text(label, style: const TextStyle(fontSize: 12, color: Palette.sec)),
-        const Spacer(),
-        Transform.scale(
-          scale: 0.8,
-          child: Switch(
-            value: value,
-            activeThumbColor: Palette.green,
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            onChanged: onChanged,
+  Widget _switchRow(
+    String label,
+    bool value,
+    ValueChanged<bool> onChanged, {
+    String? subtitle,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        crossAxisAlignment:
+            subtitle != null ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(fontSize: 12, color: Palette.pri),
+                ),
+                if (subtitle != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: Palette.sec,
+                      height: 1.3,
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
-        ),
-      ],
+          const SizedBox(width: 8),
+          Transform.scale(
+            scale: 0.8,
+            child: Switch(
+              value: value,
+              activeThumbColor: Palette.green,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              onChanged: onChanged,
+            ),
+          ),
+        ],
+      ),
     );
   }
 

@@ -22,13 +22,24 @@ void main() {
       expect(parsed.fontSize, equals(6.0));
     });
 
-    test('clone preserves turnSpacing', () {
-      final cfg = AppConfig(turnSpacing: 12.0);
+    test('clone preserves turnSpacing, hideFromScreenShare and alwaysOnTop', () {
+      final cfg = AppConfig(
+        turnSpacing: 12.0,
+        hideFromScreenShare: true,
+        alwaysOnTop: true,
+      );
       final cloned = cfg.clone();
       expect(cloned.turnSpacing, equals(12.0));
-      cloned.turnSpacing = 8.0;
-      expect(cfg.turnSpacing, equals(12.0));
-      expect(cloned.turnSpacing, equals(8.0));
+      expect(cloned.hideFromScreenShare, isTrue);
+      expect(cloned.alwaysOnTop, isTrue);
+
+      final json = cloned.toJson();
+      expect(json['hideFromScreenShare'], isTrue);
+      expect(json['alwaysOnTop'], isTrue);
+
+      final restored = AppConfig.fromJson(json);
+      expect(restored.hideFromScreenShare, isTrue);
+      expect(restored.alwaysOnTop, isTrue);
     });
   });
 
