@@ -8,6 +8,7 @@ import 'l10n.dart';
 import 'services/config_store.dart';
 import 'services/deepgram_stream.dart';
 import 'services/llm_service.dart';
+import 'services/system_audio.dart';
 
 enum SessionStatus { idle, connecting, listening, error }
 
@@ -41,7 +42,7 @@ class Session extends ChangeNotifier {
   DeepgramStream? _micStream;
   DeepgramStream? _themStream;
   StreamSubscription<Uint8List>? _audioSub;
-  StreamSubscription<Uint8List>? _themAudioSub;
+  StreamSubscription<dynamic>? _themAudioSub;
   final _eventSubs = <StreamSubscription<dynamic>>[];
 
   bool get isStreaming =>
@@ -131,26 +132,64 @@ class Session extends ChangeNotifier {
       _eventSubs.add(_micStream!.errors.listen(onStreamError));
       await _micStream!.start();
 
-      final audio = await _recorder!.startStream(const RecordConfig(
-        encoder: AudioEncoder.pcm16bits,
-        sampleRate: 16000,
-        numChannels: 1,
-      ));
+      final audio = await _recorder!.startStream(
+        RecordConfig(
+          encoder: AudioEncoder.pcm16bits,
+          sampleRate: 16000,
+          numChannels: 1,
+          device:
+              config.myDeviceId.isNotEmpty
+                  ? InputDevice(id: config.myDeviceId, label: config.myDeviceId)
+                  : null,
+        ),
+      );
       var micChunks = 0;
       debugPrint('[AUDIO me] stream started');
-      _audioSub = audio.listen(
-        (chunk) {
-          micChunks++;
-          if (micChunks % 50 == 1) {
-            debugPrint('[AUDIO me] chunk #$micChunks ${chunk.length}B');
-          }
-          _micStream?.send(chunk);
-        },
-        onError: (Object e) => onStreamError('Микрофон: $e'),
-      );
+      _audioSub = audio.listen((chunk) {
+        micChunks++;
+        if (micChunks % 50 == 1) {
+          debugPrint('[AUDIO me] chunk #$micChunks ${chunk.length}B');
+        }
+        _micStream?.send(chunk);
+      }, onError: (Object e) => onStreamError('Микрофон: $e'));
 
-      // Второй поток — голос собеседника (системный звук, напр. BlackHole).
-      if (config.themDeviceId.isNotEmpty) {
+      // Второй поток — голос собеседника.
+      // '__sckit__' = системный звук через ScreenCaptureKit (нативный захват,
+      // macOS 13+, без виртуальных драйверов). Иначе — выбранное устройство (напр. BlackHole).
+      if (config.themDeviceId == kSystemAudioDeviceId) {
+        try {
+          debugPrint('[THEM] init: ScreenCaptureKit (системный звук)');
+          _themStream = DeepgramStream(
+            source: Speaker.them,
+            token: config.deepgramToken,
+            model: config.deepgramModel,
+            languageHint: config.languageHint,
+          );
+          _eventSubs.add(_themStream!.events.listen(onTurnEvent));
+          _eventSubs.add(_themStream!.errors.listen(_onThemError));
+          await _themStream!.start();
+          var sckChunks = 0;
+          final sckSub = SystemAudio.stream().listen((data) {
+            if (data is! List<int>) return;
+            final chunk = Uint8List.fromList(data);
+            sckChunks++;
+            if (sckChunks % 10 == 1) {
+              var maxAmp = 0;
+              for (var i = 0; i + 1 < chunk.length; i += 2) {
+                final v = (chunk[i] | (chunk[i + 1] << 8));
+                final a = v < 0 ? -v : v;
+                if (a > maxAmp) maxAmp = a;
+              }
+              debugPrint('[AUDIO them/SCK] chunk #$sckChunks maxAmp=$maxAmp');
+            }
+            _themStream?.send(chunk);
+          }, onError: (Object e) => _onThemError('Захват звука: $e'));
+          _themAudioSub = sckSub;
+          debugPrint('[THEM/SCK] слушаю системный звук');
+        } catch (e) {
+          _onThemError('Захват звука: $e');
+        }
+      } else if (config.themDeviceId.isNotEmpty) {
         try {
           debugPrint('[THEM] init: device=${config.themDeviceId}');
           _themStream = DeepgramStream(
@@ -160,42 +199,33 @@ class Session extends ChangeNotifier {
             languageHint: config.languageHint,
           );
           _eventSubs.add(_themStream!.events.listen(onTurnEvent));
-          _eventSubs.add(_themStream!.errors.listen(onStreamError));
+          _eventSubs.add(_themStream!.errors.listen(_onThemError));
           await _themStream!.start();
-          // Внимание: WebSocket-клиент соединяется лениво; реальный статус
-          // покажут события DG them или ошибка в статусе.
           debugPrint('[THEM] ws requested');
           _themRecorder = AudioRecorder();
-          final themAudio = await _themRecorder!.startStream(RecordConfig(
-            encoder: AudioEncoder.pcm16bits,
-            sampleRate: 16000,
-            numChannels: 1,
-            device: InputDevice(id: config.themDeviceId, label: config.themDeviceId),
-          ));
+          final themAudio = await _themRecorder!.startStream(
+            RecordConfig(
+              encoder: AudioEncoder.pcm16bits,
+              sampleRate: 16000,
+              numChannels: 1,
+              device: InputDevice(
+                id: config.themDeviceId,
+                label: config.themDeviceId,
+              ),
+            ),
+          );
           debugPrint('[THEM] recorder ok');
           var themChunks = 0;
-          _themAudioSub = themAudio.listen(
-            (chunk) {
-              themChunks++;
-              if (themChunks % 50 == 1) {
-                debugPrint('[AUDIO them] chunk #$themChunks ${chunk.length}B');
-              }
-              _themStream?.send(chunk);
-            },
-            onError: (Object e) => onStreamError('Собеседник: $e'),
-          );
+          _themAudioSub = themAudio.listen((chunk) {
+            themChunks++;
+            if (themChunks % 50 == 1) {
+              debugPrint('[AUDIO them] chunk #$themChunks ${chunk.length}B');
+            }
+            _themStream?.send(chunk);
+          }, onError: (Object e) => _onThemError('Собеседник: $e'));
         } catch (e) {
           // Источник собеседника недоступен — продолжаем только с микрофоном.
-          debugPrint('[THEM] FAILED: $e');
-          themError = '$e';
-          try {
-            await _themAudioSub?.cancel();
-            await _themStream?.stop();
-            await _themRecorder?.dispose();
-          } catch (_) {}
-          _themAudioSub = null;
-          _themStream = null;
-          _themRecorder = null;
+          _onThemError('Собеседник: $e');
         }
       }
       status = SessionStatus.listening;
@@ -241,6 +271,21 @@ class Session extends ChangeNotifier {
     }
   }
 
+  void _onThemError(String msg) {
+    debugPrint('[THEM error]: $msg');
+    themError = msg;
+    try {
+      _themAudioSub?.cancel();
+      _themAudioSub = null;
+      _themStream?.stop();
+      _themStream = null;
+      _themRecorder?.stop();
+      _themRecorder?.dispose();
+      _themRecorder = null;
+    } catch (_) {}
+    notifyListeners();
+  }
+
   void onStreamError(String msg) {
     if (!isStreaming) return;
     status = SessionStatus.error;
@@ -280,24 +325,27 @@ class Session extends ChangeNotifier {
 
   String _transcriptForPrompt() {
     final buf = StringBuffer();
-    final recent =
-        turns.length > 30 ? turns.sublist(turns.length - 30) : turns;
+    final recent = turns.length > 30 ? turns.sublist(turns.length - 30) : turns;
     for (final t in recent) {
       buf.writeln(
-          '${t.speaker == Speaker.me ? 'Speaker 1 (я, кандидат)' : 'Speaker 2 (собеседник)'}: ${t.text}');
+        '${t.speaker == Speaker.me ? 'Speaker 1 (я, кандидат)' : 'Speaker 2 (собеседник)'}: ${t.text}',
+      );
     }
     final live = interimMe.trim();
     if (live.isNotEmpty) {
       buf.writeln(
-          'Speaker 1 (я, кандидат) — говорит прямо сейчас, фразу не закончил: $live');
+        'Speaker 1 (я, кандидат) — говорит прямо сейчас, фразу не закончил: $live',
+      );
     }
     return buf.toString().trim();
   }
 
   String _buildPrompt() {
     final lastLine = switch (lastSpeaker) {
-      Speaker.me => 'Последнюю реплику говорил я (кандидат) — помоги закончить мысль и продолжить ответ.',
-      Speaker.them => 'Последним говорил собеседник — подскажи, что мне ответить.',
+      Speaker.me =>
+        'Последнюю реплику говорил я (кандидат) — помоги закончить мысль и продолжить ответ.',
+      Speaker.them =>
+        'Последним говорил собеседник — подскажи, что мне ответить.',
       null => 'Разговор только начался.',
     };
     final my = config.myProfile.trim();
@@ -327,7 +375,9 @@ class Session extends ChangeNotifier {
       notifyListeners();
       return;
     }
-    if (turns.isEmpty && interimMe.trim().isEmpty && interimThem.trim().isEmpty) {
+    if (turns.isEmpty &&
+        interimMe.trim().isEmpty &&
+        interimThem.trim().isEmpty) {
       helpError = S.t('errEmptyTranscript');
       notifyListeners();
       return;

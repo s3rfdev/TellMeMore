@@ -32,5 +32,7 @@
 	<string>Приложение транскрибирует вашу речь в реальном времени, чтобы помогать вам на собеседовании.</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>NSScreenCaptureUsageDescription</key>
+	<string>Приложение захватывает системный звук (голос собеседника в звонке) для транскрибации. Экран не записывается.</string>
 </dict>
 </plist>

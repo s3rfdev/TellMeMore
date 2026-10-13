@@ -17,7 +17,9 @@ Future<void> main() async {
   try {
     WindowManipulator.initialize();
     WindowManipulator.makeWindowFullyTransparent();
-  } catch (_) {/* без прозрачности приложение работает как раньше */}
+  } catch (_) {
+    /* без прозрачности приложение работает как раньше */
+  }
   session.applyTitlebar();
   runApp(SobesApp(session: session));
 }
@@ -67,8 +69,9 @@ class SobesApp extends StatelessWidget {
                   return Column(
                     children: [
                       SizedBox(
-                          height: topH,
-                          child: HelpPanel(session: session)),
+                        height: topH,
+                        child: HelpPanel(session: session),
+                      ),
                       _DragDivider(
                         session: session,
                         topHeight: topH,
@@ -115,9 +118,8 @@ class _DragDividerState extends State<_DragDivider> {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onVerticalDragUpdate: (d) {
-          final r =
-              ((widget.topHeight + d.delta.dy) / widget.totalHeight)
-                  .clamp(0.2, 0.8);
+          final r = ((widget.topHeight + d.delta.dy) / widget.totalHeight)
+              .clamp(0.2, 0.8);
           widget.session.updateSplitRatio(r);
         },
         onVerticalDragEnd: (_) => widget.session.saveConfig(),

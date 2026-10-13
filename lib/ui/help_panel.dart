@@ -60,19 +60,24 @@ class HelpPanel extends StatelessWidget {
                 ),
                 const SizedBox(width: 10),
               ],
-              Text(S.t('helpTitle'),
-                  style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.1,
-                      color: Palette.sec)),
+              Text(
+                S.t('helpTitle'),
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.1,
+                  color: Palette.sec,
+                ),
+              ),
               const SizedBox(width: 8),
               Tooltip(
                 message:
                     '${p.label} · ${session.config.modelFor(p)} · ${hasKey ? S.t('keySet') : S.t('keyMissing')}',
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(999),
                     border: Border.all(color: Palette.border),
@@ -89,11 +94,14 @@ class HelpPanel extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 4),
-                      Text(p.shortLabel,
-                          style: const TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              color: Palette.sec)),
+                      Text(
+                        p.shortLabel,
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: Palette.sec,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -167,41 +175,49 @@ class HelpPanel extends StatelessWidget {
             side: const BorderSide(color: Palette.border),
           ),
         ),
-        child: Text(session.config.uiLang.toUpperCase(),
-            style:
-                const TextStyle(fontSize: 10, fontWeight: FontWeight.w700)),
+        child: Text(
+          session.config.uiLang.toUpperCase(),
+          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700),
+        ),
       ),
     );
   }
 
   Widget _body() {
     if (session.helpLoading) {
-      return Row(children: [
-        const Icon(Icons.bolt, size: 17, color: Palette.green),
-        const SizedBox(width: 8),
-        Text(S.t('thinking'), style: const TextStyle(color: Palette.sec)),
-      ]);
+      return Row(
+        children: [
+          const Icon(Icons.bolt, size: 17, color: Palette.green),
+          const SizedBox(width: 8),
+          Text(S.t('thinking'), style: const TextStyle(color: Palette.sec)),
+        ],
+      );
     }
     if (session.helpError != null) {
       return SingleChildScrollView(
-        child: Text(session.helpError!,
-            style:
-                const TextStyle(color: Palette.red, fontSize: 13, height: 1.4)),
+        child: Text(
+          session.helpError!,
+          style: const TextStyle(color: Palette.red, fontSize: 13, height: 1.4),
+        ),
       );
     }
     if (session.helpAnswer != null) {
       final c = session.config;
       return SingleChildScrollView(
-        child: SelectableText(session.helpAnswer!,
-            style: TextStyle(
-                color: Color(c.hintColor),
-                fontSize: c.fontSize,
-                height: 1.45,
-                fontWeight:
-                    c.boldText ? FontWeight.w700 : FontWeight.w400)),
+        child: SelectableText(
+          session.helpAnswer!,
+          style: TextStyle(
+            color: Color(c.hintColor),
+            fontSize: c.fontSize,
+            height: 1.45,
+            fontWeight: c.boldText ? FontWeight.w700 : FontWeight.w400,
+          ),
+        ),
       );
     }
-    return Text(S.t('hintPlaceholder'),
-        style: const TextStyle(color: Palette.sec, fontSize: 13, height: 1.4));
+    return Text(
+      S.t('hintPlaceholder'),
+      style: const TextStyle(color: Palette.sec, fontSize: 13, height: 1.4),
+    );
   }
 }

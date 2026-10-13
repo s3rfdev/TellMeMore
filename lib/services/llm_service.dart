@@ -38,29 +38,30 @@ const kModelPresets = <String, List<String>>{
 
 extension LlmProviderMeta on LlmProvider {
   String get label => switch (this) {
-        LlmProvider.gemini => 'Google Gemini',
-        LlmProvider.zai => 'Z.ai (GLM)',
-        LlmProvider.openai => 'OpenAI',
-        LlmProvider.anthropic => 'Anthropic Claude',
-      };
+    LlmProvider.gemini => 'Google Gemini',
+    LlmProvider.zai => 'Z.ai (GLM)',
+    LlmProvider.openai => 'OpenAI',
+    LlmProvider.anthropic => 'Anthropic Claude',
+  };
 
   String get shortLabel => switch (this) {
-        LlmProvider.gemini => 'Gemini',
-        LlmProvider.zai => 'Z.ai',
-        LlmProvider.openai => 'OpenAI',
-        LlmProvider.anthropic => 'Claude',
-      };
+    LlmProvider.gemini => 'Gemini',
+    LlmProvider.zai => 'Z.ai',
+    LlmProvider.openai => 'OpenAI',
+    LlmProvider.anthropic => 'Claude',
+  };
 
   String get defaultModel => switch (this) {
-        LlmProvider.gemini => kDefaultGeminiModel,
-        LlmProvider.zai => kDefaultZaiModel,
-        LlmProvider.openai => kDefaultOpenaiModel,
-        LlmProvider.anthropic => kDefaultAnthropicModel,
-      };
+    LlmProvider.gemini => kDefaultGeminiModel,
+    LlmProvider.zai => kDefaultZaiModel,
+    LlmProvider.openai => kDefaultOpenaiModel,
+    LlmProvider.anthropic => kDefaultAnthropicModel,
+  };
 
-  static LlmProvider fromName(String? name) =>
-      LlmProvider.values.firstWhere((p) => p.name == name,
-          orElse: () => LlmProvider.gemini);
+  static LlmProvider fromName(String? name) => LlmProvider.values.firstWhere(
+    (p) => p.name == name,
+    orElse: () => LlmProvider.gemini,
+  );
 }
 
 class LlmService {
@@ -104,7 +105,8 @@ class LlmService {
     final resp = await http
         .post(
           Uri.parse(
-              'https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent'),
+            'https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent',
+          ),
           headers: {
             'Content-Type': 'application/json',
             'x-goog-api-key': apiKey,
@@ -113,9 +115,9 @@ class LlmService {
             'contents': [
               {
                 'parts': [
-                  {'text': prompt}
-                ]
-              }
+                  {'text': prompt},
+                ],
+              },
             ],
             'generationConfig': {'temperature': 0.4, 'maxOutputTokens': 300},
           }),
@@ -155,7 +157,7 @@ class LlmService {
             maxTokensField: 300,
             'temperature': 0.4,
             'messages': [
-              {'role': 'user', 'content': prompt}
+              {'role': 'user', 'content': prompt},
             ],
           }),
         )
@@ -191,7 +193,7 @@ class LlmService {
             'max_tokens': 300,
             'temperature': 0.4,
             'messages': [
-              {'role': 'user', 'content': prompt}
+              {'role': 'user', 'content': prompt},
             ],
           }),
         )
@@ -201,8 +203,11 @@ class LlmService {
     }
     final j = jsonDecode(utf8.decode(resp.bodyBytes)) as Map<String, dynamic>;
     final blocks = j['content'] as List<dynamic>?;
-    final text = blocks
-            ?.map((b) => b is Map && b['type'] == 'text' ? (b['text'] ?? '') : '')
+    final text =
+        blocks
+            ?.map(
+              (b) => b is Map && b['type'] == 'text' ? (b['text'] ?? '') : '',
+            )
             .join() ??
         '';
     if (text.trim().isEmpty) {

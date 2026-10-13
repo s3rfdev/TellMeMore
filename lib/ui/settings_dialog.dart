@@ -23,17 +23,22 @@ class _SettingsDialogState extends State<SettingsDialog> {
   /// Снимок на момент открытия — «Отмена» откатывает всё.
   late final AppConfig _orig = widget.session.config.clone();
 
-  late final TextEditingController _deepgram =
-      TextEditingController(text: widget.session.config.deepgramToken);
+  late final TextEditingController _deepgram = TextEditingController(
+    text: widget.session.config.deepgramToken,
+  );
   late final TextEditingController _key = TextEditingController(
-      text: widget.session.config.keyFor(widget.session.config.provider));
+    text: widget.session.config.keyFor(widget.session.config.provider),
+  );
   final TextEditingController _customModel = TextEditingController();
-  late final TextEditingController _myProfile =
-      TextEditingController(text: widget.session.config.myProfile);
-  late final TextEditingController _interviewerProfile =
-      TextEditingController(text: widget.session.config.interviewerProfile);
-  late final TextEditingController _goals =
-      TextEditingController(text: widget.session.config.goals);
+  late final TextEditingController _myProfile = TextEditingController(
+    text: widget.session.config.myProfile,
+  );
+  late final TextEditingController _interviewerProfile = TextEditingController(
+    text: widget.session.config.interviewerProfile,
+  );
+  late final TextEditingController _goals = TextEditingController(
+    text: widget.session.config.goals,
+  );
 
   bool _addingCustom = false;
   bool _checking = false;
@@ -87,7 +92,9 @@ class _SettingsDialogState extends State<SettingsDialog> {
   }
 
   Future<void> _loadFromFile(TextEditingController controller) async {
-    const groups = [XTypeGroup(label: 'Text', extensions: ['txt', 'md'])];
+    const groups = [
+      XTypeGroup(label: 'Text', extensions: ['txt', 'md']),
+    ];
     final file = await openFile(acceptedTypeGroups: groups);
     if (file == null) return;
     try {
@@ -95,9 +102,9 @@ class _SettingsDialogState extends State<SettingsDialog> {
       setState(() => controller.text = text.trim());
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-          SnackBar(content: Text(S.t('loadFailed'))),
-        );
+        ScaffoldMessenger.maybeOf(
+          context,
+        )?.showSnackBar(SnackBar(content: Text(S.t('loadFailed'))));
       }
     }
   }
@@ -113,8 +120,10 @@ class _SettingsDialogState extends State<SettingsDialog> {
       titlePadding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
       contentPadding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
       actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
-      title: Text(S.t('settingsTitle'),
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+      title: Text(
+        S.t('settingsTitle'),
+        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+      ),
       content: SizedBox(
         width: 480,
         height: math.min(520, MediaQuery.sizeOf(context).height * 0.74),
@@ -128,42 +137,49 @@ class _SettingsDialogState extends State<SettingsDialog> {
                 dividerColor: Palette.border,
                 labelColor: Palette.pri,
                 unselectedLabelColor: Palette.sec,
-                labelStyle:
-                    const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                labelStyle: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
                 tabs: [
                   Tab(
                     height: 36,
-                    child: Row(mainAxisSize: MainAxisSize.min, children: [
-                      const Icon(Icons.person_outline, size: 14),
-                      const SizedBox(width: 6),
-                      Text(S.t('tabContext')),
-                    ]),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.person_outline, size: 14),
+                        const SizedBox(width: 6),
+                        Text(S.t('tabContext')),
+                      ],
+                    ),
                   ),
                   const Tab(
                     height: 36,
-                    child: Row(mainAxisSize: MainAxisSize.min, children: [
-                      Icon(Icons.memory, size: 14),
-                      SizedBox(width: 6),
-                      Text('LLM'),
-                    ]),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.memory, size: 14),
+                        SizedBox(width: 6),
+                        Text('LLM'),
+                      ],
+                    ),
                   ),
                   Tab(
                     height: 36,
-                    child: Row(mainAxisSize: MainAxisSize.min, children: [
-                      const Icon(Icons.palette_outlined, size: 14),
-                      const SizedBox(width: 6),
-                      Text(S.t('tabUi')),
-                    ]),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.palette_outlined, size: 14),
+                        const SizedBox(width: 6),
+                        Text(S.t('tabUi')),
+                      ],
+                    ),
                   ),
                 ],
               ),
               Expanded(
                 child: TabBarView(
-                  children: [
-                    _contextTab(),
-                    _llmTab(),
-                    _uiTab(),
-                  ],
+                  children: [_contextTab(), _llmTab(), _uiTab()],
                 ),
               ),
             ],
@@ -205,11 +221,17 @@ class _SettingsDialogState extends State<SettingsDialog> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _fieldWithLoad(_myProfile, S.t('myProfile'),
-              hint: S.t('myProfileHint')),
+          _fieldWithLoad(
+            _myProfile,
+            S.t('myProfile'),
+            hint: S.t('myProfileHint'),
+          ),
           const SizedBox(height: 12),
-          _fieldWithLoad(_interviewerProfile, S.t('interviewerProfile'),
-              hint: S.t('interviewerHint')),
+          _fieldWithLoad(
+            _interviewerProfile,
+            S.t('interviewerProfile'),
+            hint: S.t('interviewerHint'),
+          ),
           const SizedBox(height: 12),
           _field(_goals, S.t('goals'), minLines: 4, maxLines: 8),
         ],
@@ -231,13 +253,12 @@ class _SettingsDialogState extends State<SettingsDialog> {
           _keyFieldWithCheck(p),
           const SizedBox(height: 12),
           _modelRow(p),
-          if (_addingCustom) ...[
-            const SizedBox(height: 8),
-            _customModelRow(),
-          ],
+          if (_addingCustom) ...[const SizedBox(height: 8), _customModelRow()],
           const SizedBox(height: 14),
           _section(S.t('sectionAudio')),
           _field(_deepgram, S.t('deepgramToken'), obscure: true),
+          const SizedBox(height: 12),
+          _mySourceRow(),
           const SizedBox(height: 12),
           _themSourceRow(),
         ],
@@ -245,35 +266,126 @@ class _SettingsDialogState extends State<SettingsDialog> {
     );
   }
 
+  /// Источник своего микрофона (напр. Встроенный микрофон или гарнитура).
+  Widget _mySourceRow() {
+    final myDevices =
+        _themDevices.where((d) => !d.label.contains('BlackHole')).toList();
+    final rawItems = <DropdownMenuItem<String>>[
+      DropdownMenuItem(
+        value: '',
+        child: Text(S.t('deviceDefault'), style: const TextStyle(fontSize: 13)),
+      ),
+      for (final d in myDevices)
+        DropdownMenuItem(
+          value: d.id,
+          child: Text(
+            d.label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 13),
+          ),
+        ),
+      if (c.myDeviceId.isNotEmpty &&
+          !myDevices.any((d) => d.id == c.myDeviceId))
+        DropdownMenuItem(
+          value: c.myDeviceId,
+          child: Text(
+            '${c.myDeviceId} — нет в системе',
+            style: const TextStyle(fontSize: 13, color: Palette.sec),
+          ),
+        ),
+    ];
+
+    final seen = <String>{};
+    final items = <DropdownMenuItem<String>>[];
+    for (final item in rawItems) {
+      final val = item.value ?? '';
+      if (seen.add(val)) {
+        items.add(item);
+      }
+    }
+    final selectedVal = seen.contains(c.myDeviceId) ? c.myDeviceId : '';
+
+    return Row(
+      children: [
+        Text(
+          S.t('mySource'),
+          style: const TextStyle(fontSize: 12, color: Palette.sec),
+        ),
+        const Spacer(),
+        DropdownButton<String>(
+          value: selectedVal,
+          underline: const SizedBox.shrink(),
+          dropdownColor: const Color(0xFF22262C),
+          borderRadius: BorderRadius.circular(10),
+          style: const TextStyle(fontSize: 13, color: Palette.pri),
+          items: items,
+          onChanged: (v) {
+            c.myDeviceId = v ?? '';
+            _touch();
+          },
+        ),
+      ],
+    );
+  }
+
   /// Источник голоса собеседника: входное аудиоустройство (напр. BlackHole).
   Widget _themSourceRow() {
-    final items = <DropdownMenuItem<String>>[
+    final rawItems = <DropdownMenuItem<String>>[
       DropdownMenuItem(
-          value: '',
-          child: Text(S.t('deviceOff'), style: const TextStyle(fontSize: 13))),
+        value: '',
+        child: Text(S.t('deviceOff'), style: const TextStyle(fontSize: 13)),
+      ),
+      DropdownMenuItem(
+        value: kSystemAudioDeviceId,
+        child: Text(
+          S.t('deviceSystemAudio'),
+          style: const TextStyle(fontSize: 13, color: Palette.green),
+        ),
+      ),
       for (final d in _themDevices)
         DropdownMenuItem(
-            value: d.id,
-            child: Text(d.label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 13))),
+          value: d.id,
+          child: Text(
+            d.label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 13),
+          ),
+        ),
       if (c.themDeviceId.isNotEmpty &&
+          c.themDeviceId != kSystemAudioDeviceId &&
           !_themDevices.any((d) => d.id == c.themDeviceId))
         DropdownMenuItem(
-            value: c.themDeviceId,
-            child: Text('${c.themDeviceId} — нет в системе',
-                style: const TextStyle(fontSize: 13, color: Palette.sec))),
+          value: c.themDeviceId,
+          child: Text(
+            '${c.themDeviceId} — нет в системе',
+            style: const TextStyle(fontSize: 13, color: Palette.sec),
+          ),
+        ),
     ];
+
+    final seen = <String>{};
+    final items = <DropdownMenuItem<String>>[];
+    for (final item in rawItems) {
+      final val = item.value ?? '';
+      if (seen.add(val)) {
+        items.add(item);
+      }
+    }
+    final selectedVal = seen.contains(c.themDeviceId) ? c.themDeviceId : '';
+
     return Tooltip(
       message: S.t('startTooltip'),
       child: Row(
         children: [
-          Text(S.t('themSource'),
-              style: const TextStyle(fontSize: 12, color: Palette.sec)),
+          Text(
+            S.t('themSource'),
+            style: const TextStyle(fontSize: 12, color: Palette.sec),
+          ),
           const Spacer(),
           DropdownButton<String>(
-            value: c.themDeviceId,
+            value: selectedVal,
             underline: const SizedBox.shrink(),
             dropdownColor: const Color(0xFF22262C),
             borderRadius: BorderRadius.circular(10),
@@ -300,15 +412,20 @@ class _SettingsDialogState extends State<SettingsDialog> {
         children: [
           _opacityRow(),
           const SizedBox(height: 10),
-          _miniChoiceRow(S.t('titlebarMode'), c.titlebarMode, [
-            ('transparent', Icons.blur_on, S.t('tbTransparent')),
-            ('opaque', Icons.dock, S.t('tbOpaque')),
-            ('hidden', Icons.visibility_off, S.t('tbHidden')),
-          ], (v) {
-            c.titlebarMode = v;
-            widget.session.applyTitlebar();
-            _touch();
-          }),
+          _miniChoiceRow(
+            S.t('titlebarMode'),
+            c.titlebarMode,
+            [
+              ('transparent', Icons.blur_on, S.t('tbTransparent')),
+              ('opaque', Icons.dock, S.t('tbOpaque')),
+              ('hidden', Icons.visibility_off, S.t('tbHidden')),
+            ],
+            (v) {
+              c.titlebarMode = v;
+              widget.session.applyTitlebar();
+              _touch();
+            },
+          ),
           const SizedBox(height: 10),
           _section(S.t('sectionText')),
           _fontSizeRow(),
@@ -324,11 +441,11 @@ class _SettingsDialogState extends State<SettingsDialog> {
   }
 
   String _providerKeyLabel(LlmProvider p) => switch (p) {
-        LlmProvider.gemini => S.t('geminiKey'),
-        LlmProvider.zai => S.t('zaiKey'),
-        LlmProvider.openai => S.t('openaiKey'),
-        LlmProvider.anthropic => S.t('anthropicKey'),
-      };
+    LlmProvider.gemini => S.t('geminiKey'),
+    LlmProvider.zai => S.t('zaiKey'),
+    LlmProvider.openai => S.t('openaiKey'),
+    LlmProvider.anthropic => S.t('anthropicKey'),
+  };
 
   /// Поле ключа с микро-кнопкой проверки «ключ + модель».
   Widget _keyFieldWithCheck(LlmProvider p) {
@@ -337,32 +454,41 @@ class _SettingsDialogState extends State<SettingsDialog> {
       children: [
         Row(
           children: [
-            Text(_providerKeyLabel(p),
-                style: const TextStyle(fontSize: 12, color: Palette.sec)),
+            Text(
+              _providerKeyLabel(p),
+              style: const TextStyle(fontSize: 12, color: Palette.sec),
+            ),
             const Spacer(),
             SizedBox(
               height: 22,
-              child: _checking
-                  ? const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 8),
-                      child: SizedBox(
+              child:
+                  _checking
+                      ? const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 8),
+                        child: SizedBox(
                           width: 12,
                           height: 12,
                           child: CircularProgressIndicator(
-                              strokeWidth: 1.6, color: Palette.green)),
-                    )
-                  : Tooltip(
-                      message: S.t('checkModel'),
-                      child: InkWell(
-                        onTap: _checkModel,
-                        borderRadius: BorderRadius.circular(6),
-                        child: const Padding(
-                          padding: EdgeInsets.all(3),
-                          child: Icon(Icons.verified_outlined,
-                              size: 15, color: Palette.green),
+                            strokeWidth: 1.6,
+                            color: Palette.green,
+                          ),
+                        ),
+                      )
+                      : Tooltip(
+                        message: S.t('checkModel'),
+                        child: InkWell(
+                          onTap: _checkModel,
+                          borderRadius: BorderRadius.circular(6),
+                          child: const Padding(
+                            padding: EdgeInsets.all(3),
+                            child: Icon(
+                              Icons.verified_outlined,
+                              size: 15,
+                              color: Palette.green,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
             ),
           ],
         ),
@@ -396,53 +522,56 @@ class _SettingsDialogState extends State<SettingsDialog> {
   void _showCheckResult(String? error) {
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Palette.dialogBg,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-          side: const BorderSide(color: Palette.border),
-        ),
-        contentPadding: const EdgeInsets.fromLTRB(18, 16, 18, 6),
-        content: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 400),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(
-                error == null
-                    ? Icons.check_circle_outline
-                    : Icons.error_outline,
-                size: 16,
-                color: error == null ? Palette.green : Palette.red,
-              ),
-              const SizedBox(width: 8),
-              Flexible(
-                child: SingleChildScrollView(
-                  child: SelectableText(
+      builder:
+          (ctx) => AlertDialog(
+            backgroundColor: Palette.dialogBg,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: const BorderSide(color: Palette.border),
+            ),
+            contentPadding: const EdgeInsets.fromLTRB(18, 16, 18, 6),
+            content: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 400),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
                     error == null
-                        ? S.t('checkOk')
-                        : '${S.t('checkFail')}: $error',
-                    style: TextStyle(
-                        fontSize: 11,
-                        height: 1.4,
-                        color:
-                            error == null ? Palette.pri : Palette.red),
+                        ? Icons.check_circle_outline
+                        : Icons.error_outline,
+                    size: 16,
+                    color: error == null ? Palette.green : Palette.red,
                   ),
-                ),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: SingleChildScrollView(
+                      child: SelectableText(
+                        error == null
+                            ? S.t('checkOk')
+                            : '${S.t('checkFail')}: $error',
+                        style: TextStyle(
+                          fontSize: 11,
+                          height: 1.4,
+                          color: error == null ? Palette.pri : Palette.red,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
-      ),
     );
   }
 
   Widget _dropdownRow() {
     return Row(
       children: [
-        Text(S.t('provider'),
-            style: const TextStyle(fontSize: 12, color: Palette.sec)),
+        Text(
+          S.t('provider'),
+          style: const TextStyle(fontSize: 12, color: Palette.sec),
+        ),
         const Spacer(),
         DropdownButton<LlmProvider>(
           value: c.provider,
@@ -469,25 +598,33 @@ class _SettingsDialogState extends State<SettingsDialog> {
     final items = <DropdownMenuItem<String>>[
       for (final m in models)
         DropdownMenuItem(
-            value: m, child: Text(m, style: const TextStyle(fontSize: 13))),
+          value: m,
+          child: Text(m, style: const TextStyle(fontSize: 13)),
+        ),
       if (!models.contains(current))
         DropdownMenuItem(
-            value: current,
-            child: Text(current, style: const TextStyle(fontSize: 13))),
+          value: current,
+          child: Text(current, style: const TextStyle(fontSize: 13)),
+        ),
       DropdownMenuItem(
         value: sentinel,
-        child: Text(S.t('customModel'),
-            style: const TextStyle(
-                fontSize: 13,
-                fontStyle: FontStyle.italic,
-                color: Palette.green)),
+        child: Text(
+          S.t('customModel'),
+          style: const TextStyle(
+            fontSize: 13,
+            fontStyle: FontStyle.italic,
+            color: Palette.green,
+          ),
+        ),
       ),
     ];
 
     return Row(
       children: [
-        Text(S.t('model'),
-            style: const TextStyle(fontSize: 12, color: Palette.sec)),
+        Text(
+          S.t('model'),
+          style: const TextStyle(fontSize: 12, color: Palette.sec),
+        ),
         const Spacer(),
         if (c.isCustomModel(p, current) && !_addingCustom)
           Tooltip(
@@ -497,8 +634,11 @@ class _SettingsDialogState extends State<SettingsDialog> {
               borderRadius: BorderRadius.circular(6),
               child: const Padding(
                 padding: EdgeInsets.all(4),
-                child:
-                    Icon(Icons.delete_outline, size: 15, color: Palette.faint),
+                child: Icon(
+                  Icons.delete_outline,
+                  size: 15,
+                  color: Palette.faint,
+                ),
               ),
             ),
           ),
@@ -527,8 +667,11 @@ class _SettingsDialogState extends State<SettingsDialog> {
     return Row(
       children: [
         Expanded(
-          child:
-              _input(_customModel, hint: S.t('modelIdHint'), autofocus: true),
+          child: _input(
+            _customModel,
+            hint: S.t('modelIdHint'),
+            autofocus: true,
+          ),
         ),
         const SizedBox(width: 8),
         GradientButton(
@@ -547,8 +690,10 @@ class _SettingsDialogState extends State<SettingsDialog> {
     final pct = (c.windowOpacity * 100).round();
     return Row(
       children: [
-        Text(S.t('bgOpacity'),
-            style: const TextStyle(fontSize: 12, color: Palette.sec)),
+        Text(
+          S.t('bgOpacity'),
+          style: const TextStyle(fontSize: 12, color: Palette.sec),
+        ),
         const SizedBox(width: 10),
         Expanded(
           child: SliderTheme(
@@ -568,9 +713,11 @@ class _SettingsDialogState extends State<SettingsDialog> {
         const SizedBox(width: 6),
         SizedBox(
           width: 38,
-          child: Text('$pct%',
-              textAlign: TextAlign.end,
-              style: const TextStyle(fontSize: 12, color: Palette.sec)),
+          child: Text(
+            '$pct%',
+            textAlign: TextAlign.end,
+            style: const TextStyle(fontSize: 12, color: Palette.sec),
+          ),
         ),
       ],
     );
@@ -579,8 +726,10 @@ class _SettingsDialogState extends State<SettingsDialog> {
   Widget _fontSizeRow() {
     return Row(
       children: [
-        Text(S.t('fontSize'),
-            style: const TextStyle(fontSize: 12, color: Palette.sec)),
+        Text(
+          S.t('fontSize'),
+          style: const TextStyle(fontSize: 12, color: Palette.sec),
+        ),
         const SizedBox(width: 10),
         Expanded(
           child: SliderTheme(
@@ -600,9 +749,11 @@ class _SettingsDialogState extends State<SettingsDialog> {
         const SizedBox(width: 6),
         SizedBox(
           width: 38,
-          child: Text('${c.fontSize.round()}',
-              textAlign: TextAlign.end,
-              style: const TextStyle(fontSize: 12, color: Palette.sec)),
+          child: Text(
+            '${c.fontSize.round()}',
+            textAlign: TextAlign.end,
+            style: const TextStyle(fontSize: 12, color: Palette.sec),
+          ),
         ),
       ],
     );
@@ -625,11 +776,11 @@ class _SettingsDialogState extends State<SettingsDialog> {
       children: [
         Text(label, style: const TextStyle(fontSize: 12, color: Palette.sec)),
         const Spacer(),
-          Transform.scale(
+        Transform.scale(
           scale: 0.8,
           child: Switch(
             value: value,
-            activeColor: Palette.green,
+            activeThumbColor: Palette.green,
             materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
             onChanged: onChanged,
           ),
@@ -652,8 +803,10 @@ class _SettingsDialogState extends State<SettingsDialog> {
     ];
     return Row(
       children: [
-        Text(S.t('textColor'),
-            style: const TextStyle(fontSize: 12, color: Palette.sec)),
+        Text(
+          S.t('textColor'),
+          style: const TextStyle(fontSize: 12, color: Palette.sec),
+        ),
         const SizedBox(width: 10),
         Expanded(
           child: Row(
@@ -675,9 +828,10 @@ class _SettingsDialogState extends State<SettingsDialog> {
                         shape: BoxShape.circle,
                         color: Color(argb),
                         border: Border.all(
-                          color: c.hintColor == argb
-                              ? Palette.pri
-                              : Palette.border,
+                          color:
+                              c.hintColor == argb
+                                  ? Palette.pri
+                                  : Palette.border,
                           width: c.hintColor == argb ? 2 : 1,
                         ),
                       ),
@@ -693,10 +847,11 @@ class _SettingsDialogState extends State<SettingsDialog> {
 
   /// Микро-переключатель: серые иконки+текст, активный подсвечен зелёным.
   Widget _miniChoiceRow(
-      String label,
-      String value,
-      List<(String, IconData, String)> options,
-      ValueChanged<String> onSelected) {
+    String label,
+    String value,
+    List<(String, IconData, String)> options,
+    ValueChanged<String> onSelected,
+  ) {
     return Row(
       children: [
         Text(label, style: const TextStyle(fontSize: 12, color: Palette.sec)),
@@ -717,16 +872,21 @@ class _SettingsDialogState extends State<SettingsDialog> {
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 120),
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 7, vertical: 3),
+                      horizontal: 7,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(7),
-                      color: value == options[i].$1
-                          ? Palette.green.withValues(alpha: 0.14)
-                          : Colors.transparent,
-                      border: value == options[i].$1
-                          ? Border.all(
-                              color: Palette.green.withValues(alpha: 0.55))
-                          : null,
+                      color:
+                          value == options[i].$1
+                              ? Palette.green.withValues(alpha: 0.14)
+                              : Colors.transparent,
+                      border:
+                          value == options[i].$1
+                              ? Border.all(
+                                color: Palette.green.withValues(alpha: 0.55),
+                              )
+                              : null,
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -734,19 +894,22 @@ class _SettingsDialogState extends State<SettingsDialog> {
                         Icon(
                           options[i].$2,
                           size: 11,
-                          color: value == options[i].$1
-                              ? Palette.green
-                              : Palette.sec,
+                          color:
+                              value == options[i].$1
+                                  ? Palette.green
+                                  : Palette.sec,
                         ),
                         const SizedBox(width: 4),
                         Text(
                           options[i].$3,
                           style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              color: value == options[i].$1
-                                  ? Palette.green
-                                  : Palette.sec),
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color:
+                                value == options[i].$1
+                                    ? Palette.green
+                                    : Palette.sec,
+                          ),
                         ),
                       ],
                     ),
@@ -764,32 +927,39 @@ class _SettingsDialogState extends State<SettingsDialog> {
   Widget _section(String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: Text(text,
-          style: const TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.1,
-              color: Palette.faint)),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 1.1,
+          color: Palette.faint,
+        ),
+      ),
     );
   }
 
-  Widget _fieldWithLoad(TextEditingController controller, String label,
-      {String? hint}) {
+  Widget _fieldWithLoad(
+    TextEditingController controller,
+    String label, {
+    String? hint,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Text(label,
-                style: const TextStyle(fontSize: 12, color: Palette.sec)),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 12, color: Palette.sec),
+            ),
             const Spacer(),
             SizedBox(
               height: 22,
               child: TextButton.icon(
                 onPressed: () => _loadFromFile(controller),
                 icon: const Icon(Icons.file_open_outlined, size: 13),
-                label:
-                    Text(S.t('load'), style: const TextStyle(fontSize: 11)),
+                label: Text(S.t('load'), style: const TextStyle(fontSize: 11)),
                 style: TextButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                   minimumSize: Size.zero,
@@ -806,32 +976,38 @@ class _SettingsDialogState extends State<SettingsDialog> {
     );
   }
 
-  Widget _field(TextEditingController controller, String label,
-      {bool obscure = false,
-      int minLines = 1,
-      int maxLines = 1,
-      String? hint}) {
+  Widget _field(
+    TextEditingController controller,
+    String label, {
+    bool obscure = false,
+    int minLines = 1,
+    int maxLines = 1,
+    String? hint,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: const TextStyle(fontSize: 12, color: Palette.sec)),
+        Text(label, style: const TextStyle(fontSize: 12, color: Palette.sec)),
         const SizedBox(height: 5),
-        _input(controller,
-            hint: hint,
-            obscure: obscure,
-            minLines: minLines,
-            maxLines: maxLines),
+        _input(
+          controller,
+          hint: hint,
+          obscure: obscure,
+          minLines: minLines,
+          maxLines: maxLines,
+        ),
       ],
     );
   }
 
-  Widget _input(TextEditingController controller,
-      {bool obscure = false,
-      int minLines = 1,
-      int maxLines = 1,
-      String? hint,
-      bool autofocus = false}) {
+  Widget _input(
+    TextEditingController controller, {
+    bool obscure = false,
+    int minLines = 1,
+    int maxLines = 1,
+    String? hint,
+    bool autofocus = false,
+  }) {
     return TextField(
       controller: controller,
       obscureText: obscure,
@@ -843,8 +1019,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
         hintText: hint,
         hintStyle: const TextStyle(fontSize: 12, color: Palette.faint),
         isDense: true,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: const BorderSide(color: Palette.inputBorder),

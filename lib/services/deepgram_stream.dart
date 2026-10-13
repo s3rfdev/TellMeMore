@@ -48,6 +48,8 @@ class DeepgramStream {
   final bool diarize;
 
   WebSocketChannel? _channel;
+  Timer? _keepAliveTimer;
+  bool _manuallyClosed = false;
   final _events = StreamController<DeepgramTurnEvent>.broadcast();
   final _errors = StreamController<String>.broadcast();
 
@@ -59,17 +61,29 @@ class DeepgramStream {
   Stream<String> get errors => _errors.stream;
 
   Future<void> start() async {
+    _manuallyClosed = false;
     // Все потоки ходят в v1 nova-3 (стабильно работает с ключами без v2-скоупа).
     // diarize=true добавляет разделение спикеров по голосам (простой режим).
     final lang = languageHint == 'en' ? 'en' : 'multi';
-    final uri = Uri.parse('wss://api.deepgram.com/v1/listen'
-        '?model=nova-3&language=$lang'
-        '&diarize=${diarize ? 'true' : 'false'}'
-        '&interim_results=true&endpointing=500'
-        '&encoding=linear16&sample_rate=16000');
-    final channel =
-        IOWebSocketChannel.connect(uri, headers: {'Authorization': 'Token $token'});
+    final uri = Uri.parse(
+      'wss://api.deepgram.com/v1/listen'
+      '?model=nova-3&language=$lang'
+      '&diarize=${diarize ? 'true' : 'false'}'
+      '&interim_results=true&endpointing=500'
+      '&encoding=linear16&sample_rate=16000',
+    );
+    final channel = IOWebSocketChannel.connect(
+      uri,
+      headers: {'Authorization': 'Token $token'},
+    );
     _channel = channel;
+
+    _keepAliveTimer?.cancel();
+    _keepAliveTimer = Timer.periodic(const Duration(seconds: 8), (_) {
+      try {
+        _channel?.sink.add(jsonEncode({'type': 'KeepAlive'}));
+      } catch (_) {}
+    });
 
     channel.stream.listen(
       (data) {
@@ -83,12 +97,18 @@ class DeepgramStream {
         _handleV1Results(j);
       },
       onError: (Object e) {
-        debugPrint('[DG $source] ERROR: $e');
-        _errors.add('Deepgram ($model): $e');
+        _keepAliveTimer?.cancel();
+        if (!_manuallyClosed) {
+          debugPrint('[DG $source] ERROR: $e');
+          _errors.add('Deepgram ($model): $e');
+        }
       },
       onDone: () {
+        _keepAliveTimer?.cancel();
         debugPrint('[DG $source] closed');
-        if (!_errors.isClosed) _errors.add(S.t('errDgClosed'));
+        if (!_manuallyClosed && !_errors.isClosed) {
+          _errors.add(S.t('errDgClosed'));
+        }
       },
     );
   }
@@ -108,47 +128,56 @@ class DeepgramStream {
     if (!isFinal) {
       // Промежуточный (незаконченный) фрагмент — показываем как interim.
       if (transcript.isNotEmpty) {
-        _events.add(DeepgramTurnEvent(
-          source: _bufferSpeaker ?? Speaker.me,
-          phase: TurnPhase.update,
-          turnIndex: 0,
-          transcript: _buffer + transcript,
-        ));
+        final fullInterim =
+            _buffer.isEmpty ? transcript : '$_buffer $transcript';
+        _events.add(
+          DeepgramTurnEvent(
+            source: diarize ? (_bufferSpeaker ?? source) : source,
+            phase: TurnPhase.update,
+            turnIndex: 0,
+            transcript: fullInterim,
+          ),
+        );
       }
       return;
     }
 
     // Готовый фрагмент — в буфер.
     if (transcript.isNotEmpty) {
-      final words = (alt['words'] as List?) ?? const [];
-      int? spk;
-      for (final w in words) {
-        if (w is Map && w['speaker'] is int) {
-          spk = w['speaker'] as int;
-          break;
+      if (diarize) {
+        final words = (alt['words'] as List?) ?? const [];
+        int? spk;
+        for (final w in words) {
+          if (w is Map && w['speaker'] is int) {
+            spk = w['speaker'] as int;
+            break;
+          }
         }
+        if (spk != null) {
+          _firstSpeaker ??= spk;
+          _bufferSpeaker ??= spk == _firstSpeaker ? Speaker.me : Speaker.them;
+        }
+      } else {
+        _bufferSpeaker = source;
       }
-      if (spk != null) {
-        _firstSpeaker ??= spk;
-        _bufferSpeaker ??= spk == _firstSpeaker ? Speaker.me : Speaker.them;
-      }
-      _buffer =
-          _buffer.isEmpty ? transcript : '$_buffer $transcript';
+      _buffer = _buffer.isEmpty ? transcript : '$_buffer $transcript';
     }
 
     if (speechFinal) {
       final text = _buffer;
-      final sp = _bufferSpeaker ?? Speaker.me;
+      final sp = diarize ? (_bufferSpeaker ?? source) : source;
       _buffer = '';
       _bufferSpeaker = null;
       if (text.isNotEmpty) {
-        debugPrint('[DG diarize] END $sp "$text"');
-        _events.add(DeepgramTurnEvent(
-          source: sp,
-          phase: TurnPhase.end,
-          turnIndex: 0,
-          transcript: text,
-        ));
+        debugPrint('[DG $source] END $sp "$text"');
+        _events.add(
+          DeepgramTurnEvent(
+            source: sp,
+            phase: TurnPhase.end,
+            turnIndex: 0,
+            transcript: text,
+          ),
+        );
       }
     }
   }
@@ -158,6 +187,9 @@ class DeepgramStream {
   }
 
   Future<void> stop() async {
+    _manuallyClosed = true;
+    _keepAliveTimer?.cancel();
+    _keepAliveTimer = null;
     final c = _channel;
     _channel = null;
     await c?.sink.close();

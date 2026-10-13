@@ -17,7 +17,8 @@ const Map<String, Map<String, String>> _d = {
   'helpTitle': {'ru': 'ПОДСКАЗКА', 'en': 'HINT'},
   'thinking': {'ru': 'Думаю…', 'en': 'Thinking…'},
   'hintPlaceholder': {
-    'ru': 'Нажмите «Tell Memo» — получите короткую подсказку, что сказать дальше.',
+    'ru':
+        'Нажмите «Tell Memo» — получите короткую подсказку, что сказать дальше.',
     'en': 'Press "Tell Memo" for a short hint on what to say next.',
   },
   'settings': {'ru': 'Настройки', 'en': 'Settings'},
@@ -32,8 +33,10 @@ const Map<String, Map<String, String>> _d = {
   'you': {'ru': 'Вы', 'en': 'Me'},
   'interviewer': {'ru': 'Собеседник', 'en': 'Interviewer'},
   'emptyTranscript': {
-    'ru': 'Нажмите «Начать стрим» и говорите —\nздесь появится текст разговора с метками спикеров.',
-    'en': 'Press "Start Stream" and talk —\nthe live transcript will appear here.',
+    'ru':
+        'Нажмите «Начать стрим» и говорите —\nздесь появится текст разговора с метками спикеров.',
+    'en':
+        'Press "Start Stream" and talk —\nthe live transcript will appear here.',
   },
 
   // --- Сообщения сессии ---
@@ -46,8 +49,10 @@ const Map<String, Map<String, String>> _d = {
     'en': 'The transcript is empty — start the stream and talk first.',
   },
   'errMicDenied': {
-    'ru': 'Нет доступа к микрофону — разрешите запись при запросе или в Системных настройках',
-    'en': 'No microphone access — allow recording when prompted, or in System Settings',
+    'ru':
+        'Нет доступа к микрофону — разрешите запись при запросе или в Системных настройках',
+    'en':
+        'No microphone access — allow recording when prompted, or in System Settings',
   },
   'errDgClosed': {
     'ru': 'Соединение с Deepgram закрыто',
@@ -64,7 +69,10 @@ const Map<String, Map<String, String>> _d = {
   'model': {'ru': 'Модель', 'en': 'Model'},
   'customModel': {'ru': 'Своя модель…', 'en': 'Custom model…'},
   'addModel': {'ru': 'Добавить', 'en': 'Add'},
-  'modelIdHint': {'ru': 'ID модели, напр. glm-5.3', 'en': 'model ID, e.g. glm-5.3'},
+  'modelIdHint': {
+    'ru': 'ID модели, напр. glm-5.3',
+    'en': 'model ID, e.g. glm-5.3',
+  },
   'deleteModel': {
     'ru': 'Удалить свою модель из списка',
     'en': 'Remove custom model from list',
@@ -84,10 +92,16 @@ const Map<String, Map<String, String>> _d = {
   'tbHidden': {'ru': 'Скрытая', 'en': 'Hidden'},
   'winMinimize': {'ru': 'Свернуть', 'en': 'Minimize'},
   'winClose': {'ru': 'Закрыть', 'en': 'Close'},
+  'mySource': {'ru': 'Ваш микрофон', 'en': 'Your microphone'},
+  'deviceDefault': {'ru': 'По умолчанию в системе', 'en': 'System default'},
   'themSource': {'ru': 'Голос собеседника', 'en': 'Interviewer voice'},
   'deviceOff': {
     'ru': 'Авто: по голосам (один микрофон)',
     'en': 'Auto: by voice (single mic)',
+  },
+  'deviceSystemAudio': {
+    'ru': 'Системный звук (Chrome/YouTube) — точное разделение',
+    'en': 'System audio (Chrome/YouTube) — exact split',
   },
   'checkModel': {'ru': 'Проверить ключ и модель', 'en': 'Test key & model'},
   'checkOk': {'ru': 'Работает', 'en': 'Works'},
@@ -140,7 +154,10 @@ const Map<String, Map<String, String>> _d = {
     'en': 'My goals & criteria (used for hints)',
   },
   'load': {'ru': 'Загрузить', 'en': 'Load'},
-  'loadFailed': {'ru': 'Не удалось прочитать файл', 'en': 'Could not read the file'},
+  'loadFailed': {
+    'ru': 'Не удалось прочитать файл',
+    'en': 'Could not read the file',
+  },
   'cancel': {'ru': 'Отмена', 'en': 'Cancel'},
   'save': {'ru': 'Сохранить', 'en': 'Save'},
 };

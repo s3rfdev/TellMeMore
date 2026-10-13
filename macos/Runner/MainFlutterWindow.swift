@@ -1,5 +1,8 @@
 import Cocoa
 import FlutterMacOS
+import ScreenCaptureKit
+import CoreAudio
+import CoreMedia
 
 class MainFlutterWindow: NSWindow {
   override func awakeFromNib() {
@@ -18,6 +21,190 @@ class MainFlutterWindow: NSWindow {
 
     RegisterGeneratedPlugins(registry: flutterViewController)
 
+    // Канал захвата системного звука (ScreenCaptureKit, macOS 13+).
+    if #available(macOS 13.0, *) {
+      let channel = FlutterEventChannel(
+        name: "tellmemo/system_audio",
+        binaryMessenger: flutterViewController.engine.binaryMessenger)
+      channel.setStreamHandler(SystemAudioStreamHandler())
+    }
+
     super.awakeFromNib()
+  }
+}
+
+/// Захват системного звука через ScreenCaptureKit: аудио-поток выбранного
+/// дисплея (весь системный звук) конвертируется в PCM s16le 16k mono и
+/// отправляется в Dart чанками по 100 мс.
+@available(macOS 13.0, *)
+class SystemAudioStreamHandler: NSObject, FlutterStreamHandler, SCStreamOutput {
+  private var sink: FlutterEventSink?
+  private var stream: SCStream?
+  private var pcmBuffer = Data()
+  private let pcmLock = NSLock()
+
+  func onListen(withArguments arguments: Any?, eventSink: @escaping FlutterEventSink) -> FlutterError? {
+    self.sink = eventSink
+    Task { await start() }
+    return nil
+  }
+
+  func onCancel(withArguments arguments: Any?) -> FlutterError? {
+    Task { await stop() }
+    sink = nil
+    return nil
+  }
+
+  private func start() async {
+    // Разрешение «Запись экрана» (так macOS классифицирует захват системного звука).
+    if !CGPreflightScreenCaptureAccess() {
+      let granted = CGRequestScreenCaptureAccess()
+      if !granted {
+        sink?(FlutterError(code: "PERMISSION",
+                           message: "Требуется разрешение «Запись экрана» (Системные настройки → Конфиденциальность)",
+                           details: nil))
+        return
+      }
+    }
+
+    do {
+      let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: false)
+      guard let display = content.displays.first else {
+        sink?(FlutterError(code: "NO_DISPLAY", message: "Дисплей не найден", details: nil))
+        return
+      }
+      // Аудио «дисплея» = весь системный звук; своё окно исключаем (нет эха).
+      let filter = SCContentFilter(display: display, excludingWindows: [])
+      let config = SCStreamConfiguration()
+      config.capturesAudio = true
+      config.excludesCurrentProcessAudio = true
+
+      let scStream = SCStream(filter: filter, configuration: config, delegate: nil)
+      try scStream.addStreamOutput(self, type: .audio, sampleHandlerQueue: nil)
+      try await scStream.startCapture()
+      self.stream = scStream
+      sink?([
+        "event": "started",
+      ])
+    } catch {
+      sink?(FlutterError(code: "SCKIT", message: "\(error.localizedDescription)", details: nil))
+    }
+  }
+
+  private func stop() async {
+    if let s = stream {
+      try? await s.stopCapture()
+      stream = nil
+    }
+  }
+
+  /// CMSampleBuffer → s16le 16k mono (чанки 3200Б). Формат из ASBD.
+  private var didPrintFormat = false
+
+  func stream(_ stream: SCStream, didOutputSampleBuffer sampleBuffer: CMSampleBuffer,
+              of type: SCStreamOutputType) {
+    guard type == .audio, sampleBuffer.isValid else { return }
+    guard let fd = CMSampleBufferGetFormatDescription(sampleBuffer),
+          let asbd = fd.audioStreamBasicDescription else { return }
+
+    if !didPrintFormat {
+      didPrintFormat = true
+      print("[SCK-FMT] id=\(String(asbd.mFormatID, radix: 16)) flags=\(String(asbd.mFormatFlags, radix: 16)) bits=\(asbd.mBitsPerChannel) ch=\(asbd.mChannelsPerFrame) rate=\(asbd.mSampleRate) bps=\(asbd.mBytesPerPacket)")
+    }
+
+    let isFloat = (asbd.mFormatFlags & kAudioFormatFlagIsFloat) != 0
+    let nonInterleaved = (asbd.mFormatFlags & kAudioFormatFlagIsNonInterleaved) != 0
+    let channels = max(1, Int(asbd.mChannelsPerFrame))
+    let inRate = asbd.mSampleRate > 0 ? asbd.mSampleRate : 48000
+
+    guard let dataBuffer = CMSampleBufferGetDataBuffer(sampleBuffer) else { return }
+    let length = CMBlockBufferGetDataLength(dataBuffer)
+    guard length > 0 else { return }
+    var dataPointer: UnsafeMutablePointer<Int8>?
+    guard CMBlockBufferGetDataPointer(
+            dataBuffer, atOffset: 0, lengthAtOffsetOut: nil,
+            totalLengthOut: nil, dataPointerOut: &dataPointer) == noErr,
+          let ptr = dataPointer else { return }
+
+    let bytesPerSample = isFloat ? 4 : 2
+    // Полное число сэмплов (по всем каналам) в буфере.
+    let totalSamples = length / bytesPerSample
+    guard totalSamples > 0 else { return }
+
+    var samples16 = [Int16]()
+    samples16.reserveCapacity(totalSamples)
+
+    if isFloat {
+      ptr.withMemoryRebound(to: Float32.self, capacity: totalSamples) { fp in
+        if nonInterleaved {
+          // Плоскости каналов подряд: берём первую (plane0) длиной total/ch.
+          let plane = totalSamples / channels
+          for i in 0..<plane {
+            let v = fp[i]
+            samples16.append(Int16(max(-32768, min(32767, Int32(v * 32767)))))
+          }
+        } else {
+          for i in 0..<totalSamples {
+            let v = fp[i]
+            samples16.append(Int16(max(-32768, min(32767, Int32(v * 32767)))))
+          }
+        }
+      }
+    } else {
+      ptr.withMemoryRebound(to: Int16.self, capacity: totalSamples) { ip in
+        if nonInterleaved {
+          let plane = totalSamples / channels
+          for i in 0..<plane { samples16.append(ip[i]) }
+        } else {
+          for i in 0..<totalSamples { samples16.append(ip[i]) }
+        }
+      }
+    }
+
+    // interleaved стерео → моно (усреднение)
+    if channels > 1 && !nonInterleaved {
+      var mono = [Int16]()
+      mono.reserveCapacity(samples16.count / channels)
+      var i = 0
+      while i + channels <= samples16.count {
+        var sum = 0
+        for c in 0..<channels { sum += Int(samples16[i + c]) }
+        mono.append(Int16(sum / channels))
+        i += channels
+      }
+      samples16 = mono
+    }
+
+    // даунсемпл до 16к
+    if inRate > 16000.5 {
+      let step = Int((inRate / 16000).rounded())
+      if step > 1 {
+        var dec = [Int16]()
+        dec.reserveCapacity(samples16.count / step)
+        var i = 0
+        while i < samples16.count {
+          dec.append(samples16[i])
+          i += step
+        }
+        samples16 = dec
+      }
+    }
+
+    var pcm = Data(capacity: samples16.count * 2)
+    for v in samples16 {
+      pcm.append(UInt8(truncatingIfNeeded: v & 0xFF))
+      pcm.append(UInt8(truncatingIfNeeded: (v >> 8) & 0xFF))
+    }
+
+    pcmLock.lock()
+    pcmBuffer.append(pcm)
+    while pcmBuffer.count >= 3200 {
+      let payload = pcmBuffer.prefix(3200)
+      pcmBuffer.removeFirst(3200)
+      DispatchQueue.main.async { [weak self] in
+        self?.sink?(payload)
+      }
+    }
+    pcmLock.unlock()
   }
 }

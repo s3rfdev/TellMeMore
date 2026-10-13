@@ -37,11 +37,7 @@ class _TranscriptPanelState extends State<TranscriptPanel> {
     _autoScroll();
     final s = widget.session;
     return Column(
-      children: [
-        _header(s),
-        Expanded(child: _list(s)),
-        _footer(s),
-      ],
+      children: [_header(s), Expanded(child: _list(s)), _footer(s)],
     );
   }
 
@@ -50,38 +46,50 @@ class _TranscriptPanelState extends State<TranscriptPanel> {
       SessionStatus.idle => (Palette.faint, S.t('statusIdle')),
       SessionStatus.connecting => (Palette.amber, S.t('statusConnecting')),
       SessionStatus.listening => (Palette.green, S.t('statusListening')),
-      SessionStatus.error => (Palette.red, s.statusMessage ?? S.t('statusIdle')),
+      SessionStatus.error => (
+        Palette.red,
+        s.statusMessage ?? S.t('statusIdle'),
+      ),
     };
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(14, 6, 12, 6),
       child: Row(
         children: [
-          Text(S.t('transcriptTitle'),
-              style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.1,
-                  color: Palette.sec)),
+          Text(
+            S.t('transcriptTitle'),
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.1,
+              color: Palette.sec,
+            ),
+          ),
           const SizedBox(width: 10),
           Container(
             width: 7,
             height: 7,
             decoration: BoxDecoration(
-                color: dotColor, borderRadius: BorderRadius.circular(4)),
+              color: dotColor,
+              borderRadius: BorderRadius.circular(4),
+            ),
           ),
           const SizedBox(width: 6),
           Flexible(
             child: Tooltip(
               message: statusText,
-              child: Text(statusText,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                      fontSize: 12,
-                      color: s.status == SessionStatus.error
+              child: Text(
+                statusText,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 12,
+                  color:
+                      s.status == SessionStatus.error
                           ? Palette.red
-                          : Palette.sec)),
+                          : Palette.sec,
+                ),
+              ),
             ),
           ),
           const Spacer(),
@@ -93,7 +101,11 @@ class _TranscriptPanelState extends State<TranscriptPanel> {
   }
 
   /// Круглая кнопка микрофона: серая — неактивна, зелёная — пишет.
-  Widget _micToggle(Session s, {required double size, required double iconSize}) {
+  Widget _micToggle(
+    Session s, {
+    required double size,
+    required double iconSize,
+  }) {
     final streaming = s.isStreaming;
     return Tooltip(
       message: streaming ? S.t('stopTooltip') : S.t('startTooltip'),
@@ -106,13 +118,12 @@ class _TranscriptPanelState extends State<TranscriptPanel> {
           height: size,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: streaming
-                ? Palette.green.withValues(alpha: 0.15)
-                : Colors.transparent,
+            color:
+                streaming
+                    ? Palette.green.withValues(alpha: 0.15)
+                    : Colors.transparent,
             border: Border.all(
-              color: streaming
-                  ? Palette.green
-                  : const Color(0xFF3A4048),
+              color: streaming ? Palette.green : const Color(0xFF3A4048),
               width: 1.4,
             ),
           ),
@@ -136,10 +147,15 @@ class _TranscriptPanelState extends State<TranscriptPanel> {
           children: [
             _micToggle(s, size: 64, iconSize: 26),
             const SizedBox(height: 14),
-            Text(S.t('emptyTranscript'),
-                textAlign: TextAlign.center,
-                style:
-                    const TextStyle(color: Palette.sec, fontSize: 13, height: 1.5)),
+            Text(
+              S.t('emptyTranscript'),
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Palette.sec,
+                fontSize: 13,
+                height: 1.5,
+              ),
+            ),
           ],
         ),
       );
@@ -174,21 +190,26 @@ class _TranscriptPanelState extends State<TranscriptPanel> {
         children: [
           SizedBox(
             width: 92,
-            child: Text(finalText ? label : '$label…',
-                style: TextStyle(
-                    fontSize: c.fontSize - 2,
-                    fontWeight: FontWeight.w700,
-                    color: color.withValues(alpha: alpha))),
+            child: Text(
+              finalText ? label : '$label…',
+              style: TextStyle(
+                fontSize: c.fontSize - 2,
+                fontWeight: FontWeight.w700,
+                color: color.withValues(alpha: alpha),
+              ),
+            ),
           ),
           Expanded(
-            child: SelectableText(text,
-                style: TextStyle(
-                    fontSize: c.fontSize,
-                    height: 1.45,
-                    fontStyle: finalText ? FontStyle.normal : FontStyle.italic,
-                    fontWeight:
-                        c.boldText ? FontWeight.w700 : FontWeight.w400,
-                    color: Color(c.hintColor).withValues(alpha: alpha))),
+            child: SelectableText(
+              text,
+              style: TextStyle(
+                fontSize: c.fontSize,
+                height: 1.45,
+                fontStyle: finalText ? FontStyle.normal : FontStyle.italic,
+                fontWeight: c.boldText ? FontWeight.w700 : FontWeight.w400,
+                color: Color(c.hintColor).withValues(alpha: alpha),
+              ),
+            ),
           ),
         ],
       ),
@@ -200,14 +221,16 @@ class _TranscriptPanelState extends State<TranscriptPanel> {
     if (s.themActive) {
       themLabel = 'Собеседник: устройство';
     } else if (s.config.themDeviceId.isEmpty) {
-      themLabel = s.isStreaming ? 'Собеседник: авто (по голосам)' : 'Собеседник: авто';
+      themLabel =
+          s.isStreaming ? 'Собеседник: авто (по голосам)' : 'Собеседник: авто';
     } else {
       themLabel = 'Собеседник: выкл';
     }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
-      decoration:
-          const BoxDecoration(border: Border(top: BorderSide(color: Palette.border))),
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: Palette.border)),
+      ),
       child: Row(
         children: [
           Container(
@@ -215,15 +238,19 @@ class _TranscriptPanelState extends State<TranscriptPanel> {
             height: 6,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: s.themActive ? Palette.them : (s.themError != null ? Palette.red : Palette.faint),
+              color:
+                  s.themActive
+                      ? Palette.them
+                      : (s.themError != null ? Palette.red : Palette.faint),
             ),
           ),
           const SizedBox(width: 6),
           Text(
             themLabel,
             style: TextStyle(
-                fontSize: 11,
-                color: s.themError != null ? Palette.red : Palette.faint),
+              fontSize: 11,
+              color: s.themError != null ? Palette.red : Palette.faint,
+            ),
           ),
           if (s.themError != null) ...[
             const SizedBox(width: 8),
