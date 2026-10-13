@@ -5,20 +5,22 @@ import 'package:http/http.dart' as http;
 /// Провайдеры LLM для подсказок.
 enum LlmProvider { gemini, zai, openai, anthropic }
 
-const kDefaultGeminiModel = 'gemini-3.5-flash-lite';
-const kDefaultZaiModel = 'glm-5.3-flash';
+const kDefaultGeminiModel = 'gemini-3.8-flash';
+const kDefaultZaiModel = 'glm-4.7-flash';
 const kDefaultOpenaiModel = 'gpt-4o-mini';
 const kDefaultAnthropicModel = 'claude-3-5-haiku-latest';
 
 /// Пресеты моделей по провайдерам (name из LlmProvider).
 const kModelPresets = <String, List<String>>{
   'gemini': [
+    'gemini-3.8-flash',
+    'gemini-3.7-flash',
+    'gemini-3.5-flash',
     'gemini-3.5-flash-lite',
     'gemini-3.1-flash-lite',
-    'gemini-3.5-flash',
     'gemini-2.5-flash',
-    'gemini-flash-lite-latest',
     'gemini-flash-latest',
+    'gemini-flash-lite-latest',
   ],
   'zai': [
     'glm-5.3-flash',

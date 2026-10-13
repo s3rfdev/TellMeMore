@@ -28,7 +28,7 @@ class _WindowDragArea extends StatelessWidget {
     return Listener(
       behavior: HitTestBehavior.translucent,
       onPointerDown: (_) => _drag(),
-      child: child ?? const SizedBox.expand(),
+      child: child,
     );
   }
 }
@@ -66,28 +66,35 @@ class HelpPanel extends StatelessWidget {
   Widget _header(BuildContext context) {
     final p = session.config.provider;
     final hasKey = session.config.keyFor(p).trim().isNotEmpty;
-    return Row(
-      children: [
-        // Левая треть: свои кнопки окна (если шапка скрыта), логотип, заголовок, чип + область перетаскивания
-        Expanded(
-          child: Row(
-            children: [
-              if (session.config.titlebarMode == 'hidden') ...[
-                _winButton(
-                  icon: Icons.remove,
-                  tooltip: S.t('winMinimize'),
-                  onTap: () => WindowManipulator.miniaturizeWindow(),
-                ),
-                const SizedBox(width: 6),
-                _winButton(
-                  icon: Icons.close,
-                  tooltip: S.t('winClose'),
-                  onTap: () => WindowManipulator.closeWindow(),
-                ),
-                const SizedBox(width: 10),
-              ],
-              Expanded(
-                child: _WindowDragArea(
+    return SizedBox(
+      height: 32,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Вся фоновая область шапки — нативное перетаскивание окна
+          const Positioned.fill(child: _WindowDragArea()),
+
+          // Левая часть: кнопки окна (если скрыта нативная шапка), логотип, заголовок, статус
+          Positioned(
+            left: 0,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (session.config.titlebarMode == 'hidden') ...[
+                  _winButton(
+                    icon: Icons.remove,
+                    tooltip: S.t('winMinimize'),
+                    onTap: () => WindowManipulator.miniaturizeWindow(),
+                  ),
+                  const SizedBox(width: 6),
+                  _winButton(
+                    icon: Icons.close,
+                    tooltip: S.t('winClose'),
+                    onTap: () => WindowManipulator.closeWindow(),
+                  ),
+                  const SizedBox(width: 10),
+                ],
+                _WindowDragArea(
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -95,8 +102,8 @@ class HelpPanel extends StatelessWidget {
                         borderRadius: BorderRadius.circular(4),
                         child: SvgPicture.asset(
                           'assets/logo.svg',
-                          width: 15,
-                          height: 15,
+                          width: 16,
+                          height: 16,
                         ),
                       ),
                       const SizedBox(width: 6),
@@ -149,36 +156,40 @@ class HelpPanel extends StatelessWidget {
                     ],
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-        // Центр: Get answer
-        GradientButton(
-          icon: Icons.bolt,
-          label: 'Get answer',
-          height: 28,
-          fontSize: 12,
-          onTap: session.helpLoading ? null : session.getHelp,
-          tooltip: S.t('hintPlaceholder'),
-        ),
-        // Правая треть: перетаскивание, язык, настройки
-        Expanded(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              const Expanded(child: _WindowDragArea()),
-              _langToggle(),
-              IconButton(
-                tooltip: S.t('settings'),
-                icon: const Icon(Icons.tune, size: 18, color: Palette.sec),
-                onPressed: () => showSettingsDialog(context, session),
-                visualDensity: VisualDensity.compact,
-              ),
-            ],
+
+          // Центр: Get answer (строго по горизонтальному центру)
+          Center(
+            child: GradientButton(
+              icon: Icons.bolt,
+              label: 'Get answer',
+              height: 28,
+              fontSize: 12,
+              onTap: session.helpLoading ? null : session.getHelp,
+              tooltip: S.t('hintPlaceholder'),
+            ),
           ),
-        ),
-      ],
+
+          // Правая часть: переключение языка и настройки
+          Positioned(
+            right: 0,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _langToggle(),
+                IconButton(
+                  tooltip: S.t('settings'),
+                  icon: const Icon(Icons.tune, size: 18, color: Palette.sec),
+                  onPressed: () => showSettingsDialog(context, session),
+                  visualDensity: VisualDensity.compact,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
