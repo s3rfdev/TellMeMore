@@ -42,6 +42,9 @@ class _TranscriptPanelState extends State<TranscriptPanel> {
   }
 
   Widget _header(Session s) {
+    final hasContent = s.turns.isNotEmpty ||
+        s.interimMe.trim().isNotEmpty ||
+        s.interimThem.trim().isNotEmpty;
     final (dotColor, statusText) = switch (s.status) {
       SessionStatus.idle => (Palette.faint, S.t('statusIdle')),
       SessionStatus.connecting => (Palette.amber, S.t('statusConnecting')),
@@ -52,49 +55,60 @@ class _TranscriptPanelState extends State<TranscriptPanel> {
       ),
     };
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 6, 12, 6),
-      child: Row(
+    return SizedBox(
+      height: 38,
+      child: Stack(
+        alignment: Alignment.center,
         children: [
-          Text(
-            S.t('transcriptTitle'),
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.1,
-              color: Palette.sec,
-            ),
-          ),
-          const SizedBox(width: 10),
-          Container(
-            width: 7,
-            height: 7,
-            decoration: BoxDecoration(
-              color: dotColor,
-              borderRadius: BorderRadius.circular(4),
-            ),
-          ),
-          const SizedBox(width: 6),
-          Flexible(
-            child: Tooltip(
-              message: statusText,
-              child: Text(
-                statusText,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 12,
-                  color:
-                      s.status == SessionStatus.error
-                          ? Palette.red
-                          : Palette.sec,
+          Positioned(
+            left: 14,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  S.t('transcriptTitle'),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.1,
+                    color: Palette.sec,
+                  ),
                 ),
-              ),
+                const SizedBox(width: 10),
+                Container(
+                  width: 7,
+                  height: 7,
+                  decoration: BoxDecoration(
+                    color: dotColor,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 130),
+                  child: Tooltip(
+                    message: statusText,
+                    child: Text(
+                      statusText,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color:
+                            s.status == SessionStatus.error
+                                ? Palette.red
+                                : Palette.sec,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          const Spacer(),
-          // Маленький тумблер стрима — чтобы остановить, когда список не пуст.
-          _micToggle(s, size: 26, iconSize: 14),
+          if (hasContent)
+            Center(
+              child: _micToggle(s, size: 26, iconSize: 14),
+            ),
         ],
       ),
     );

@@ -100,9 +100,11 @@ const Map<String, Map<String, String>> _d = {
     'en': 'Auto: by voice (single mic)',
   },
   'deviceSystemAudio': {
-    'ru': 'Системный звук (Chrome/YouTube) — точное разделение',
-    'en': 'System audio (Chrome/YouTube) — exact split',
+    'ru': 'Системный звук (Chrome/YouTube)',
+    'en': 'System audio (Chrome/YouTube)',
   },
+  'showKey': {'ru': 'Показать ключ', 'en': 'Show key'},
+  'hideKey': {'ru': 'Скрыть ключ', 'en': 'Hide key'},
   'checkModel': {'ru': 'Проверить ключ и модель', 'en': 'Test key & model'},
   'checkOk': {'ru': 'Работает', 'en': 'Works'},
   'checkRunning': {'ru': 'Проверяю…', 'en': 'Checking…'},

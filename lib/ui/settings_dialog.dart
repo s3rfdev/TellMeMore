@@ -40,6 +40,8 @@ class _SettingsDialogState extends State<SettingsDialog> {
     text: widget.session.config.goals,
   );
 
+  bool _obscureKey = true;
+  bool _obscureDeepgram = true;
   bool _addingCustom = false;
   bool _checking = false;
   List<InputDevice> _themDevices = [];
@@ -68,6 +70,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
 
   void _switchProvider(LlmProvider p) {
     if (p == c.provider) return;
+    c.setKeyFor(c.provider, _key.text.trim());
     c.provider = p;
     _key.text = c.keyFor(p);
     _addingCustom = false;
@@ -125,8 +128,8 @@ class _SettingsDialogState extends State<SettingsDialog> {
         style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
       ),
       content: SizedBox(
-        width: 480,
-        height: math.min(520, MediaQuery.sizeOf(context).height * 0.74),
+        width: 520,
+        height: math.min(540, MediaQuery.sizeOf(context).height * 0.74),
         child: DefaultTabController(
           length: 3,
           child: Column(
@@ -256,7 +259,16 @@ class _SettingsDialogState extends State<SettingsDialog> {
           if (_addingCustom) ...[const SizedBox(height: 8), _customModelRow()],
           const SizedBox(height: 14),
           _section(S.t('sectionAudio')),
-          _field(_deepgram, S.t('deepgramToken'), obscure: true),
+          _field(
+            _deepgram,
+            S.t('deepgramToken'),
+            obscure: _obscureDeepgram,
+            suffixIcon: _eyeButton(
+              obscured: _obscureDeepgram,
+              onToggle: () =>
+                  setState(() => _obscureDeepgram = !_obscureDeepgram),
+            ),
+          ),
           const SizedBox(height: 12),
           _mySourceRow(),
           const SizedBox(height: 12),
@@ -273,7 +285,12 @@ class _SettingsDialogState extends State<SettingsDialog> {
     final rawItems = <DropdownMenuItem<String>>[
       DropdownMenuItem(
         value: '',
-        child: Text(S.t('deviceDefault'), style: const TextStyle(fontSize: 13)),
+        child: Text(
+          S.t('deviceDefault'),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontSize: 13),
+        ),
       ),
       for (final d in myDevices)
         DropdownMenuItem(
@@ -291,6 +308,8 @@ class _SettingsDialogState extends State<SettingsDialog> {
           value: c.myDeviceId,
           child: Text(
             '${c.myDeviceId} — нет в системе',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(fontSize: 13, color: Palette.sec),
           ),
         ),
@@ -308,22 +327,30 @@ class _SettingsDialogState extends State<SettingsDialog> {
 
     return Row(
       children: [
-        Text(
-          S.t('mySource'),
-          style: const TextStyle(fontSize: 12, color: Palette.sec),
+        SizedBox(
+          width: 140,
+          child: Text(
+            S.t('mySource'),
+            style: const TextStyle(fontSize: 12, color: Palette.sec),
+          ),
         ),
-        const Spacer(),
-        DropdownButton<String>(
-          value: selectedVal,
-          underline: const SizedBox.shrink(),
-          dropdownColor: const Color(0xFF22262C),
-          borderRadius: BorderRadius.circular(10),
-          style: const TextStyle(fontSize: 13, color: Palette.pri),
-          items: items,
-          onChanged: (v) {
-            c.myDeviceId = v ?? '';
-            _touch();
-          },
+        const SizedBox(width: 8),
+        Expanded(
+          child: DropdownButton<String>(
+            value: selectedVal,
+            isExpanded: true,
+            isDense: true,
+            alignment: AlignmentDirectional.centerEnd,
+            underline: const SizedBox.shrink(),
+            dropdownColor: const Color(0xFF22262C),
+            borderRadius: BorderRadius.circular(10),
+            style: const TextStyle(fontSize: 13, color: Palette.pri),
+            items: items,
+            onChanged: (v) {
+              c.myDeviceId = v ?? '';
+              _touch();
+            },
+          ),
         ),
       ],
     );
@@ -334,12 +361,19 @@ class _SettingsDialogState extends State<SettingsDialog> {
     final rawItems = <DropdownMenuItem<String>>[
       DropdownMenuItem(
         value: '',
-        child: Text(S.t('deviceOff'), style: const TextStyle(fontSize: 13)),
+        child: Text(
+          S.t('deviceOff'),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontSize: 13),
+        ),
       ),
       DropdownMenuItem(
         value: kSystemAudioDeviceId,
         child: Text(
           S.t('deviceSystemAudio'),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: const TextStyle(fontSize: 13, color: Palette.green),
         ),
       ),
@@ -360,6 +394,8 @@ class _SettingsDialogState extends State<SettingsDialog> {
           value: c.themDeviceId,
           child: Text(
             '${c.themDeviceId} — нет в системе',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(fontSize: 13, color: Palette.sec),
           ),
         ),
@@ -375,17 +411,22 @@ class _SettingsDialogState extends State<SettingsDialog> {
     }
     final selectedVal = seen.contains(c.themDeviceId) ? c.themDeviceId : '';
 
-    return Tooltip(
-      message: S.t('startTooltip'),
-      child: Row(
-        children: [
-          Text(
+    return Row(
+      children: [
+        SizedBox(
+          width: 140,
+          child: Text(
             S.t('themSource'),
             style: const TextStyle(fontSize: 12, color: Palette.sec),
           ),
-          const Spacer(),
-          DropdownButton<String>(
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: DropdownButton<String>(
             value: selectedVal,
+            isExpanded: true,
+            isDense: true,
+            alignment: AlignmentDirectional.centerEnd,
             underline: const SizedBox.shrink(),
             dropdownColor: const Color(0xFF22262C),
             borderRadius: BorderRadius.circular(10),
@@ -397,8 +438,8 @@ class _SettingsDialogState extends State<SettingsDialog> {
               _touch();
             },
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -447,6 +488,24 @@ class _SettingsDialogState extends State<SettingsDialog> {
     LlmProvider.anthropic => S.t('anthropicKey'),
   };
 
+  Widget _eyeButton({required bool obscured, required VoidCallback onToggle}) {
+    return Tooltip(
+      message: obscured ? S.t('showKey') : S.t('hideKey'),
+      child: InkWell(
+        onTap: onToggle,
+        borderRadius: BorderRadius.circular(6),
+        child: Padding(
+          padding: const EdgeInsets.all(7),
+          child: Icon(
+            obscured ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+            size: 16,
+            color: obscured ? Palette.sec : Palette.green,
+          ),
+        ),
+      ),
+    );
+  }
+
   /// Поле ключа с микро-кнопкой проверки «ключ + модель».
   Widget _keyFieldWithCheck(LlmProvider p) {
     return Column(
@@ -493,7 +552,14 @@ class _SettingsDialogState extends State<SettingsDialog> {
           ],
         ),
         const SizedBox(height: 5),
-        _input(_key, obscure: true),
+        _input(
+          _key,
+          obscure: _obscureKey,
+          suffixIcon: _eyeButton(
+            obscured: _obscureKey,
+            onToggle: () => setState(() => _obscureKey = !_obscureKey),
+          ),
+        ),
       ],
     );
   }
@@ -568,24 +634,39 @@ class _SettingsDialogState extends State<SettingsDialog> {
   Widget _dropdownRow() {
     return Row(
       children: [
-        Text(
-          S.t('provider'),
-          style: const TextStyle(fontSize: 12, color: Palette.sec),
+        SizedBox(
+          width: 140,
+          child: Text(
+            S.t('provider'),
+            style: const TextStyle(fontSize: 12, color: Palette.sec),
+          ),
         ),
-        const Spacer(),
-        DropdownButton<LlmProvider>(
-          value: c.provider,
-          underline: const SizedBox.shrink(),
-          dropdownColor: const Color(0xFF22262C),
-          borderRadius: BorderRadius.circular(10),
-          style: const TextStyle(fontSize: 13, color: Palette.pri),
-          items: [
-            for (final p in LlmProvider.values)
-              DropdownMenuItem(value: p, child: Text(p.label)),
-          ],
-          onChanged: (p) {
-            if (p != null) _switchProvider(p);
-          },
+        const SizedBox(width: 8),
+        Expanded(
+          child: DropdownButton<LlmProvider>(
+            value: c.provider,
+            isExpanded: true,
+            isDense: true,
+            alignment: AlignmentDirectional.centerEnd,
+            underline: const SizedBox.shrink(),
+            dropdownColor: const Color(0xFF22262C),
+            borderRadius: BorderRadius.circular(10),
+            style: const TextStyle(fontSize: 13, color: Palette.pri),
+            items: [
+              for (final p in LlmProvider.values)
+                DropdownMenuItem(
+                  value: p,
+                  child: Text(
+                    p.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+            ],
+            onChanged: (p) {
+              if (p != null) _switchProvider(p);
+            },
+          ),
         ),
       ],
     );
@@ -599,17 +680,29 @@ class _SettingsDialogState extends State<SettingsDialog> {
       for (final m in models)
         DropdownMenuItem(
           value: m,
-          child: Text(m, style: const TextStyle(fontSize: 13)),
+          child: Text(
+            m,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 13),
+          ),
         ),
       if (!models.contains(current))
         DropdownMenuItem(
           value: current,
-          child: Text(current, style: const TextStyle(fontSize: 13)),
+          child: Text(
+            current,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 13),
+          ),
         ),
       DropdownMenuItem(
         value: sentinel,
         child: Text(
           S.t('customModel'),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: const TextStyle(
             fontSize: 13,
             fontStyle: FontStyle.italic,
@@ -621,11 +714,14 @@ class _SettingsDialogState extends State<SettingsDialog> {
 
     return Row(
       children: [
-        Text(
-          S.t('model'),
-          style: const TextStyle(fontSize: 12, color: Palette.sec),
+        SizedBox(
+          width: 140,
+          child: Text(
+            S.t('model'),
+            style: const TextStyle(fontSize: 12, color: Palette.sec),
+          ),
         ),
-        const Spacer(),
+        const SizedBox(width: 8),
         if (c.isCustomModel(p, current) && !_addingCustom)
           Tooltip(
             message: S.t('deleteModel'),
@@ -642,22 +738,27 @@ class _SettingsDialogState extends State<SettingsDialog> {
               ),
             ),
           ),
-        DropdownButton<String>(
-          value: _addingCustom ? sentinel : current,
-          underline: const SizedBox.shrink(),
-          dropdownColor: const Color(0xFF22262C),
-          borderRadius: BorderRadius.circular(10),
-          style: const TextStyle(fontSize: 13, color: Palette.pri),
-          items: items,
-          onChanged: (v) {
-            if (v == null) return;
-            if (v == sentinel) {
-              setState(() => _addingCustom = true);
-            } else {
-              c.setModelFor(p, v);
-              _touch();
-            }
-          },
+        Expanded(
+          child: DropdownButton<String>(
+            value: _addingCustom ? sentinel : current,
+            isExpanded: true,
+            isDense: true,
+            alignment: AlignmentDirectional.centerEnd,
+            underline: const SizedBox.shrink(),
+            dropdownColor: const Color(0xFF22262C),
+            borderRadius: BorderRadius.circular(10),
+            style: const TextStyle(fontSize: 13, color: Palette.pri),
+            items: items,
+            onChanged: (v) {
+              if (v == null) return;
+              if (v == sentinel) {
+                setState(() => _addingCustom = true);
+              } else {
+                c.setModelFor(p, v);
+                _touch();
+              }
+            },
+          ),
         ),
       ],
     );
@@ -983,6 +1084,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
     int minLines = 1,
     int maxLines = 1,
     String? hint,
+    Widget? suffixIcon,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -995,6 +1097,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
           obscure: obscure,
           minLines: minLines,
           maxLines: maxLines,
+          suffixIcon: suffixIcon,
         ),
       ],
     );
@@ -1007,6 +1110,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
     int maxLines = 1,
     String? hint,
     bool autofocus = false,
+    Widget? suffixIcon,
   }) {
     return TextField(
       controller: controller,
@@ -1020,6 +1124,9 @@ class _SettingsDialogState extends State<SettingsDialog> {
         hintStyle: const TextStyle(fontSize: 12, color: Palette.faint),
         isDense: true,
         contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+        suffixIcon: suffixIcon,
+        suffixIconConstraints:
+            const BoxConstraints(minWidth: 32, minHeight: 32),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: const BorderSide(color: Palette.inputBorder),
