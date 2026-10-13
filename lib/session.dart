@@ -32,6 +32,10 @@ class Session extends ChangeNotifier {
   String? helpAnswer;
   String? helpError;
 
+  /// Статус второго потока (голос собеседника).
+  String? themError;
+  bool get themActive => _themStream != null;
+
   AudioRecorder? _recorder;
   AudioRecorder? _themRecorder;
   DeepgramStream? _micStream;
@@ -105,6 +109,7 @@ class Session extends ChangeNotifier {
     if (isStreaming) return;
     status = SessionStatus.connecting;
     statusMessage = null;
+    themError = null;
     notifyListeners();
     try {
       _recorder = AudioRecorder();
@@ -158,7 +163,7 @@ class Session extends ChangeNotifier {
           );
         } catch (e) {
           // Источник собеседника недоступен — продолжаем только с микрофоном.
-          statusMessage = 'Собеседник: $e';
+          themError = '$e';
           try {
             await _themAudioSub?.cancel();
             await _themStream?.stop();

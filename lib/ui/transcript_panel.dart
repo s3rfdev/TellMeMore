@@ -196,16 +196,46 @@ class _TranscriptPanelState extends State<TranscriptPanel> {
   }
 
   Widget _footer(Session s) {
+    final themLabel = s.config.themDeviceId.isNotEmpty
+        ? (s.themActive ? 'Собеседник: вкл' : 'Собеседник: выкл')
+        : 'Собеседник: не выбран';
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
       decoration:
           const BoxDecoration(border: Border(top: BorderSide(color: Palette.border))),
       child: Row(
         children: [
-          Expanded(
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: s.themActive ? Palette.them : (s.themError != null ? Palette.red : Palette.faint),
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            themLabel,
+            style: TextStyle(
+                fontSize: 11,
+                color: s.themError != null ? Palette.red : Palette.faint),
+          ),
+          if (s.themError != null) ...[
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                s.themError!,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 10, color: Palette.red),
+              ),
+            ),
+          ] else ...[
+            const SizedBox(width: 8),
+          ],
+          Flexible(
             child: Text(
-              'Deepgram · ${s.config.deepgramModel} · ${s.config.languageHint}'
-              '   ·   ${s.config.provider.label} · ${s.config.modelFor(s.config.provider)}',
+              'Deepgram · ${s.config.deepgramModel} · ${s.config.provider.shortLabel} · ${s.config.modelFor(s.config.provider)}',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(fontSize: 11, color: Palette.faint),
