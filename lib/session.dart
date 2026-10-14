@@ -44,6 +44,19 @@ class TranscriptTurn {
   }
 }
 
+/// Результат разбора импортированного файла истории
+class ImportedChatResult {
+  const ImportedChatResult({
+    required this.turns,
+    this.conversationSummary = '',
+    this.summarizedUpToTurn = 0,
+  });
+
+  final List<TranscriptTurn> turns;
+  final String conversationSummary;
+  final int summarizedUpToTurn;
+}
+
 class Session extends ChangeNotifier {
   AppConfig config = AppConfig();
 
@@ -53,6 +66,17 @@ class Session extends ChangeNotifier {
   final List<TranscriptTurn> turns = [];
   String interimMe = '';
   String interimThem = '';
+
+  /// Сжатое резюме предыдущей части диалога (для предотвращения переполнения контекста)
+  String conversationSummary = '';
+
+  /// Индекс реплики (в turns), до которой диалог уже вошёл в conversationSummary
+  int summarizedUpToTurn = 0;
+
+  /// Флаг фонового процесса сжатия истории
+  bool isCompressing = false;
+
+  Timer? _compressDebounce;
 
   bool helpLoading = false;
   String? helpAnswer;
@@ -76,6 +100,117 @@ class Session extends ChangeNotifier {
 
   bool get isStreaming =>
       status == SessionStatus.connecting || status == SessionStatus.listening;
+
+  /// Число символов в старых репликах, ожидающих компрессии
+  int get unsummarizedChars {
+    final keep = config.compressKeepRecentTurns.clamp(4, 50);
+    final eligibleEnd = turns.length - keep;
+    if (eligibleEnd <= summarizedUpToTurn) return 0;
+    var total = 0;
+    for (var i = summarizedUpToTurn; i < eligibleEnd; i++) {
+      total += turns[i].text.length;
+    }
+    return total;
+  }
+
+  /// Нужно ли запускать автоматическую компрессию диалога
+  bool get shouldCompress {
+    if (!config.autoCompressContext) return false;
+    if (isCompressing) return false;
+    final keep = config.compressKeepRecentTurns.clamp(4, 50);
+    if (turns.length <= keep) return false;
+    return unsummarizedChars >= config.compressThresholdChars;
+  }
+
+  void _scheduleAutoCompress() {
+    if (!config.autoCompressContext) return;
+    if (!shouldCompress) return;
+    _compressDebounce?.cancel();
+    _compressDebounce = Timer(const Duration(milliseconds: 1500), () {
+      compressHistoryNow();
+    });
+  }
+
+  /// Запуск компрессии накопленного диалога.
+  /// При [force] == true сжимает все реплики старше keepRecent, даже если порог символов ещё не достигнут.
+  Future<bool> compressHistoryNow({bool force = false}) async {
+    if (isCompressing) return false;
+    final keep = config.compressKeepRecentTurns.clamp(4, 50);
+    final eligibleEnd = turns.length - keep;
+    if (eligibleEnd <= summarizedUpToTurn) return false;
+
+    final chars = unsummarizedChars;
+    if (!force && chars < config.compressThresholdChars) return false;
+
+    final provider = config.provider;
+    final apiKey = config.keyFor(provider).trim();
+    if (apiKey.isEmpty) return false;
+
+    isCompressing = true;
+    notifyListeners();
+
+    try {
+      final slice = turns.sublist(summarizedUpToTurn, eligibleEnd);
+      final dialogueSliceBuf = StringBuffer();
+      for (final t in slice) {
+        final label = t.speaker == Speaker.me ? 'Кандидат' : 'Интервьюер';
+        dialogueSliceBuf.writeln('[$label]: ${t.text}');
+      }
+
+      final prompt = '''
+Ты — интеллектуальный ассистент, выполняющий смысловую компрессию (сжатие) истории живого технического/делового собеседования.
+Твоя задача — составить или обновить связное, ёмкое резюме диалога, сохранив ключевую суть:
+1. Темы, вопросы и задачи, озвученные интервьюером;
+2. Навыки, опыт, архитектурные/технические решения, код и аргументы кандидата;
+3. Замечания, требования и текущий статус обсуждения.
+
+Формат резюме:
+- Краткие маркированные пункты (тезисно, без «воды»);
+- Сохраняй ключевые факты, стек, технологии, формулировки и цифры;
+- Не искажай смысл и не добавляй вымышленных деталей;
+- Язык резюме: тот же язык, на котором шёл диалог (русский или английский).
+
+<previous_summary>
+${conversationSummary.trim().isNotEmpty ? conversationSummary.trim() : 'Нет предыдущего резюме (это начало диалога)'}
+</previous_summary>
+
+<new_dialogue_turns_to_compress>
+${dialogueSliceBuf.toString().trim()}
+</new_dialogue_turns_to_compress>
+
+Верни ТОЛЬКО обновлённое структурированное резюме диалога без вступительных слов и комментариев.
+'''.trim();
+
+      final newSummary = await LlmService.ask(
+        provider: provider,
+        apiKey: apiKey,
+        model: config.modelFor(provider),
+        prompt: prompt,
+      );
+
+      if (newSummary.trim().isNotEmpty) {
+        conversationSummary = newSummary.trim();
+        summarizedUpToTurn = eligibleEnd;
+        _scheduleSaveHistory();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      debugPrint('[COMPRESS] failed: $e');
+      return false;
+    } finally {
+      isCompressing = false;
+      notifyListeners();
+    }
+  }
+
+  /// Сброс только сохранённого резюме компрессии (реплики сохраняются)
+  void resetSummary() {
+    conversationSummary = '';
+    summarizedUpToTurn = 0;
+    _scheduleSaveHistory();
+    notifyListeners();
+  }
 
   Future<void> loadAudioDevices() async {
     try {
@@ -118,13 +253,21 @@ class Session extends ChangeNotifier {
   void _scheduleSaveHistory() {
     _saveDebounce?.cancel();
     _saveDebounce = Timer(const Duration(milliseconds: 500), () {
-      HistoryStore.save(turns);
+      HistoryStore.saveData(
+        turns: turns,
+        conversationSummary: conversationSummary,
+        summarizedUpToTurn: summarizedUpToTurn,
+      );
     });
   }
 
   Future<void> flushHistory() async {
     _saveDebounce?.cancel();
-    await HistoryStore.save(turns);
+    await HistoryStore.saveData(
+      turns: turns,
+      conversationSummary: conversationSummary,
+      summarizedUpToTurn: summarizedUpToTurn,
+    );
   }
 
   Future<void> loadConfig() async {
@@ -138,9 +281,11 @@ class Session extends ChangeNotifier {
 
   Future<void> loadHistory() async {
     try {
-      final saved = await HistoryStore.load();
+      final saved = await HistoryStore.loadData();
       turns.clear();
-      turns.addAll(saved);
+      turns.addAll(saved.turns);
+      conversationSummary = saved.conversationSummary;
+      summarizedUpToTurn = saved.summarizedUpToTurn.clamp(0, turns.length);
       notifyListeners();
     } catch (_) {}
   }
@@ -148,7 +293,11 @@ class Session extends ChangeNotifier {
   /// Полная очистка текущего чата
   Future<void> clearChat() async {
     _saveDebounce?.cancel();
+    _compressDebounce?.cancel();
     turns.clear();
+    conversationSummary = '';
+    summarizedUpToTurn = 0;
+    isCompressing = false;
     interimMe = '';
     interimThem = '';
     await HistoryStore.clear();
@@ -156,14 +305,21 @@ class Session extends ChangeNotifier {
   }
 
   /// Импорт реплик чата (перезаписывает текущую историю)
-  Future<void> importChat(List<TranscriptTurn> newTurns) async {
+  Future<void> importChat(
+    List<TranscriptTurn> newTurns, {
+    String conversationSummary = '',
+    int summarizedUpToTurn = 0,
+  }) async {
     _saveDebounce?.cancel();
+    _compressDebounce?.cancel();
     turns.clear();
     turns.addAll(newTurns);
     if (turns.length > maxTranscriptTurns) {
       turns.removeRange(0, turns.length - maxTranscriptTurns);
     }
-    await HistoryStore.save(turns);
+    this.conversationSummary = conversationSummary;
+    this.summarizedUpToTurn = summarizedUpToTurn.clamp(0, turns.length);
+    await flushHistory();
     notifyListeners();
   }
 
@@ -191,20 +347,22 @@ class Session extends ChangeNotifier {
       'exportedAt': DateTime.now().toIso8601String(),
       'app': 'TellMeMore',
       'turnsCount': turns.length,
+      'conversationSummary': conversationSummary,
+      'summarizedUpToTurn': summarizedUpToTurn,
       'plainTranscript': plainTextBuffer.toString(),
       'turns': turnsJson,
     };
     return const JsonEncoder.withIndent('  ').convert(exportData);
   }
 
-  /// Разбор импортированного файла (JSON или текстовый формат)
-  static List<TranscriptTurn> parseImportedChat(String raw) {
+  /// Полный разбор импортированного файла (включая реплики и резюме компрессии)
+  static ImportedChatResult parseImportedChatFull(String raw) {
     final trimmed = raw.trim();
-    if (trimmed.isEmpty) return [];
+    if (trimmed.isEmpty) return const ImportedChatResult(turns: []);
     try {
       final dynamic decoded = jsonDecode(trimmed);
       if (decoded is Map && decoded['turns'] is List) {
-        return (decoded['turns'] as List).map((e) {
+        final turns = (decoded['turns'] as List).map((e) {
           final m = e as Map<String, dynamic>;
           final s = (m['speaker'] == 'them' ||
                   m['speakerRole'] == 'them' ||
@@ -216,12 +374,21 @@ class Session extends ChangeNotifier {
               DateTime.now();
           return TranscriptTurn(speaker: s, text: text, timestamp: time);
         }).where((t) => t.text.trim().isNotEmpty).toList();
+
+        final summary = (decoded['conversationSummary'] as String?) ?? '';
+        final upTo = (decoded['summarizedUpToTurn'] as num?)?.toInt() ?? 0;
+        return ImportedChatResult(
+          turns: turns,
+          conversationSummary: summary,
+          summarizedUpToTurn: upTo.clamp(0, turns.length),
+        );
       } else if (decoded is List) {
-        return decoded
+        final turns = decoded
             .whereType<Map<String, dynamic>>()
             .map(TranscriptTurn.fromJson)
             .where((t) => t.text.trim().isNotEmpty)
             .toList();
+        return ImportedChatResult(turns: turns);
       }
     } catch (_) {}
 
@@ -252,8 +419,12 @@ class Session extends ChangeNotifier {
         result.add(TranscriptTurn(speaker: speaker, text: text));
       }
     }
-    return result;
+    return ImportedChatResult(turns: result);
   }
+
+  /// Разбор импортированного файла (возвращает список реплик)
+  static List<TranscriptTurn> parseImportedChat(String raw) =>
+      parseImportedChatFull(raw).turns;
 
   Future<void> saveConfig() async {
     await config.save();
@@ -494,9 +665,13 @@ class Session extends ChangeNotifier {
           }
           // Ограничиваем историю чата для защиты от утечек памяти и разрастания
           if (turns.length > maxTranscriptTurns) {
-            turns.removeRange(0, turns.length - maxTranscriptTurns);
+            final removeCount = turns.length - maxTranscriptTurns;
+            turns.removeRange(0, removeCount);
+            summarizedUpToTurn =
+                (summarizedUpToTurn - removeCount).clamp(0, turns.length);
           }
           _scheduleSaveHistory();
+          _scheduleAutoCompress();
         }
         _setInterim(e.source, '');
     }
@@ -517,9 +692,19 @@ class Session extends ChangeNotifier {
 
   String _transcriptForPrompt() {
     final buf = StringBuffer();
-    final limit = config.llmContextTurns.clamp(5, 100);
-    final recent =
-        turns.length > limit ? turns.sublist(turns.length - limit) : turns;
+    List<TranscriptTurn> recent;
+    if (config.autoCompressContext && conversationSummary.trim().isNotEmpty) {
+      final start = summarizedUpToTurn.clamp(0, turns.length);
+      final remaining = turns.sublist(start);
+      final limit = config.llmContextTurns.clamp(5, 100);
+      recent = remaining.length > limit
+          ? remaining.sublist(remaining.length - limit)
+          : remaining;
+    } else {
+      final limit = config.llmContextTurns.clamp(5, 100);
+      recent =
+          turns.length > limit ? turns.sublist(turns.length - limit) : turns;
+    }
     for (final t in recent) {
       final speakerTag = t.speaker == Speaker.me ? 'candidate' : 'interviewer';
       buf.writeln('  <turn speaker="$speakerTag">${t.text}</turn>');
@@ -546,6 +731,8 @@ class Session extends ChangeNotifier {
     final my = config.myProfile.trim();
     final them = config.interviewerProfile.trim();
     final goals = config.goals.trim();
+    final hasSummary =
+        config.autoCompressContext && conversationSummary.trim().isNotEmpty;
 
     final languageInstruction = switch (config.answerLang) {
       'ru' => 'Отвечай строго на русском языке.',
@@ -572,7 +759,12 @@ ${them.isNotEmpty ? them : 'Профиль собеседника не указ�
 <interview_goals>
 ${goals.isNotEmpty ? goals : 'Пройти собеседование успешно, отвечать уверенно и структурированно.'}
 </interview_goals>
+${hasSummary ? '''
 
+<conversation_summary>
+${conversationSummary.trim()}
+</conversation_summary>
+''' : ''}
 <live_transcript>
 ${_transcriptForPrompt()}
 </live_transcript>
@@ -591,7 +783,7 @@ ${withScreenshot ? '''
 1. Отвечай от первого лица ("я"), голосом кандидата — так, чтобы кандидат мог сразу вслух произнести твою подсказку.
 2. Строго опирайся на навыки и опыт из <candidate_profile>, если он указан. Не противоречь опыту кандидата и не выдумывай несуществующие факты.
 3. Учитывай цели из <interview_goals> и особенности собеседника из <interviewer_profile>.
-${withScreenshot ? '''
+${hasSummary ? '4. Опирайся на контекст из <conversation_summary> (сохранённое резюме предыдущей части собеседования) и актуальные реплики из <live_transcript>.\n' : ''}${withScreenshot ? '''
 4. ВНИМАТЕЛЬНО ИЗУЧИ ПРИКРЕПЛЁННЫЙ СКРИНШОТ ЭКРАНА! Распознай код, сигнатуры функций, контекст IDE, условие задачи или ошибку.
 5. Если кандидат решает задачу по программированию / алгоритмам / архитектуре / SQL — ДАЙ ГОТОВЫЙ РАБОЧИЙ КОД И ЧЁТКОЕ РЕШЕНИЕ с лаконичным объяснением (почему именно так).
 6. Если на экране видна ошибка или упавший тест — объясни причину в одном предложении и дай готовый исправленный код / команду.
@@ -687,7 +879,12 @@ ${withScreenshot ? '''
   Future<void> dispose() async {
     await HotkeyService.unregisterAll();
     _saveDebounce?.cancel();
-    await HistoryStore.save(turns);
+    _compressDebounce?.cancel();
+    await HistoryStore.saveData(
+      turns: turns,
+      conversationSummary: conversationSummary,
+      summarizedUpToTurn: summarizedUpToTurn,
+    );
     await _teardown();
     super.dispose();
   }

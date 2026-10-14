@@ -36,6 +36,9 @@ class AppConfig {
     this.boldText = false,
     this.turnSpacing = 5.0,
     this.llmContextTurns = defaultLlmContextTurns,
+    this.autoCompressContext = defaultAutoCompressContext,
+    this.compressThresholdChars = defaultCompressThresholdChars,
+    this.compressKeepRecentTurns = defaultCompressKeepRecentTurns,
     this.hideFromScreenShare = false,
     this.alwaysOnTop = false,
     this.titlebarMode = 'transparent',
@@ -47,6 +50,9 @@ class AppConfig {
   static const defaultDeepgramModel = 'flux-general-multi';
   static const defaultLanguageHint = 'ru';
   static const defaultLlmContextTurns = 30;
+  static const defaultAutoCompressContext = true;
+  static const defaultCompressThresholdChars = 3500;
+  static const defaultCompressKeepRecentTurns = 12;
   static const defaultGoals =
       'Пройти собеседование успешно и получить оффер: '
       'отвечать уверенно, структурированно (сначала суть, потом детали) и по делу; '
@@ -100,6 +106,15 @@ class AppConfig {
 
   /// Количество последних реплик диалога, отправляемых в LLM (5–100).
   int llmContextTurns;
+
+  /// Включить автокомпрессию старой части контекста диалога в краткое резюме.
+  bool autoCompressContext;
+
+  /// Порог объёма текста (в символах) для запуска компрессии (1000–20000).
+  int compressThresholdChars;
+
+  /// Количество последних реплик диалога, которые никогда не сжимаются (4–50).
+  int compressKeepRecentTurns;
 
   /// Скрыть окно от демонстрации экрана и скриншотов (NSWindow.SharingType.none).
   bool hideFromScreenShare;
@@ -189,6 +204,9 @@ class AppConfig {
     boldText: boldText,
     turnSpacing: turnSpacing,
     llmContextTurns: llmContextTurns,
+    autoCompressContext: autoCompressContext,
+    compressThresholdChars: compressThresholdChars,
+    compressKeepRecentTurns: compressKeepRecentTurns,
     hideFromScreenShare: hideFromScreenShare,
     alwaysOnTop: alwaysOnTop,
     titlebarMode: titlebarMode,
@@ -222,6 +240,9 @@ class AppConfig {
     'boldText': boldText,
     'turnSpacing': turnSpacing,
     'llmContextTurns': llmContextTurns,
+    'autoCompressContext': autoCompressContext,
+    'compressThresholdChars': compressThresholdChars,
+    'compressKeepRecentTurns': compressKeepRecentTurns,
     'hideFromScreenShare': hideFromScreenShare,
     'alwaysOnTop': alwaysOnTop,
     'titlebarMode': titlebarMode,
@@ -264,6 +285,17 @@ class AppConfig {
         ((j['llmContextTurns'] as num?) ?? defaultLlmContextTurns)
             .toInt()
             .clamp(5, 100),
+    autoCompressContext:
+        (j['autoCompressContext'] as bool?) ?? defaultAutoCompressContext,
+    compressThresholdChars:
+        ((j['compressThresholdChars'] as num?) ?? defaultCompressThresholdChars)
+            .toInt()
+            .clamp(1000, 20000),
+    compressKeepRecentTurns:
+        ((j['compressKeepRecentTurns'] as num?) ??
+                defaultCompressKeepRecentTurns)
+            .toInt()
+            .clamp(4, 50),
     hideFromScreenShare: (j['hideFromScreenShare'] as bool?) ?? false,
     alwaysOnTop: (j['alwaysOnTop'] as bool?) ?? false,
     titlebarMode:

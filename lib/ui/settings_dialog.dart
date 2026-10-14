@@ -269,6 +269,8 @@ class _SettingsDialogState extends State<SettingsDialog> {
           const SizedBox(height: 14),
           _contextTurnsRow(),
           const SizedBox(height: 14),
+          _autoCompressSection(),
+          const SizedBox(height: 14),
           _section(S.t('sectionAudio')),
           _field(
             _deepgram,
@@ -329,6 +331,217 @@ class _SettingsDialogState extends State<SettingsDialog> {
           S.t('llmContextTurnsHint'),
           style: const TextStyle(fontSize: 11, color: Palette.sec),
         ),
+      ],
+    );
+  }
+
+  /// Секция автоматической компрессии длинного контекста диалога
+  Widget _autoCompressSection() {
+    final s = widget.session;
+    final hasSummary = s.conversationSummary.trim().isNotEmpty;
+    final unsummarized = s.unsummarizedChars;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _switchRow(
+          S.t('autoCompressContext'),
+          c.autoCompressContext,
+          (v) {
+            c.autoCompressContext = v;
+            _touch();
+          },
+          subtitle: S.t('autoCompressContextSub'),
+        ),
+        if (c.autoCompressContext) ...[
+          const SizedBox(height: 10),
+          // Порог сжатия по объёму текста
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  S.t('compressThreshold', '${c.compressThresholdChars}'),
+                  style: const TextStyle(fontSize: 12, color: Palette.sec),
+                ),
+              ),
+              Text(
+                '${c.compressThresholdChars}',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Palette.pri,
+                ),
+              ),
+            ],
+          ),
+          SliderTheme(
+            data: _sliderTheme(context),
+            child: Slider(
+              value: c.compressThresholdChars.toDouble().clamp(1000, 15000),
+              min: 1000,
+              max: 15000,
+              divisions: 28,
+              onChanged: (v) {
+                c.compressThresholdChars = (v / 500).round() * 500;
+                _touch();
+              },
+            ),
+          ),
+          Text(
+            S.t('compressThresholdHint'),
+            style: const TextStyle(fontSize: 10, color: Palette.sec),
+          ),
+          const SizedBox(height: 10),
+          // Количество свежих реплик
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  S.t('compressKeepRecent', '${c.compressKeepRecentTurns}'),
+                  style: const TextStyle(fontSize: 12, color: Palette.sec),
+                ),
+              ),
+              Text(
+                '${c.compressKeepRecentTurns}',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Palette.pri,
+                ),
+              ),
+            ],
+          ),
+          SliderTheme(
+            data: _sliderTheme(context),
+            child: Slider(
+              value: c.compressKeepRecentTurns.toDouble().clamp(4, 40),
+              min: 4,
+              max: 40,
+              divisions: 36,
+              onChanged: (v) {
+                c.compressKeepRecentTurns = v.round();
+                _touch();
+              },
+            ),
+          ),
+          Text(
+            S.t('compressKeepRecentHint'),
+            style: const TextStyle(fontSize: 10, color: Palette.sec),
+          ),
+          const SizedBox(height: 10),
+          // Индикатор статуса и ручные действия
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(
+              color: Palette.panel.withValues(alpha: 0.6),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Palette.border.withValues(alpha: 0.5)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      hasSummary ? Icons.auto_awesome : Icons.info_outline,
+                      size: 13,
+                      color: hasSummary ? Palette.green : Palette.sec,
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        hasSummary
+                            ? S.t('activeSummary', '${s.conversationSummary.length}')
+                            : S.t('noSummaryYet'),
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight:
+                              hasSummary ? FontWeight.w600 : FontWeight.normal,
+                          color: hasSummary ? Palette.pri : Palette.sec,
+                        ),
+                      ),
+                    ),
+                    if (s.isCompressing)
+                      const SizedBox(
+                        width: 12,
+                        height: 12,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 1.5,
+                          color: Palette.pri,
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  S.t(
+                    'unsummarizedVolume',
+                    '$unsummarized',
+                  ).replaceFirst('{1}', '${c.compressThresholdChars}'),
+                  style: const TextStyle(fontSize: 10, color: Palette.sec),
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        visualDensity: VisualDensity.compact,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        side: BorderSide(color: Palette.border),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                      ),
+                      onPressed: s.isCompressing
+                          ? null
+                          : () async {
+                              await s.compressHistoryNow(force: true);
+                              if (context.mounted) {
+                                setState(() {});
+                              }
+                            },
+                      child: Text(
+                        s.isCompressing
+                            ? S.t('compressing')
+                            : S.t('compressNow'),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Palette.pri,
+                        ),
+                      ),
+                    ),
+                    if (hasSummary) ...[
+                      const SizedBox(width: 8),
+                      TextButton(
+                        style: TextButton.styleFrom(
+                          visualDensity: VisualDensity.compact,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                        ),
+                        onPressed: () {
+                          s.resetSummary();
+                          setState(() {});
+                        },
+                        child: Text(
+                          S.t('resetSummary'),
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Palette.red,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
       ],
     );
   }

@@ -288,5 +288,149 @@ void main() {
       expect(parsed[2].text, 'Sounds good.');
     });
   });
+
+  group('Auto-compression tests', () {
+    test('AppConfig auto-compression defaults, clamping and serialization', () {
+      final cfg = AppConfig();
+      expect(cfg.autoCompressContext, isTrue);
+      expect(cfg.compressThresholdChars, equals(3500));
+      expect(cfg.compressKeepRecentTurns, equals(12));
+
+      final json = cfg.toJson();
+      expect(json['autoCompressContext'], isTrue);
+      expect(json['compressThresholdChars'], equals(3500));
+      expect(json['compressKeepRecentTurns'], equals(12));
+
+      // Test clamping
+      final clamped = AppConfig.fromJson({
+        'autoCompressContext': false,
+        'compressThresholdChars': 500, // below 1000
+        'compressKeepRecentTurns': 2, // below 4
+      });
+      expect(clamped.autoCompressContext, isFalse);
+      expect(clamped.compressThresholdChars, equals(1000));
+      expect(clamped.compressKeepRecentTurns, equals(4));
+
+      final clampedHigh = AppConfig.fromJson({
+        'compressThresholdChars': 50000, // above 20000
+        'compressKeepRecentTurns': 100, // above 50
+      });
+      expect(clampedHigh.compressThresholdChars, equals(20000));
+      expect(clampedHigh.compressKeepRecentTurns, equals(50));
+
+      final cloned = cfg.clone();
+      cloned.autoCompressContext = false;
+      cloned.compressThresholdChars = 5000;
+      cloned.compressKeepRecentTurns = 16;
+      expect(cfg.autoCompressContext, isTrue);
+      expect(cloned.autoCompressContext, isFalse);
+      expect(cloned.compressThresholdChars, equals(5000));
+      expect(cloned.compressKeepRecentTurns, equals(16));
+    });
+
+    test('Session unsummarizedChars and shouldCompress volume calculation', () {
+      final session = Session();
+      session.config.autoCompressContext = true;
+      session.config.compressThresholdChars = 100;
+      session.config.compressKeepRecentTurns = 4;
+
+      // 0 turns: nothing to compress
+      expect(session.unsummarizedChars, equals(0));
+      expect(session.shouldCompress, isFalse);
+
+      // Add 4 turns (equals keepRecentTurns = 4): still 0 eligible turns
+      session.turns.add(TranscriptTurn(speaker: Speaker.them, text: 'Hello'));
+      session.turns.add(TranscriptTurn(speaker: Speaker.me, text: 'Hi there'));
+      session.turns.add(TranscriptTurn(speaker: Speaker.them, text: 'Question 2'));
+      session.turns.add(TranscriptTurn(speaker: Speaker.me, text: 'Answer 2'));
+      expect(session.unsummarizedChars, equals(0));
+      expect(session.shouldCompress, isFalse);
+
+      // Add 5th turn: 1 eligible turn ("Hello", length 5)
+      session.turns.add(TranscriptTurn(speaker: Speaker.them, text: 'Next question'));
+      expect(session.unsummarizedChars, equals(5));
+      expect(session.shouldCompress, isFalse); // 5 < 100
+
+      // Add turn with 105 chars to eligible slice
+      final longText = 'A' * 105;
+      session.turns.insert(1, TranscriptTurn(speaker: Speaker.them, text: longText));
+      // turns are now: [Hello, A*105, Hi there, Question 2, Answer 2, Next question]
+      // keepRecent = 4 -> recent 4: [Hi there, Question 2, Answer 2, Next question]
+      // eligible: [Hello, A*105] -> 5 + 105 = 110 chars
+      expect(session.unsummarizedChars, equals(110));
+      expect(session.shouldCompress, isTrue);
+
+      // If autoCompressContext is disabled, shouldCompress is false
+      session.config.autoCompressContext = false;
+      expect(session.shouldCompress, isFalse);
+
+      // Reset summary resets summary and summarizedUpToTurn
+      session.conversationSummary = 'Some previous summary';
+      session.summarizedUpToTurn = 2;
+      session.resetSummary();
+      expect(session.conversationSummary, isEmpty);
+      expect(session.summarizedUpToTurn, equals(0));
+    });
+
+    test('Prompt includes conversation_summary when autoCompressContext is enabled and summary is present', () {
+      final session = Session();
+      session.config.autoCompressContext = true;
+      session.conversationSummary = '• Обсудили опыт в микросервисах и Golang\n• Вопрос по базам данных';
+      session.summarizedUpToTurn = 2;
+
+      session.turns.addAll([
+        TranscriptTurn(speaker: Speaker.them, text: 'Вопрос 1 (вошел в резюме)'),
+        TranscriptTurn(speaker: Speaker.me, text: 'Ответ 1 (вошел в резюме)'),
+        TranscriptTurn(speaker: Speaker.them, text: 'Свежий вопрос 2'),
+        TranscriptTurn(speaker: Speaker.me, text: 'Свежий ответ 2'),
+      ]);
+
+      final prompt = session.buildPrompt();
+      expect(prompt, contains('<conversation_summary>'));
+      expect(prompt, contains('Обсудили опыт в микросервисах'));
+      // Verbatim transcript should only include the unsummarized turns starting from summarizedUpToTurn = 2
+      expect(prompt, contains('Свежий вопрос 2'));
+      expect(prompt, contains('Свежий ответ 2'));
+      expect(prompt, isNot(contains('Вопрос 1 (вошел в резюме)')));
+
+      // When autoCompressContext is disabled, conversation_summary is omitted and all turns within limit are used
+      session.config.autoCompressContext = false;
+      final promptNoCompress = session.buildPrompt();
+      expect(promptNoCompress, isNot(contains('<conversation_summary>')));
+      expect(promptNoCompress, contains('Вопрос 1 (вошел в резюме)'));
+    });
+
+    test('Export and import preserves conversationSummary and summarizedUpToTurn', () {
+      final session = Session();
+      session.conversationSummary = '• Тестовая сводка для экспорта';
+      session.summarizedUpToTurn = 3;
+      session.turns.addAll([
+        TranscriptTurn(speaker: Speaker.them, text: 'Q1'),
+        TranscriptTurn(speaker: Speaker.me, text: 'A1'),
+        TranscriptTurn(speaker: Speaker.them, text: 'Q2'),
+        TranscriptTurn(speaker: Speaker.me, text: 'A2'),
+      ]);
+
+      final exported = session.exportChatJson();
+      expect(exported, contains('conversationSummary'));
+      expect(exported, contains('• Тестовая сводка для экспорта'));
+
+      final parsed = Session.parseImportedChatFull(exported);
+      expect(parsed.turns.length, equals(4));
+      expect(parsed.conversationSummary, equals('• Тестовая сводка для экспорта'));
+      expect(parsed.summarizedUpToTurn, equals(3));
+
+      final session2 = Session();
+      session2.importChat(
+        parsed.turns,
+        conversationSummary: parsed.conversationSummary,
+        summarizedUpToTurn: parsed.summarizedUpToTurn,
+      );
+      expect(session2.turns.length, equals(4));
+      expect(session2.conversationSummary, equals('• Тестовая сводка для экспорта'));
+      expect(session2.summarizedUpToTurn, equals(3));
+    });
+  });
 }
+
 

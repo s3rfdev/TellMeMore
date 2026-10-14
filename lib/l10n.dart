@@ -151,6 +151,54 @@ const Map<String, Map<String, String>> _d = {
     'ru': 'Профиль кандидата, собеседника и цели всегда передаются целиком.',
     'en': 'Candidate profile, interviewer profile and goals are always sent in full.',
   },
+  'autoCompressContext': {
+    'ru': 'Автокомпрессия длинного диалога',
+    'en': 'Auto-compress long conversation',
+  },
+  'autoCompressContextSub': {
+    'ru': 'Сжимает старые реплики в ёмкое резюме при накоплении текста',
+    'en': 'Summarizes older dialogue when text volume reaches threshold',
+  },
+  'compressThreshold': {
+    'ru': 'Порог сжатия по объёму текста: {0} симв.',
+    'en': 'Compression text volume threshold: {0} chars',
+  },
+  'compressThresholdHint': {
+    'ru': '~3500 символов — это примерно 10–15 минут активной речи',
+    'en': '~3500 characters is roughly 10–15 minutes of dialogue',
+  },
+  'compressKeepRecent': {
+    'ru': 'Хранить свежих реплик без сжатия: {0}',
+    'en': 'Keep recent live turns verbatim: {0}',
+  },
+  'compressKeepRecentHint': {
+    'ru': 'Эти последние реплики отправляются в нейросеть дословно',
+    'en': 'These recent turns are sent to the LLM verbatim and never compressed',
+  },
+  'compressNow': {
+    'ru': 'Сжать историю сейчас',
+    'en': 'Compress history now',
+  },
+  'compressing': {
+    'ru': 'Сжатие диалога…',
+    'en': 'Compressing dialogue…',
+  },
+  'activeSummary': {
+    'ru': 'Резюме активно ({0} симв.)',
+    'en': 'Active summary ({0} chars)',
+  },
+  'noSummaryYet': {
+    'ru': 'Резюме пока нет',
+    'en': 'No summary yet',
+  },
+  'resetSummary': {
+    'ru': 'Сбросить резюме',
+    'en': 'Reset summary',
+  },
+  'unsummarizedVolume': {
+    'ru': 'Накоплено без сжатия: {0} / {1} симв.',
+    'en': 'Unsummarized buffer: {0} / {1} chars',
+  },
   'showKey': {'ru': 'Показать ключ', 'en': 'Show key'},
   'hideKey': {'ru': 'Скрыть ключ', 'en': 'Hide key'},
   'checkModel': {'ru': 'Проверить ключ и модель', 'en': 'Test key & model'},

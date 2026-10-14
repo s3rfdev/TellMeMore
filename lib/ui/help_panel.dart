@@ -397,15 +397,19 @@ class HelpPanel extends StatelessWidget {
     if (file == null) return;
     try {
       final text = await file.readAsString();
-      final parsed = Session.parseImportedChat(text);
-      if (parsed.isEmpty) {
+      final parsed = Session.parseImportedChatFull(text);
+      if (parsed.turns.isEmpty) {
         throw Exception(S.t('importEmptyError'));
       }
-      await session.importChat(parsed);
+      await session.importChat(
+        parsed.turns,
+        conversationSummary: parsed.conversationSummary,
+        summarizedUpToTurn: parsed.summarizedUpToTurn,
+      );
       if (context.mounted) {
         ScaffoldMessenger.maybeOf(context)?.showSnackBar(
           SnackBar(
-            content: Text(S.t('importSuccess', '${parsed.length}')),
+            content: Text(S.t('importSuccess', '${parsed.turns.length}')),
             duration: const Duration(seconds: 2),
           ),
         );
