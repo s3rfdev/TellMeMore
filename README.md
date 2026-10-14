@@ -1,142 +1,198 @@
-# Tell Memo — автопомощник для собеседований (macOS)
+# TellMeMore — Real-Time AI Interview Co-Pilot & Teleprompter
 
-Tell Memo слушает разговор в реальном времени, транскрибирует его с разделением
-на «Вы» и «Собеседника», и по кнопке **Tell Memo** шлёт контекст разговора в LLM,
-который возвращает короткую подсказку — что сказать дальше.
+<p align="center">
+  <img src="assets/screenshots/main.png" alt="TellMeMore Main Window" width="880">
+</p>
 
-Собеседование может идти в Skype, Zoom, Google Meet, браузерной звонилке —
-где угодно. Два режима разделения спикеров:
+<p align="center">
+  <strong>An undetectable, floating, real-time AI assistant for technical and behavioural interviews on macOS.</strong><br>
+  Dual-stream live speech-to-text, zero-latency prompt suggestions, screen-share stealth mode, and multi-LLM support.
+</p>
 
-- **Точный (рекомендуется для звонков)**: микрофон (вы) + системный звук через
-  BlackHole (собеседник) — два независимых потока, разделение 100%.
-  Для звонка используйте наушники: тогда микрофон слышит только вас.
-- **Простой**: один микрофон, спикеров различает нейросеть Deepgram (diarization).
-  Работает без BlackHole; голоса должны звучать заметно по-разному.
+<p align="center">
+  <a href="https://github.com/s3rfdev/TellMeMore/releases"><img src="https://img.shields.io/github/v/release/s3rfdev/TellMeMore?color=2FBF71&label=Release" alt="Release"></a>
+  <img src="https://img.shields.io/badge/Platform-macOS%2013%2B-blue?logo=apple" alt="macOS 13+">
+  <img src="https://img.shields.io/badge/Flutter-3.29%2B-02569B?logo=flutter" alt="Flutter">
+  <img src="https://img.shields.io/badge/STT-Deepgram%20Nova--3-green" alt="Deepgram Nova-3">
+  <img src="https://img.shields.io/badge/LLMs-Gemini%20%7C%20Claude%20%7C%20OpenAI%20%7C%20GLM-orange" alt="LLMs">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-lightgrey" alt="MIT License"></a>
+</p>
 
-STT — Deepgram v1 `nova-3` (multi). Ключи без доступа к v2/Flux работают полноценно.
+---
 
-## Возможности
+## Why TellMeMore?
 
-- **Живая транскрипция** двух спикеров с метками («Вы» — зелёным, «Собеседник» — синим);
-  незаконченная фраза показывается приглушённо и фиксируется по паузе (End-of-Turn).
-- **Подсказки от LLM** по кнопке Tell Memo: учитывает стенограмму (последние 30 реплик),
-  кто говорил последним, ваш профиль, профиль собеседника и ваши цели.
-- **4 провайдера LLM на выбор**: Google Gemini, Z.ai (GLM), OpenAI, Anthropic Claude —
-  у каждого свой ключ, список моделей + добавление своих моделей, кнопка проверки ключа.
-- **RU / EN** одним переключателем: язык интерфейса и язык подсказок вместе.
-- **Тёмный минималистичный UI**: прозрачность окна 0–100% (видно рабочий стол),
-  три режима шапки окна (прозрачная / плотная / скрытая), перетаскиваемая граница
-  между панелями, настройка размера/жирности/цвета текста.
-- Все настройки сохраняются локально в `~/.sobes_helper.json`.
+Job interviews are stressful. Even experienced engineers freeze under pressure, forget syntax, or blank on specific system design details. Traditional cheatsheets and second monitors require constant eye movement that is immediately noticeable on camera.
 
-## Требования
+**TellMeMore** acts as your personal, invisible co-pilot:
+1. **Listens in real time** to both your microphone and your interviewer's voice via independent audio streams.
+2. **Maintains a chronological live transcript** with instant speaker identification ("Me" vs. "Interviewer").
+3. **Generates targeted, high-impact suggestions** on demand (`Get answer`), structured around your resume, the interviewer's background, and your target interview goals.
+4. **Completely invisible to screen sharing** (`NSWindow.SharingType.none`): even if you share your entire desktop in Zoom, Google Meet, Microsoft Teams, or Slack, TellMeMore remains invisible to participants.
 
-| Что | Зачем |
-|---|---|
-| macOS 13+ | платформа |
-| Flutter 3.29 (рекомендуется через [fvm](https://fvm.app)) | сборка |
-| Xcode + CocoaPods | сборка macOS-таргета |
-| Homebrew | установка BlackHole |
-| [BlackHole 2ch](https://existential.audio) | виртуальный аудиокабель для голоса собеседника |
-| Ключ [Deepgram](https://console.deepgram.com) | STT (новым аккаунтам дают $200 бесплатно) |
-| Ключ LLM: [Gemini](https://aistudio.google.com) / [Z.ai](https://z.ai) / OpenAI / Anthropic | подсказки (Gemini и Z.ai имеют бесплатные модели) |
+---
 
-## Установка (macOS)
+## Screenshots
+
+<div align="center">
+  <table>
+    <tr>
+      <td width="50%">
+        <img src="assets/screenshots/main.png" alt="Live Dialogue & Teleprompter" /><br />
+        <b>1. Live Dialogue & Teleprompter Overlay</b><br />
+        <i>Real-time dual-stream transcription with speaker separation and one-click answers.</i>
+      </td>
+      <td width="50%">
+        <img src="assets/screenshots/1.png" alt="Context & Candidate Profile" /><br />
+        <b>2. Tailored Candidate & Interview Context</b><br />
+        <i>Upload your CV, interviewer background, and desired answers/evaluation criteria.</i>
+      </td>
+    </tr>
+    <tr>
+      <td width="50%">
+        <img src="assets/screenshots/2.png" alt="LLM & Audio Devices" /><br />
+        <b>3. LLM Model & Clean Audio Device Routing</b><br />
+        <i>Multi-provider support (Gemini, Claude, GPT, GLM) with sliding window history and BlackHole.</i>
+      </td>
+      <td width="50%">
+        <img src="assets/screenshots/3.png" alt="UI & Stealth Customization" /><br />
+        <b>4. Stealth & Appearance Controls</b><br />
+        <i>Hide from screen share, window transparency (0–100%), always-on-top, and font scaling.</i>
+      </td>
+    </tr>
+  </table>
+</div>
+
+---
+
+## Key Features
+
+- **Dual-Stream Audio Isolation (100% Speaker Accuracy):**
+  - Your voice is captured directly from your hardware microphone.
+  - The interviewer's voice is routed through [BlackHole](https://existential.audio/blackhole/) (a lightweight, open-source macOS virtual audio driver).
+  - Both streams are processed simultaneously via Deepgram Nova-3 WebSocket connections. Zero crosstalk, zero hallucinated speaker labels.
+- **Strict Chronological Dialogue Interleaving:**
+  - Sentences are timestamped and segmented on natural grammatical boundaries (`.`, `!`, `?`, or length thresholds).
+  - Even during rapid back-and-forth dialogue or uninterrupted monologue, turns are rendered in chronological timeline order.
+- **Screen Sharing Protection (Stealth Mode):**
+  - Integrated macOS native `NSWindow.SharingType.none`.
+  - The window is excluded at the window-server level from desktop captures, window shares, and screenshot tools (Zoom, Google Meet, Teams, Slack, OBS).
+- **Floating Translucent UI Overlay:**
+  - True per-pixel transparency (0–100%) so you can read hints naturally while looking directly at your camera or IDE.
+  - Hidden / translucent / solid titlebar modes with custom window dragging areas.
+  - Optional `Always on Top` floating window level.
+  - Draggable split-ratio handle between hint prompt and transcript.
+  - Customizable typography (font size from 6px to 24px, bold toggle, turn spacing, color presets).
+- **Multi-LLM Provider Engine:**
+  - **Google Gemini** (Gemini 2.5 Flash, 3.8 Flash, Pro, custom models).
+  - **Anthropic Claude** (Claude 3.7 Sonnet, Haiku, Opus).
+  - **OpenAI** (GPT-4o, GPT-4o-mini, o3-mini).
+  - **Z.ai / Zhipu GLM** (GLM-4.7-Flash, GLM-4.5-Flash).
+  - Live model testing tool directly inside the settings modal.
+- **Configurable Context History:**
+  - Adjust dialogue history from 5 to 100 turns via slider.
+  - Candidate profile, interviewer notes, and goals are **always attached in full** to every LLM request.
+  - Automatic dialogue truncation protects against memory leaks during marathon interview sessions.
+
+---
+
+## Quick Start (Installation)
+
+### Option 1: Download Prebuilt App (Recommended)
+
+1. Download the latest `TellMeMore-macOS.zip` from [Releases](https://github.com/s3rfdev/TellMeMore/releases).
+2. Extract the archive and drag `TellMeMore.app` to your `/Applications` folder.
+3. Open `TellMeMore.app`. If macOS blocks execution because of Gatekeeper:
+   ```bash
+   xattr -cr /Applications/TellMeMore.app
+   ```
+
+### Option 2: Build from Source
+
+#### Prerequisites
+- macOS 13+ (Ventura, Sonoma, Sequoia)
+- [Flutter 3.29+](https://flutter.dev) (or via [FVM](https://fvm.app))
+- Xcode with Command Line Tools
+- [Homebrew](https://brew.sh)
 
 ```bash
-# 1. Склонировать и перейти в папку
-git clone <repo-url> && cd sobes123
+# 1. Clone the repository
+git clone https://github.com/s3rfdev/TellMeMore.git
+cd TellMeMore
 
-# 2. Скрипт-помощник: поставит BlackHole, подтянет пакеты, подскажет что дальше
-./scripts/setup_macos.sh
+# 2. Install dependencies
+flutter pub get
+
+# 3. Build debug or release bundle
+flutter build macos --release
+
+# 4. Launch the application
+open build/macos/Build/Products/Release/TellMeMore.app
 ```
 
-Скрипт можно не использовать — всё вручную:
+---
 
-```bash
-# BlackHole (виртуальный аудиодрайвер; попросит пароль администратора)
-brew install --cask blackhole-2ch
+## Audio Setup (2-Minute One-Time Configuration)
 
-# Зависимости и сборка
-fvm use 3.29.0            # или используйте системный flutter
-fvm flutter pub get
-fvm flutter build macos --debug
-open build/macos/Build/Products/Debug/sobes123.app
-```
+To capture the interviewer's voice without sending feedback through your microphone, we recommend using **BlackHole 2ch**:
 
-Для разработки: `fvm flutter run -d macos`.
+1. **Install BlackHole**:
+   ```bash
+   brew install --cask blackhole-2ch
+   ```
+2. **Create a Multi-Output Device**:
+   - Open **Audio MIDI Setup** on macOS (press `Cmd + Space` and search for `Audio MIDI Setup`).
+   - Click the **`+`** icon in the bottom-left corner and select **Create Multi-Output Device**.
+   - Check **your headphones/speakers** AND **BlackHole 2ch**.
+   - Keep your headphones at the top of the list as the primary output device (Drift Correction enabled on BlackHole).
+3. **Configure Your Call (Zoom / Google Meet / Teams / Browser)**:
+   - In your calling app or macOS sound settings, set **Output / Speaker** to the new **Multi-Output Device**.
+   - Set **Input / Microphone** to your real hardware microphone.
+4. **Configure TellMeMore**:
+   - Open TellMeMore **Settings (⚙) -> LLM -> AUDIO**:
+     - **Your microphone:** `System default` (or your headset mic).
+     - **Interviewer voice:** `BlackHole 2ch`.
 
-### Настройка голоса собеседника (один раз, ~2 минуты)
+Now, when your interviewer speaks, you hear them clearly in your headphones, and TellMeMore captures their audio in real time!
 
-Приложение слышит собеседника через **BlackHole** — виртуальный аудиовыход.
-Чтобы одновременно и слышать собеседника, и записывать его:
+---
 
-1. Откройте **Audio MIDI Setup** (Настройка Audio MIDI) — поиск Spotlight.
-2. **+ → Create Multi-Output Device** (Создать устройство с несколькими выходами).
-3. Отметьте галочками **ваши колонки/наушники** и **BlackHole 2ch**.
-   Колонки держите первыми (мастер-устройством будет оно).
-4. В Skype/Zoom/Meet (или в системном звуке) выберите выводом этот **Multi-Output Device**.
-5. В Tell Memo: **Настройки → LLM → АУДИО → «Голос собеседника»** → выберите **BlackHole 2ch**.
+## API Keys
 
-Готово: ваш микрофон идёт в поток «Вы», системный звук — в поток «Собеседник».
+TellMeMore requires a speech-to-text API key and an LLM API key:
 
-### Ключи API
+| Service | Purpose | Free Tier / Cost | Where to Get |
+|---|---|---|---|
+| **Deepgram** | Real-time dual STT (`nova-3`) | **$200 free credit** on signup | [console.deepgram.com](https://console.deepgram.com) |
+| **Google Gemini** | Answer suggestion LLM | Free tier available | [aistudio.google.com](https://aistudio.google.com) |
+| **Z.ai (GLM)** | High-speed LLM alternative | Free flash models available | [z.ai](https://z.ai) |
+| **OpenAI / Anthropic** | Answer suggestion LLM | Pay-as-you-go | [platform.openai.com](https://platform.openai.com) / [console.anthropic.com](https://console.anthropic.com) |
 
-Первый запуск → **Настройки (⚙)**:
+All credentials are saved locally in `~/.sobes_helper.json` on your machine. No keys or conversation transcripts are ever sent to third-party tracking servers.
 
-- **Deepgram API Token** — из [console.deepgram.com](https://console.deepgram.com).
-- **LLM** (вкладка LLM): выберите провайдера и вставьте ключ:
-  - Gemini: [aistudio.google.com](https://aistudio.google.com) → Get API key.
-    На free tier берите `gemini-3.5-flash-lite` или `gemini-3.1-flash-lite`
-    (500 запросов/день; обычные Flash-модели ограничены 20/день, 2.0/Pro — недоступны).
-  - Z.ai: бесплатные модели — `glm-4.7-flash` и `glm-4.5-flash`; GLM-5.x требуют баланса.
-  - OpenAI / Anthropic — при наличии ключей.
-- Кнопка **✓** рядом с полем ключа мгновенно проверяет, что ключ и модель живые.
+---
 
-Микрофон: при первом «Начать стрим» macOS спросит разрешение — разрешите
-(или Системные настройки → Конфиденциальность → Микрофон).
+## Privacy & Security
 
-## Как пользоваться
+- **Zero Telemetry**: No analytics, tracking, or remote error reporting.
+- **Local Storage**: All profile configurations, API keys, and window layouts are saved strictly to `~/.sobes_helper.json`.
+- **Direct Peer Connections**: Audio is streamed directly from your device to Deepgram via secure WebSockets (`wss://`), and LLM queries are sent directly to the official provider endpoints (Google, Anthropic, OpenAI, Zhipu).
 
-1. **Начать стрим** — большая кнопка-микрофон в нижней панели (или маленький тумблер
-   рядом со статусом). Статус станет «Слушаю…».
-2. Говорите — текст появляется сразу; паузы фиксируют реплики с метками спикеров.
-3. В любой момент (даже посреди своей фразы) жмите **Tell Memo** — верхняя панель
-   покажет короткую подсказку, что сказать/как продолжить мысль.
-4. Настройки под себя: прозрачность (Вид), размер шрифта, цвет текста, язык RU/EN
-   (кнопка в шапке), выбор модели, свои модели («Своя модель…»).
+---
 
-## Известные нюансы
+## Contributing
 
-- **Gemini 503 «high demand»** — временная перегрузка Google; смените модель на
-  `gemini-3.1-flash-lite` (лимиты те же).
-- **401 от Deepgram** — ключ отозван/кончились кредиты: создайте новый в консоли
-  и вставьте в настройках. Ключи с доступом только к v1 тоже подходят.
-- **После пересборки debug-версии macOS может заново спросить микрофон** —
-  это нормально для dev-сборок; в подписанной release-сборке не повторяется.
-- Если системный вывод стоит на Multi-Output устройстве — кнопки громкости
-  гаснут (особенность macOS на агрегатных устройствах), регулируйте громкость
-  в плеере/звонилке.
-- **Z.ai: код 1113** — на аккаунте нет баланса; бесплатно работают только
-  `glm-4.7-flash` и `glm-4.5-flash`.
-- BlackHole не появился в списке устройств — перезапустите аудиодемон:
-  `sudo killall coreaudiod` (пароль администратора; перезагрузка не нужна).
-  Если и это не помогло — перезагрузите Mac.
-- Нет звука в колонках при включённом Multi-Output — проверьте, что колонки стоят
-  первыми в устройстве и громкость на нём не на нуле.
-- Два потока = двойной расход минут Deepgram (~$0.004–0.006/мин за поток).
+Contributions, issues, and feature requests are welcome!
+Feel free to check [issues page](https://github.com/s3rfdev/TellMeMore/issues) or open a PR.
 
-## Приватность
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-Аудио отправляется в Deepgram (облачный STT), стенограмма — в выбранный LLM при
-нажатии Tell Memo. Ключи и все настройки хранятся только локально:
-`~/.sobes_helper.json`. Никаких телеметрий в приложении нет.
+---
 
-> Помните о согласии сторон на запись/транскрибацию разговора.
+## License
 
-## Roadmap
-
-- [ ] Экран/звук через ScreenCaptureKit (без BlackHole)
-- [ ] Готовый .dmg-инсталлятор
-- [ ] Автосрабатывание подсказок (по вопросу собеседника)
-- [ ] Скриншоты и демо-гиф в README
+Distributed under the MIT License. See [`LICENSE`](LICENSE) for more information.
