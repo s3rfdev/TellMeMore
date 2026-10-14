@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -8,6 +9,7 @@ import 'package:record/record.dart';
 import 'l10n.dart';
 import 'services/config_store.dart';
 import 'services/deepgram_stream.dart';
+import 'services/history_store.dart';
 import 'services/llm_service.dart';
 import 'services/window_service.dart';
 
@@ -23,6 +25,22 @@ class TranscriptTurn {
   final Speaker speaker;
   final String text;
   final DateTime timestamp;
+
+  Map<String, dynamic> toJson() => {
+    'speaker': speaker.name,
+    'text': text,
+    'timestamp': timestamp.toIso8601String(),
+  };
+
+  factory TranscriptTurn.fromJson(Map<String, dynamic> json) {
+    final s = json['speaker'];
+    final speaker =
+        (s == 'them' || s == 'interviewer') ? Speaker.them : Speaker.me;
+    final text = (json['text'] as String?) ?? '';
+    final timeStr = (json['timestamp'] as String?) ?? '';
+    final timestamp = DateTime.tryParse(timeStr) ?? DateTime.now();
+    return TranscriptTurn(speaker: speaker, text: text, timestamp: timestamp);
+  }
 }
 
 class Session extends ChangeNotifier {
@@ -94,12 +112,146 @@ class Session extends ChangeNotifier {
     return true;
   }
 
+  Timer? _saveDebounce;
+
+  void _scheduleSaveHistory() {
+    _saveDebounce?.cancel();
+    _saveDebounce = Timer(const Duration(milliseconds: 500), () {
+      HistoryStore.save(turns);
+    });
+  }
+
+  Future<void> flushHistory() async {
+    _saveDebounce?.cancel();
+    await HistoryStore.save(turns);
+  }
+
   Future<void> loadConfig() async {
     config = await AppConfig.load();
     S.lang = config.uiLang;
+    await loadHistory();
     notifyListeners();
     applyTitlebar();
     await applyWindowSettings();
+  }
+
+  Future<void> loadHistory() async {
+    try {
+      final saved = await HistoryStore.load();
+      turns.clear();
+      turns.addAll(saved);
+      notifyListeners();
+    } catch (_) {}
+  }
+
+  /// Полная очистка текущего чата
+  Future<void> clearChat() async {
+    _saveDebounce?.cancel();
+    turns.clear();
+    interimMe = '';
+    interimThem = '';
+    await HistoryStore.clear();
+    notifyListeners();
+  }
+
+  /// Импорт реплик чата (перезаписывает текущую историю)
+  Future<void> importChat(List<TranscriptTurn> newTurns) async {
+    _saveDebounce?.cancel();
+    turns.clear();
+    turns.addAll(newTurns);
+    if (turns.length > maxTranscriptTurns) {
+      turns.removeRange(0, turns.length - maxTranscriptTurns);
+    }
+    await HistoryStore.save(turns);
+    notifyListeners();
+  }
+
+  /// Экспорт текущего чата в форматированный JSON со сводкой
+  String exportChatJson() {
+    final turnsJson = turns.map((t) => {
+      'speaker': t.speaker == Speaker.me ? 'candidate' : 'interviewer',
+      'speakerRole': t.speaker.name,
+      'timestamp': t.timestamp.toIso8601String(),
+      'text': t.text,
+    }).toList();
+
+    final plainTextBuffer = StringBuffer();
+    for (final t in turns) {
+      final h = t.timestamp.hour.toString().padLeft(2, '0');
+      final m = t.timestamp.minute.toString().padLeft(2, '0');
+      final s = t.timestamp.second.toString().padLeft(2, '0');
+      final speakerLabel =
+          t.speaker == Speaker.me ? 'Вы (Кандидат)' : 'Собеседник';
+      plainTextBuffer.writeln('[$h:$m:$s] $speakerLabel: ${t.text}');
+    }
+
+    final exportData = {
+      'format': 'tellmemore_dialogue_v1',
+      'exportedAt': DateTime.now().toIso8601String(),
+      'app': 'TellMeMore',
+      'turnsCount': turns.length,
+      'plainTranscript': plainTextBuffer.toString(),
+      'turns': turnsJson,
+    };
+    return const JsonEncoder.withIndent('  ').convert(exportData);
+  }
+
+  /// Разбор импортированного файла (JSON или текстовый формат)
+  static List<TranscriptTurn> parseImportedChat(String raw) {
+    final trimmed = raw.trim();
+    if (trimmed.isEmpty) return [];
+    try {
+      final dynamic decoded = jsonDecode(trimmed);
+      if (decoded is Map && decoded['turns'] is List) {
+        return (decoded['turns'] as List).map((e) {
+          final m = e as Map<String, dynamic>;
+          final s = (m['speaker'] == 'them' ||
+                  m['speakerRole'] == 'them' ||
+                  m['speaker'] == 'interviewer')
+              ? Speaker.them
+              : Speaker.me;
+          final text = (m['text'] as String?) ?? '';
+          final time = DateTime.tryParse((m['timestamp'] as String?) ?? '') ??
+              DateTime.now();
+          return TranscriptTurn(speaker: s, text: text, timestamp: time);
+        }).where((t) => t.text.trim().isNotEmpty).toList();
+      } else if (decoded is List) {
+        return decoded
+            .whereType<Map<String, dynamic>>()
+            .map(TranscriptTurn.fromJson)
+            .where((t) => t.text.trim().isNotEmpty)
+            .toList();
+      }
+    } catch (_) {}
+
+    // Fallback: построчный парсинг текста
+    final lines = trimmed.split('\n');
+    final result = <TranscriptTurn>[];
+    for (final line in lines) {
+      final l = line.trim();
+      if (l.isEmpty) continue;
+      var speaker = Speaker.them;
+      var text = l;
+      final matchMe = RegExp(
+              r'(?:^|\]\s*|:\s*)\[?(?:вы(?:\s*\(кандидат\))?|candidate|me)\]?\s*:\s*(.*)',
+              caseSensitive: false)
+          .firstMatch(l);
+      final matchThem = RegExp(
+              r'(?:^|\]\s*|:\s*)\[?(?:собеседник|interviewer|them|other)\]?\s*:\s*(.*)',
+              caseSensitive: false)
+          .firstMatch(l);
+      if (matchMe != null) {
+        speaker = Speaker.me;
+        text = matchMe.group(1)?.trim() ?? '';
+      } else if (matchThem != null) {
+        speaker = Speaker.them;
+        text = matchThem.group(1)?.trim() ?? '';
+      }
+      if (text.isNotEmpty) {
+        result.add(TranscriptTurn(speaker: speaker, text: text));
+      }
+    }
+    return result;
   }
 
   Future<void> saveConfig() async {
@@ -347,6 +499,7 @@ class Session extends ChangeNotifier {
           if (turns.length > maxTranscriptTurns) {
             turns.removeRange(0, turns.length - maxTranscriptTurns);
           }
+          _scheduleSaveHistory();
         }
         _setInterim(e.source, '');
     }
@@ -535,6 +688,8 @@ ${withScreenshot ? '''
 
   @override
   Future<void> dispose() async {
+    _saveDebounce?.cancel();
+    await HistoryStore.save(turns);
     await _teardown();
     super.dispose();
   }

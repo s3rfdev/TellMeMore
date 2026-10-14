@@ -223,5 +223,70 @@ void main() {
       expect(prompt, contains('ВНИМАТЕЛЬНО ИЗУЧИ ПРИКРЕПЛЁННЫЙ СКРИНШОТ ЭКРАНА!'));
       expect(prompt, contains('ДАЙ ГОТОВЫЙ РАБОЧИЙ КОД И ЧЁТКОЕ РЕШЕНИЕ'));
     });
+
+    test('TranscriptTurn serialization toJson and fromJson roundtrip', () {
+      final now = DateTime.now();
+      final turn = TranscriptTurn(
+        speaker: Speaker.them,
+        text: 'Hello from interviewer',
+        timestamp: now,
+      );
+
+      final json = turn.toJson();
+      expect(json['speaker'], 'them');
+      expect(json['text'], 'Hello from interviewer');
+      expect(json['timestamp'], now.toIso8601String());
+
+      final restored = TranscriptTurn.fromJson(json);
+      expect(restored.speaker, Speaker.them);
+      expect(restored.text, 'Hello from interviewer');
+      expect(restored.timestamp.millisecondsSinceEpoch, now.millisecondsSinceEpoch);
+    });
+
+    test('Chat export and import roundtrip preserves dialogue and ordering', () {
+      final session = Session();
+      session.turns.addAll([
+        TranscriptTurn(speaker: Speaker.them, text: 'Question 1', timestamp: DateTime(2026, 1, 1, 10, 0, 0)),
+        TranscriptTurn(speaker: Speaker.me, text: 'Answer 1', timestamp: DateTime(2026, 1, 1, 10, 0, 30)),
+      ]);
+
+      final exportedJson = session.exportChatJson();
+      expect(exportedJson, contains('tellmemore_dialogue_v1'));
+      expect(exportedJson, contains('Question 1'));
+      expect(exportedJson, contains('Answer 1'));
+
+      final parsedTurns = Session.parseImportedChat(exportedJson);
+      expect(parsedTurns.length, 2);
+      expect(parsedTurns[0].speaker, Speaker.them);
+      expect(parsedTurns[0].text, 'Question 1');
+      expect(parsedTurns[1].speaker, Speaker.me);
+      expect(parsedTurns[1].text, 'Answer 1');
+
+      final session2 = Session();
+      session2.importChat(parsedTurns);
+      expect(session2.turns.length, 2);
+      expect(session2.turns[0].text, 'Question 1');
+
+      session2.clearChat();
+      expect(session2.turns, isEmpty);
+    });
+
+    test('Chat import falls back to plain text transcript', () {
+      final plainText = '''
+[10:00:00] [Interviewer]: Tell me about yourself.
+[10:00:30] [Candidate]: I am a Flutter engineer.
+[10:01:00] [Other]: Sounds good.
+''';
+
+      final parsed = Session.parseImportedChat(plainText);
+      expect(parsed.length, 3);
+      expect(parsed[0].speaker, Speaker.them);
+      expect(parsed[0].text, 'Tell me about yourself.');
+      expect(parsed[1].speaker, Speaker.me);
+      expect(parsed[1].text, 'I am a Flutter engineer.');
+      expect(parsed[2].speaker, Speaker.them);
+      expect(parsed[2].text, 'Sounds good.');
+    });
   });
 }
+

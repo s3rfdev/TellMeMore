@@ -25,6 +25,46 @@ const Map<String, Map<String, String>> _d = {
     'ru': 'Скриншот экрана + подсказка (для задач по коду)',
     'en': 'Screen capture + hint (for code challenges)',
   },
+  'chatHistoryMenu': {
+    'ru': 'История чата (очистка, экспорт, импорт)',
+    'en': 'Chat history (clear, export, import)',
+  },
+  'clearChat': {'ru': 'Очистить чат', 'en': 'Clear chat'},
+  'clearChatTitle': {
+    'ru': 'Очистить историю чата?',
+    'en': 'Clear chat history?',
+  },
+  'clearChatConfirm': {
+    'ru':
+        'Все реплики текущего диалога будут удалены. Это действие нельзя отменить.',
+    'en':
+        'All turns in the current dialogue will be deleted. This cannot be undone.',
+  },
+  'clearAction': {'ru': 'Очистить', 'en': 'Clear'},
+  'chatCleared': {'ru': 'История чата очищена', 'en': 'Chat history cleared'},
+  'chatEmptyExport': {
+    'ru': 'Чат пуст — нечего экспортировать',
+    'en': 'Chat is empty — nothing to export',
+  },
+  'exportChat': {'ru': 'Экспорт чата…', 'en': 'Export chat…'},
+  'importChat': {'ru': 'Импорт чата…', 'en': 'Import chat…'},
+  'exportSuccess': {
+    'ru': 'Чат успешно сохранён',
+    'en': 'Chat saved successfully',
+  },
+  'exportFailed': {
+    'ru': 'Ошибка при сохранении чата',
+    'en': 'Failed to save chat',
+  },
+  'importSuccess': {
+    'ru': 'Загружено реплик: {0}',
+    'en': 'Imported {0} turns',
+  },
+  'importFailed': {'ru': 'Ошибка импорта чата', 'en': 'Chat import failed'},
+  'importEmptyError': {
+    'ru': 'Файл не содержит распознанных реплик диалога',
+    'en': 'File does not contain valid dialogue turns',
+  },
   'settings': {'ru': 'Настройки', 'en': 'Settings'},
 
   // --- Транскрипция (нижняя панель) ---
