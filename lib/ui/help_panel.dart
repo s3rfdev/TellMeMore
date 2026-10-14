@@ -156,15 +156,22 @@ class HelpPanel extends StatelessWidget {
             ),
           ),
 
-          // Центр: Get answer (строго по горизонтальному центру)
+          // Центр: Get answer + Camera (скриншот экрана + код)
           Center(
-            child: GradientButton(
-              icon: Icons.bolt,
-              label: 'Get answer',
-              height: 28,
-              fontSize: 12,
-              onTap: session.helpLoading ? null : session.getHelp,
-              tooltip: S.t('hintPlaceholder'),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                GradientButton(
+                  icon: Icons.bolt,
+                  label: 'Get answer',
+                  height: 28,
+                  fontSize: 12,
+                  onTap: session.helpLoading ? null : session.getHelp,
+                  tooltip: S.t('hintPlaceholder'),
+                ),
+                const SizedBox(width: 6),
+                _cameraButton(context),
+              ],
             ),
           ),
 
@@ -185,6 +192,40 @@ class HelpPanel extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _cameraButton(BuildContext context) {
+    final enabled = !session.helpLoading;
+    return Tooltip(
+      message: S.t('screenshotAnswer'),
+      child: MouseRegion(
+        cursor: enabled ? SystemMouseCursors.click : MouseCursor.defer,
+        child: GestureDetector(
+          onTap: enabled ? session.getHelpWithScreenshot : null,
+          child: Container(
+            width: 30,
+            height: 28,
+            decoration: BoxDecoration(
+              color: enabled
+                  ? Palette.border.withValues(alpha: 0.5)
+                  : Palette.border.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: enabled
+                    ? Palette.border
+                    : Palette.border.withValues(alpha: 0.5),
+              ),
+            ),
+            alignment: Alignment.center,
+            child: Icon(
+              Icons.camera_alt_outlined,
+              size: 16,
+              color: enabled ? Palette.pri : Palette.sec.withValues(alpha: 0.4),
+            ),
+          ),
+        ),
       ),
     );
   }

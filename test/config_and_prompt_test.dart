@@ -208,5 +208,20 @@ void main() {
       expect(prompt, contains('<turn speaker="candidate">I worked on high load streaming applications.</turn>'));
       expect(prompt, contains('Последнюю реплику говорил я (кандидат)'));
     });
+
+    test('Prompt includes screen_context and technical code instructions when withScreenshot is true', () {
+      final session = Session();
+      session.config.myProfile = 'Fullstack Engineer';
+      session.turns.add(TranscriptTurn(
+        speaker: Speaker.them,
+        text: 'Can you solve this algorithm on the screen?',
+      ));
+
+      final prompt = session.buildPrompt(withScreenshot: true);
+      expect(prompt, contains('<screen_context>'));
+      expect(prompt, contains('ЭТО ВОПРОС ТЕХНИЧЕСКОГО ХАРАКТЕРА!'));
+      expect(prompt, contains('ВНИМАТЕЛЬНО ИЗУЧИ ПРИКРЕПЛЁННЫЙ СКРИНШОТ ЭКРАНА!'));
+      expect(prompt, contains('ДАЙ ГОТОВЫЙ РАБОЧИЙ КОД И ЧЁТКОЕ РЕШЕНИЕ'));
+    });
   });
 }

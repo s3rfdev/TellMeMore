@@ -21,6 +21,10 @@ const Map<String, Map<String, String>> _d = {
         'Нажмите «Get answer» — получите короткую подсказку, что сказать дальше.',
     'en': 'Press "Get answer" for a short hint on what to say next.',
   },
+  'screenshotAnswer': {
+    'ru': 'Скриншот экрана + подсказка (для задач по коду)',
+    'en': 'Screen capture + hint (for code challenges)',
+  },
   'settings': {'ru': 'Настройки', 'en': 'Settings'},
 
   // --- Транскрипция (нижняя панель) ---

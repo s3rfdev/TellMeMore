@@ -3,6 +3,7 @@ import FlutterMacOS
 import ScreenCaptureKit
 import CoreAudio
 import CoreMedia
+import AVFoundation
 
 class MainFlutterWindow: NSWindow {
   override func awakeFromNib() {
@@ -25,7 +26,10 @@ class MainFlutterWindow: NSWindow {
 
     RegisterGeneratedPlugins(registry: flutterViewController)
 
-    // Канал управления окном (перетаскивание, скрытие при шаринге, поверх всех окон)
+    // Запрос прав на микрофон при запуске (чтобы приложение появлялось в настройках macOS)
+    AVCaptureDevice.requestAccess(for: .audio) { _ in }
+
+    // Канал управления окном (перетаскивание, скрытие при шаринге, поверх всех окон, скриншот)
     let windowChannel = FlutterMethodChannel(
       name: "tellmemo/window",
       binaryMessenger: flutterViewController.engine.binaryMessenger)
@@ -48,6 +52,36 @@ class MainFlutterWindow: NSWindow {
         let onTop = (call.arguments as? [String: Any])?["alwaysOnTop"] as? Bool ?? false
         self.level = onTop ? .floating : .normal
         result(nil)
+      case "captureScreen":
+        let wasVisible = self.isVisible
+        let originalSharing = self.sharingType
+        self.sharingType = .none
+        if wasVisible {
+          self.orderOut(nil)
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
+          guard let self = self else {
+            result(FlutterError(code: "DEALLOCATED", message: "Window deallocated", details: nil))
+            return
+          }
+          defer {
+            self.sharingType = originalSharing
+            if wasVisible {
+              self.orderFront(nil)
+            }
+          }
+          let displayID = (self.screen?.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber)?.uint32Value ?? CGMainDisplayID()
+          guard let image = CGDisplayCreateImage(displayID) else {
+            result(FlutterError(code: "CAPTURE_FAILED", message: "Failed to capture display", details: nil))
+            return
+          }
+          let rep = NSBitmapImageRep(cgImage: image)
+          guard let jpegData = rep.representation(using: .jpeg, properties: [.compressionFactor: 0.75]) else {
+            result(FlutterError(code: "ENCODE_FAILED", message: "Failed to compress JPEG", details: nil))
+            return
+          }
+          result(FlutterStandardTypedData(bytes: jpegData))
+        }
       default:
         result(FlutterMethodNotImplemented)
       }

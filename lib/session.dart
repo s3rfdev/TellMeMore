@@ -382,7 +382,7 @@ class Session extends ChangeNotifier {
     return buf.toString().trimRight();
   }
 
-  String _buildPrompt() {
+  String _buildPrompt({bool withScreenshot = false}) {
     final situation = switch (lastSpeaker) {
       Speaker.me =>
         'Последнюю реплику говорил я (кандидат). Помоги мне развить мысль, закончить формулировку или дополнить ответ сильными аргументами.',
@@ -429,20 +429,34 @@ ${_transcriptForPrompt()}
 <current_situation>
 $situation
 </current_situation>
+${withScreenshot ? '''
 
+<screen_context>
+К этому запросу прикреплён актуальный скриншот экрана кандидата (IDE, окно терминала, веб-платформа с заданием, условие задачи или кодовая база).
+ЭТО ВОПРОС ТЕХНИЧЕСКОГО ХАРАКТЕРА! На изображении находится условие задачи, код, архитектурная схема, ошибка или технический вопрос, который решает кандидат прямо сейчас.
+</screen_context>
+''' : ''}
 <instructions>
 1. Отвечай от первого лица ("я"), голосом кандидата — так, чтобы кандидат мог сразу вслух произнести твою подсказку.
 2. Строго опирайся на навыки и опыт из <candidate_profile>, если он указан. Не противоречь опыту кандидата и не выдумывай несуществующие факты.
 3. Учитывай цели из <interview_goals> и особенности собеседника из <interviewer_profile>.
+${withScreenshot ? '''
+4. ВНИМАТЕЛЬНО ИЗУЧИ ПРИКРЕПЛЁННЫЙ СКРИНШОТ ЭКРАНА! Распознай код, сигнатуры функций, контекст IDE, условие задачи или ошибку.
+5. Если кандидат решает задачу по программированию / алгоритмам / архитектуре / SQL — ДАЙ ГОТОВЫЙ РАБОЧИЙ КОД И ЧЁТКОЕ РЕШЕНИЕ с лаконичным объяснением (почему именно так).
+6. Если на экране видна ошибка или упавший тест — объясни причину в одном предложении и дай готовый исправленный код / команду.
+7. Кандидат может вслух произнести лишь короткую фразу (например: "вот у меня тут код" или "как это решить?"), поэтому всё необходимое для полного решения бери прямо со скриншота!
+''' : '''
 4. Формат подсказки: предельно ёмко, 1–3 предложения (или 2–3 коротких ключевых тезиса с готовой речевой фразой).
 5. Никаких преамбул, мета-комментариев и вступлений (ЗАПРЕЩЕНО писать: "Вот что вам сказать:", "Вы можете ответить:"). Сразу давай готовую реплику / суть ответа!
-6. $languageInstruction
+'''}
+8. $languageInstruction
 </instructions>
 '''.trim();
   }
 
   @visibleForTesting
-  String buildPrompt() => _buildPrompt();
+  String buildPrompt({bool withScreenshot = false}) =>
+      _buildPrompt(withScreenshot: withScreenshot);
 
   Future<void> getHelp() async {
     if (helpLoading) return;
@@ -470,6 +484,44 @@ $situation
         apiKey: apiKey,
         model: config.modelFor(provider),
         prompt: _buildPrompt(),
+      );
+    } catch (e) {
+      helpError = '$e';
+    }
+    helpLoading = false;
+    notifyListeners();
+  }
+
+  /// Получить подсказку с анализом скриншота экрана кандидата (для задач по коду / IDE).
+  Future<void> getHelpWithScreenshot() async {
+    if (helpLoading) return;
+    helpAnswer = null;
+    final provider = config.provider;
+    final apiKey = config.keyFor(provider).trim();
+    if (apiKey.isEmpty) {
+      helpError = S.t('errNoKey', provider.label);
+      notifyListeners();
+      return;
+    }
+    helpLoading = true;
+    helpError = null;
+    notifyListeners();
+    try {
+      final imageBytes = await WindowService.captureScreen();
+      if (imageBytes == null || imageBytes.isEmpty) {
+        throw Exception(
+          S.lang == 'ru'
+              ? 'Не удалось сделать скриншот экрана. Проверьте разрешение «Запись экрана» в Системных настройках macOS.'
+              : 'Failed to capture screen. Please check "Screen Recording" permission in macOS System Settings.',
+        );
+      }
+
+      helpAnswer = await LlmService.ask(
+        provider: provider,
+        apiKey: apiKey,
+        model: config.modelFor(provider),
+        prompt: _buildPrompt(withScreenshot: true),
+        imageBytes: imageBytes,
       );
     } catch (e) {
       helpError = '$e';

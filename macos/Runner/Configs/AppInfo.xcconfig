@@ -8,7 +8,7 @@
 PRODUCT_NAME = TellMeMore
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.tellmemore.app
+PRODUCT_BUNDLE_IDENTIFIER = com.sobes.sobes123
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2026 TellMeMore. All rights reserved.

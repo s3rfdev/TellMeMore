@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 
@@ -67,23 +68,30 @@ extension LlmProviderMeta on LlmProvider {
 }
 
 class LlmService {
-  static const _timeout = Duration(seconds: 30);
+  static const _timeout = Duration(seconds: 35);
 
   static Future<String> ask({
     required LlmProvider provider,
     required String apiKey,
     required String model,
     required String prompt,
+    Uint8List? imageBytes,
   }) async {
     switch (provider) {
       case LlmProvider.gemini:
-        return _gemini(apiKey: apiKey, model: model, prompt: prompt);
+        return _gemini(
+          apiKey: apiKey,
+          model: model,
+          prompt: prompt,
+          imageBytes: imageBytes,
+        );
       case LlmProvider.zai:
         return _openAiCompatible(
           url: 'https://api.z.ai/api/paas/v4/chat/completions',
           apiKey: apiKey,
           model: model,
           prompt: prompt,
+          imageBytes: imageBytes,
           maxTokensField: 'max_tokens',
         );
       case LlmProvider.openai:
@@ -92,10 +100,16 @@ class LlmService {
           apiKey: apiKey,
           model: model,
           prompt: prompt,
+          imageBytes: imageBytes,
           maxTokensField: 'max_completion_tokens',
         );
       case LlmProvider.anthropic:
-        return _anthropic(apiKey: apiKey, model: model, prompt: prompt);
+        return _anthropic(
+          apiKey: apiKey,
+          model: model,
+          prompt: prompt,
+          imageBytes: imageBytes,
+        );
     }
   }
 
@@ -103,7 +117,19 @@ class LlmService {
     required String apiKey,
     required String model,
     required String prompt,
+    Uint8List? imageBytes,
   }) async {
+    final parts = <Map<String, dynamic>>[];
+    if (imageBytes != null && imageBytes.isNotEmpty) {
+      parts.add({
+        'inline_data': {
+          'mime_type': 'image/jpeg',
+          'data': base64Encode(imageBytes),
+        },
+      });
+    }
+    parts.add({'text': prompt});
+
     final resp = await http
         .post(
           Uri.parse(
@@ -115,13 +141,9 @@ class LlmService {
           },
           body: jsonEncode({
             'contents': [
-              {
-                'parts': [
-                  {'text': prompt},
-                ],
-              },
+              {'parts': parts},
             ],
-            'generationConfig': {'temperature': 0.4, 'maxOutputTokens': 1500},
+            'generationConfig': {'temperature': 0.3, 'maxOutputTokens': 1500},
           }),
         )
         .timeout(_timeout);
@@ -131,8 +153,8 @@ class LlmService {
     final j = jsonDecode(utf8.decode(resp.bodyBytes)) as Map<String, dynamic>;
     final candidates = j['candidates'] as List<dynamic>?;
     final content = candidates?[0] is Map ? candidates![0]['content'] : null;
-    final parts = content is Map ? content['parts'] as List<dynamic>? : null;
-    final text = parts?.map((p) => p is Map ? (p['text'] ?? '') : '').join();
+    final partsOut = content is Map ? content['parts'] as List<dynamic>? : null;
+    final text = partsOut?.map((p) => p is Map ? (p['text'] ?? '') : '').join();
     if (text == null || text.trim().isEmpty) {
       throw Exception('LLM вернул пустой ответ');
     }
@@ -146,7 +168,23 @@ class LlmService {
     required String model,
     required String prompt,
     required String maxTokensField,
+    Uint8List? imageBytes,
   }) async {
+    final dynamic content;
+    if (imageBytes != null && imageBytes.isNotEmpty) {
+      content = [
+        {'type': 'text', 'text': prompt},
+        {
+          'type': 'image_url',
+          'image_url': {
+            'url': 'data:image/jpeg;base64,${base64Encode(imageBytes)}',
+          },
+        },
+      ];
+    } else {
+      content = prompt;
+    }
+
     final resp = await http
         .post(
           Uri.parse(url),
@@ -156,10 +194,10 @@ class LlmService {
           },
           body: jsonEncode({
             'model': model,
-            maxTokensField: 300,
-            'temperature': 0.4,
+            maxTokensField: imageBytes != null ? 1500 : 500,
+            'temperature': 0.3,
             'messages': [
-              {'role': 'user', 'content': prompt},
+              {'role': 'user', 'content': content},
             ],
           }),
         )
@@ -181,7 +219,25 @@ class LlmService {
     required String apiKey,
     required String model,
     required String prompt,
+    Uint8List? imageBytes,
   }) async {
+    final dynamic content;
+    if (imageBytes != null && imageBytes.isNotEmpty) {
+      content = [
+        {
+          'type': 'image',
+          'source': {
+            'type': 'base64',
+            'media_type': 'image/jpeg',
+            'data': base64Encode(imageBytes),
+          },
+        },
+        {'type': 'text', 'text': prompt},
+      ];
+    } else {
+      content = prompt;
+    }
+
     final resp = await http
         .post(
           Uri.parse('https://api.anthropic.com/v1/messages'),
@@ -192,10 +248,10 @@ class LlmService {
           },
           body: jsonEncode({
             'model': model,
-            'max_tokens': 300,
-            'temperature': 0.4,
+            'max_tokens': imageBytes != null ? 1500 : 500,
+            'temperature': 0.3,
             'messages': [
-              {'role': 'user', 'content': prompt},
+              {'role': 'user', 'content': content},
             ],
           }),
         )

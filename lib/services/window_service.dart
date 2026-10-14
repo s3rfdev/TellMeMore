@@ -31,4 +31,16 @@ class WindowService {
       await _channel.invokeMethod('setAlwaysOnTop', {'alwaysOnTop': onTop});
     } catch (_) {}
   }
+
+  /// Сделать скриншот экрана без окна TellMeMore.
+  /// Возвращает JPEG байты (Uint8List) или null при ошибке.
+  static Future<Uint8List?> captureScreen() async {
+    try {
+      final bytes = await _channel.invokeMethod<Uint8List>('captureScreen');
+      return bytes;
+    } catch (_) {
+      return null;
+    }
+  }
 }
+
