@@ -95,13 +95,17 @@ const Map<String, Map<String, String>> _d = {
   'mySource': {'ru': 'Ваш микрофон', 'en': 'Your microphone'},
   'deviceDefault': {'ru': 'По умолчанию в системе', 'en': 'System default'},
   'themSource': {'ru': 'Голос собеседника', 'en': 'Interviewer voice'},
-  'deviceOff': {
-    'ru': 'Авто: по голосам (один микрофон)',
-    'en': 'Auto: by voice (single mic)',
+  'deviceNone': {
+    'ru': 'Отключено (только микрофон)',
+    'en': 'Disabled (mic only)',
   },
-  'deviceSystemAudio': {
-    'ru': 'Системный звук (Chrome/YouTube)',
-    'en': 'System audio (Chrome/YouTube)',
+  'llmContextTurns': {
+    'ru': 'Реплик диалога в запросе к LLM',
+    'en': 'Recent dialogue turns sent to LLM',
+  },
+  'llmContextTurnsHint': {
+    'ru': 'Профиль кандидата, собеседника и цели всегда передаются целиком.',
+    'en': 'Candidate profile, interviewer profile and goals are always sent in full.',
   },
   'showKey': {'ru': 'Показать ключ', 'en': 'Show key'},
   'hideKey': {'ru': 'Скрыть ключ', 'en': 'Hide key'},

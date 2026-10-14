@@ -22,24 +22,111 @@ void main() {
       expect(parsed.fontSize, equals(6.0));
     });
 
+    test('llmContextTurns default, clamping and serialization', () {
+      final cfg = AppConfig();
+      expect(cfg.llmContextTurns, equals(30));
+
+      final json = cfg.toJson();
+      expect(json['llmContextTurns'], equals(30));
+
+      final parsed = AppConfig.fromJson({
+        'llmContextTurns': 150,
+      });
+      expect(parsed.llmContextTurns, equals(100));
+
+      final parsedLow = AppConfig.fromJson({
+        'llmContextTurns': 1,
+      });
+      expect(parsedLow.llmContextTurns, equals(5));
+
+      final cloned = cfg.clone();
+      cloned.llmContextTurns = 45;
+      expect(cloned.llmContextTurns, equals(45));
+      expect(cfg.llmContextTurns, equals(30));
+    });
+
     test('clone preserves turnSpacing, hideFromScreenShare and alwaysOnTop', () {
       final cfg = AppConfig(
         turnSpacing: 12.0,
+        llmContextTurns: 50,
         hideFromScreenShare: true,
         alwaysOnTop: true,
       );
       final cloned = cfg.clone();
       expect(cloned.turnSpacing, equals(12.0));
+      expect(cloned.llmContextTurns, equals(50));
       expect(cloned.hideFromScreenShare, isTrue);
       expect(cloned.alwaysOnTop, isTrue);
 
       final json = cloned.toJson();
+      expect(json['llmContextTurns'], equals(50));
       expect(json['hideFromScreenShare'], isTrue);
       expect(json['alwaysOnTop'], isTrue);
 
       final restored = AppConfig.fromJson(json);
+      expect(restored.llmContextTurns, equals(50));
       expect(restored.hideFromScreenShare, isTrue);
       expect(restored.alwaysOnTop, isTrue);
+    });
+  });
+
+  group('Session turn chronology and truncation tests', () {
+    test('onTurnEvent preserves strict chronological order based on timestamp', () {
+      final session = Session();
+      final t0 = DateTime(2026, 10, 14, 12, 0, 0);
+      final t1 = DateTime(2026, 10, 14, 12, 0, 5);
+      final t2 = DateTime(2026, 10, 14, 12, 0, 10);
+
+      // Event 1 arrives first
+      session.onTurnEvent(DeepgramTurnEvent(
+        source: Speaker.them,
+        phase: TurnPhase.end,
+        turnIndex: 0,
+        transcript: 'First question',
+        timestamp: t0,
+      ));
+
+      // Event 3 arrives second (e.g. quick candidate response)
+      session.onTurnEvent(DeepgramTurnEvent(
+        source: Speaker.me,
+        phase: TurnPhase.end,
+        turnIndex: 0,
+        transcript: 'My second response',
+        timestamp: t2,
+      ));
+
+      // Event 2 arrives third with timestamp t1 (between t0 and t2)
+      session.onTurnEvent(DeepgramTurnEvent(
+        source: Speaker.them,
+        phase: TurnPhase.end,
+        turnIndex: 0,
+        transcript: 'Follow up question',
+        timestamp: t1,
+      ));
+
+      expect(session.turns.length, equals(3));
+      expect(session.turns[0].text, equals('First question'));
+      expect(session.turns[1].text, equals('Follow up question'));
+      expect(session.turns[2].text, equals('My second response'));
+    });
+
+    test('Chat history truncates oldest turns when exceeding maxTranscriptTurns (200)', () {
+      final session = Session();
+      final base = DateTime(2026, 10, 14, 10, 0, 0);
+
+      for (var i = 0; i < 210; i++) {
+        session.onTurnEvent(DeepgramTurnEvent(
+          source: i.isEven ? Speaker.them : Speaker.me,
+          phase: TurnPhase.end,
+          turnIndex: 0,
+          transcript: 'Message #$i',
+          timestamp: base.add(Duration(seconds: i)),
+        ));
+      }
+
+      expect(session.turns.length, equals(Session.maxTranscriptTurns));
+      expect(session.turns.first.text, equals('Message #10'));
+      expect(session.turns.last.text, equals('Message #209'));
     });
   });
 
@@ -78,6 +165,34 @@ void main() {
       expect(prompt, contains('<instructions>'));
       expect(prompt, contains('Отвечай строго на русском языке.'));
       expect(prompt, contains('</instructions>'));
+    });
+
+    test('Prompt limits turns to llmContextTurns while preserving profiles and goals', () {
+      final session = Session();
+      session.config.myProfile = 'Profile 123';
+      session.config.interviewerProfile = 'Interviewer 456';
+      session.config.goals = 'Goal 789';
+      session.config.llmContextTurns = 5;
+
+      for (var i = 0; i < 20; i++) {
+        session.turns.add(TranscriptTurn(
+          speaker: i.isEven ? Speaker.them : Speaker.me,
+          text: 'Turn $i',
+        ));
+      }
+
+      final prompt = session.buildPrompt();
+
+      // Profiles are fully preserved
+      expect(prompt, contains('Profile 123'));
+      expect(prompt, contains('Interviewer 456'));
+      expect(prompt, contains('Goal 789'));
+
+      // Only the last 5 turns (Turn 15..19) are present
+      expect(prompt, contains('Turn 15'));
+      expect(prompt, contains('Turn 19'));
+      expect(prompt, isNot(contains('Turn 14')));
+      expect(prompt, isNot(contains('Turn 0')));
     });
 
     test('Prompt respects English answer language', () {

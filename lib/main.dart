@@ -11,6 +11,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final session = Session();
   await session.loadConfig();
+  await session.loadAudioDevices();
   // Настоящая per-pixel прозрачность окна macOS: фон и титлбар полностью
   // прозрачны (0%), сквозь окно виден рабочий стол. Без этого движок Flutter
   // рисует непрозрачную поверхность.

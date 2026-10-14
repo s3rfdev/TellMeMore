@@ -52,16 +52,15 @@ class _SettingsDialogState extends State<SettingsDialog> {
   @override
   void initState() {
     super.initState();
+    _themDevices = List.of(widget.session.audioDevices);
     _loadDevices();
   }
 
   Future<void> _loadDevices() async {
-    try {
-      final rec = AudioRecorder();
-      final devices = await rec.listInputDevices();
-      await rec.dispose();
-      if (mounted) setState(() => _themDevices = devices);
-    } catch (_) {}
+    await widget.session.loadAudioDevices();
+    if (mounted) {
+      setState(() => _themDevices = List.of(widget.session.audioDevices));
+    }
   }
 
   void _touch() {
@@ -268,6 +267,8 @@ class _SettingsDialogState extends State<SettingsDialog> {
           _modelRow(p),
           if (_addingCustom) ...[const SizedBox(height: 8), _customModelRow()],
           const SizedBox(height: 14),
+          _contextTurnsRow(),
+          const SizedBox(height: 14),
           _section(S.t('sectionAudio')),
           _field(
             _deepgram,
@@ -288,10 +289,56 @@ class _SettingsDialogState extends State<SettingsDialog> {
     );
   }
 
+  /// Регулировка количества последних реплик для отправки в LLM.
+  Widget _contextTurnsRow() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                S.t('llmContextTurns'),
+                style: const TextStyle(fontSize: 12, color: Palette.sec),
+              ),
+            ),
+            Text(
+              '${c.llmContextTurns}',
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Palette.pri,
+              ),
+            ),
+          ],
+        ),
+        SliderTheme(
+          data: _sliderTheme(context),
+          child: Slider(
+            value: c.llmContextTurns.toDouble(),
+            min: 5,
+            max: 100,
+            divisions: 19,
+            onChanged: (v) {
+              c.llmContextTurns = v.round();
+              _touch();
+            },
+          ),
+        ),
+        Text(
+          S.t('llmContextTurnsHint'),
+          style: const TextStyle(fontSize: 11, color: Palette.sec),
+        ),
+      ],
+    );
+  }
+
   /// Источник своего микрофона (напр. Встроенный микрофон или гарнитура).
   Widget _mySourceRow() {
     final myDevices =
-        _themDevices.where((d) => !d.label.contains('BlackHole')).toList();
+        _themDevices
+            .where((d) => !d.label.toLowerCase().contains('blackhole'))
+            .toList();
     final rawItems = <DropdownMenuItem<String>>[
       DropdownMenuItem(
         value: '',
@@ -369,24 +416,6 @@ class _SettingsDialogState extends State<SettingsDialog> {
   /// Источник голоса собеседника: входное аудиоустройство (напр. BlackHole).
   Widget _themSourceRow() {
     final rawItems = <DropdownMenuItem<String>>[
-      DropdownMenuItem(
-        value: '',
-        child: Text(
-          S.t('deviceOff'),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontSize: 13),
-        ),
-      ),
-      DropdownMenuItem(
-        value: kSystemAudioDeviceId,
-        child: Text(
-          S.t('deviceSystemAudio'),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontSize: 13, color: Palette.green),
-        ),
-      ),
       for (final d in _themDevices)
         DropdownMenuItem(
           value: d.id,
@@ -397,8 +426,16 @@ class _SettingsDialogState extends State<SettingsDialog> {
             style: const TextStyle(fontSize: 13),
           ),
         ),
+      DropdownMenuItem(
+        value: '',
+        child: Text(
+          S.t('deviceNone'),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontSize: 13, color: Palette.sec),
+        ),
+      ),
       if (c.themDeviceId.isNotEmpty &&
-          c.themDeviceId != kSystemAudioDeviceId &&
           !_themDevices.any((d) => d.id == c.themDeviceId))
         DropdownMenuItem(
           value: c.themDeviceId,

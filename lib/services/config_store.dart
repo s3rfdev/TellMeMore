@@ -6,7 +6,7 @@ import 'llm_service.dart';
 /// Локальные настройки приложения (роль SharedPreferences).
 /// Хранятся в ~/.sobes_helper.json — всё, включая раскладку панелей и прозрачность.
 
-/// Специальное значение themDeviceId: системный звук через ScreenCaptureKit.
+/// Специальное значение themDeviceId: системный звук через ScreenCaptureKit (устаревшее).
 const kSystemAudioDeviceId = '__sckit__';
 
 class AppConfig {
@@ -35,6 +35,7 @@ class AppConfig {
     this.fontSize = 14.0,
     this.boldText = false,
     this.turnSpacing = 5.0,
+    this.llmContextTurns = defaultLlmContextTurns,
     this.hideFromScreenShare = false,
     this.alwaysOnTop = false,
     this.titlebarMode = 'transparent',
@@ -45,6 +46,7 @@ class AppConfig {
   static const defaultDeepgramToken = '';
   static const defaultDeepgramModel = 'flux-general-multi';
   static const defaultLanguageHint = 'ru';
+  static const defaultLlmContextTurns = 30;
   static const defaultGoals =
       'Пройти собеседование успешно и получить оффер: '
       'отвечать уверенно, структурированно (сначала суть, потом детали) и по делу; '
@@ -95,6 +97,9 @@ class AppConfig {
 
   /// Отступ между репликами в пикселях (0–20).
   double turnSpacing;
+
+  /// Количество последних реплик диалога, отправляемых в LLM (5–100).
+  int llmContextTurns;
 
   /// Скрыть окно от демонстрации экрана и скриншотов (NSWindow.SharingType.none).
   bool hideFromScreenShare;
@@ -183,6 +188,7 @@ class AppConfig {
     fontSize: fontSize,
     boldText: boldText,
     turnSpacing: turnSpacing,
+    llmContextTurns: llmContextTurns,
     hideFromScreenShare: hideFromScreenShare,
     alwaysOnTop: alwaysOnTop,
     titlebarMode: titlebarMode,
@@ -215,6 +221,7 @@ class AppConfig {
     'fontSize': fontSize,
     'boldText': boldText,
     'turnSpacing': turnSpacing,
+    'llmContextTurns': llmContextTurns,
     'hideFromScreenShare': hideFromScreenShare,
     'alwaysOnTop': alwaysOnTop,
     'titlebarMode': titlebarMode,
@@ -253,6 +260,10 @@ class AppConfig {
     boldText: (j['boldText'] as bool?) ?? false,
     turnSpacing:
         ((j['turnSpacing'] as num?) ?? 5.0).toDouble().clamp(0.0, 20.0),
+    llmContextTurns:
+        ((j['llmContextTurns'] as num?) ?? defaultLlmContextTurns)
+            .toInt()
+            .clamp(5, 100),
     hideFromScreenShare: (j['hideFromScreenShare'] as bool?) ?? false,
     alwaysOnTop: (j['alwaysOnTop'] as bool?) ?? false,
     titlebarMode:
@@ -261,7 +272,10 @@ class AppConfig {
             ? 'transparent'
             : 'opaque'),
     myDeviceId: (j['myDeviceId'] as String?) ?? '',
-    themDeviceId: (j['themDeviceId'] as String?) ?? '',
+    themDeviceId: () {
+      final dev = (j['themDeviceId'] as String?) ?? '';
+      return dev == '__sckit__' ? '' : dev;
+    }(),
   );
 
   static File get _file =>

@@ -8,16 +8,20 @@ import 'l10n.dart';
 import 'services/config_store.dart';
 import 'services/deepgram_stream.dart';
 import 'services/llm_service.dart';
-import 'services/system_audio.dart';
 import 'services/window_service.dart';
 
 enum SessionStatus { idle, connecting, listening, error }
 
 class TranscriptTurn {
-  TranscriptTurn({required this.speaker, required this.text});
+  TranscriptTurn({
+    required this.speaker,
+    required this.text,
+    DateTime? timestamp,
+  }) : timestamp = timestamp ?? DateTime.now();
 
   final Speaker speaker;
   final String text;
+  final DateTime timestamp;
 }
 
 class Session extends ChangeNotifier {
@@ -46,8 +50,48 @@ class Session extends ChangeNotifier {
   StreamSubscription<dynamic>? _themAudioSub;
   final _eventSubs = <StreamSubscription<dynamic>>[];
 
+  static const int maxTranscriptTurns = 200;
+
+  List<InputDevice> audioDevices = [];
+
   bool get isStreaming =>
       status == SessionStatus.connecting || status == SessionStatus.listening;
+
+  Future<void> loadAudioDevices() async {
+    try {
+      final rec = AudioRecorder();
+      final list = await rec.listInputDevices();
+      await rec.dispose();
+      audioDevices = list.where(_isUserFacingDevice).toList();
+      _ensureDefaultThemDevice();
+      notifyListeners();
+    } catch (_) {}
+  }
+
+  void _ensureDefaultThemDevice() {
+    if (config.themDeviceId.isEmpty || config.themDeviceId == '__sckit__') {
+      InputDevice? blackHole;
+      for (final d in audioDevices) {
+        final l = d.label.toLowerCase();
+        final id = d.id.toLowerCase();
+        if (l.contains('blackhole') || id.contains('blackhole')) {
+          blackHole = d;
+          break;
+        }
+      }
+      if (blackHole != null) {
+        config.themDeviceId = blackHole.id;
+      }
+    }
+  }
+
+  static bool _isUserFacingDevice(InputDevice d) {
+    final l = d.label.toLowerCase();
+    final id = d.id.toLowerCase();
+    if (l.contains('cadefaultdeviceaggregate') || id.contains('cadefaultdeviceaggregate')) return false;
+    if (l.contains('aggregate-') || id.contains('aggregate-')) return false;
+    return true;
+  }
 
   Future<void> loadConfig() async {
     config = await AppConfig.load();
@@ -139,9 +183,7 @@ class Session extends ChangeNotifier {
         token: config.deepgramToken,
         model: config.deepgramModel,
         languageHint: config.languageHint,
-        // Простой режим (устройство собеседника не выбрано): один микрофон,
-        // спикеров разделяет диаризация Deepgram (v1, nova-3).
-        diarize: config.themDeviceId.isEmpty,
+        diarize: false,
       );
       _eventSubs.add(_micStream!.events.listen(onTurnEvent));
       _eventSubs.add(_micStream!.errors.listen(onStreamError));
@@ -168,43 +210,9 @@ class Session extends ChangeNotifier {
         _micStream?.send(chunk);
       }, onError: (Object e) => onStreamError('Микрофон: $e'));
 
-      // Второй поток — голос собеседника.
-      // '__sckit__' = системный звук через ScreenCaptureKit (нативный захват,
-      // macOS 13+, без виртуальных драйверов). Иначе — выбранное устройство (напр. BlackHole).
-      if (config.themDeviceId == kSystemAudioDeviceId) {
-        try {
-          debugPrint('[THEM] init: ScreenCaptureKit (системный звук)');
-          _themStream = DeepgramStream(
-            source: Speaker.them,
-            token: config.deepgramToken,
-            model: config.deepgramModel,
-            languageHint: config.languageHint,
-          );
-          _eventSubs.add(_themStream!.events.listen(onTurnEvent));
-          _eventSubs.add(_themStream!.errors.listen(_onThemError));
-          await _themStream!.start();
-          var sckChunks = 0;
-          final sckSub = SystemAudio.stream().listen((data) {
-            if (data is! List<int>) return;
-            final chunk = Uint8List.fromList(data);
-            sckChunks++;
-            if (sckChunks % 10 == 1) {
-              var maxAmp = 0;
-              for (var i = 0; i + 1 < chunk.length; i += 2) {
-                final v = (chunk[i] | (chunk[i + 1] << 8));
-                final a = v < 0 ? -v : v;
-                if (a > maxAmp) maxAmp = a;
-              }
-              debugPrint('[AUDIO them/SCK] chunk #$sckChunks maxAmp=$maxAmp');
-            }
-            _themStream?.send(chunk);
-          }, onError: (Object e) => _onThemError('Захват звука: $e'));
-          _themAudioSub = sckSub;
-          debugPrint('[THEM/SCK] слушаю системный звук');
-        } catch (e) {
-          _onThemError('Захват звука: $e');
-        }
-      } else if (config.themDeviceId.isNotEmpty) {
+      // Второй поток — голос собеседника (BlackHole или выбранное аудиоустройство).
+      if (config.themDeviceId.isNotEmpty &&
+          config.themDeviceId != kSystemAudioDeviceId) {
         try {
           debugPrint('[THEM] init: device=${config.themDeviceId}');
           _themStream = DeepgramStream(
@@ -212,6 +220,7 @@ class Session extends ChangeNotifier {
             token: config.deepgramToken,
             model: config.deepgramModel,
             languageHint: config.languageHint,
+            diarize: false,
           );
           _eventSubs.add(_themStream!.events.listen(onTurnEvent));
           _eventSubs.add(_themStream!.errors.listen(_onThemError));
@@ -319,7 +328,24 @@ class Session extends ChangeNotifier {
             (e.transcript.isNotEmpty ? e.transcript : _interimOf(e.source))
                 .trim();
         if (text.isNotEmpty) {
-          turns.add(TranscriptTurn(speaker: e.source, text: text));
+          final newTurn = TranscriptTurn(
+            speaker: e.source,
+            text: text,
+            timestamp: e.timestamp,
+          );
+          // Вставляем реплику по временной метке для сохранения строгой хронологии
+          final insertIdx = turns.indexWhere(
+            (t) => t.timestamp.isAfter(newTurn.timestamp),
+          );
+          if (insertIdx == -1) {
+            turns.add(newTurn);
+          } else {
+            turns.insert(insertIdx, newTurn);
+          }
+          // Ограничиваем историю чата для защиты от утечек памяти и разрастания
+          if (turns.length > maxTranscriptTurns) {
+            turns.removeRange(0, turns.length - maxTranscriptTurns);
+          }
         }
         _setInterim(e.source, '');
     }
@@ -340,7 +366,9 @@ class Session extends ChangeNotifier {
 
   String _transcriptForPrompt() {
     final buf = StringBuffer();
-    final recent = turns.length > 30 ? turns.sublist(turns.length - 30) : turns;
+    final limit = config.llmContextTurns.clamp(5, 100);
+    final recent =
+        turns.length > limit ? turns.sublist(turns.length - limit) : turns;
     for (final t in recent) {
       final speakerTag = t.speaker == Speaker.me ? 'candidate' : 'interviewer';
       buf.writeln('  <turn speaker="$speakerTag">${t.text}</turn>');

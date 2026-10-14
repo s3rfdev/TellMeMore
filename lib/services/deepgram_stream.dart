@@ -19,13 +19,15 @@ class DeepgramTurnEvent {
     required this.turnIndex,
     required this.transcript,
     this.eotConfidence,
-  });
+    DateTime? timestamp,
+  }) : timestamp = timestamp ?? DateTime.now();
 
   final Speaker source;
   final TurnPhase phase;
   final int turnIndex;
   final String transcript;
   final double? eotConfidence;
+  final DateTime timestamp;
 }
 
 /// Один поток (WebSocket) к Deepgram.
@@ -56,6 +58,7 @@ class DeepgramStream {
   int? _firstSpeaker;
   String _buffer = '';
   Speaker? _bufferSpeaker;
+  DateTime? _turnStartTime;
 
   Stream<DeepgramTurnEvent> get events => _events.stream;
   Stream<String> get errors => _errors.stream;
@@ -128,6 +131,7 @@ class DeepgramStream {
     if (!isFinal) {
       // Промежуточный (незаконченный) фрагмент — показываем как interim.
       if (transcript.isNotEmpty) {
+        _turnStartTime ??= DateTime.now();
         final fullInterim =
             _buffer.isEmpty ? transcript : '$_buffer $transcript';
         _events.add(
@@ -136,6 +140,7 @@ class DeepgramStream {
             phase: TurnPhase.update,
             turnIndex: 0,
             transcript: fullInterim,
+            timestamp: _turnStartTime,
           ),
         );
       }
@@ -144,6 +149,7 @@ class DeepgramStream {
 
     // Готовый фрагмент — в буфер.
     if (transcript.isNotEmpty) {
+      _turnStartTime ??= DateTime.now();
       if (diarize) {
         final words = (alt['words'] as List?) ?? const [];
         int? spk;
@@ -163,11 +169,22 @@ class DeepgramStream {
       _buffer = _buffer.isEmpty ? transcript : '$_buffer $transcript';
     }
 
-    if (speechFinal) {
-      final text = _buffer;
+    final trimmed = _buffer.trim();
+    final isSentenceEnd = trimmed.endsWith('.') ||
+        trimmed.endsWith('!') ||
+        trimmed.endsWith('?') ||
+        trimmed.endsWith('…');
+    final isLongBuffer = trimmed.length >= 90;
+
+    // Завершаем реплику, если пришёл speech_final, либо закончилось предложение,
+    // либо буфер длинный (чтобы непрерывная речь не копилась в один огромный блок).
+    if (speechFinal || (isFinal && (isSentenceEnd || isLongBuffer))) {
+      final text = _buffer.trim();
       final sp = diarize ? (_bufferSpeaker ?? source) : source;
+      final startTime = _turnStartTime ?? DateTime.now();
       _buffer = '';
       _bufferSpeaker = null;
+      _turnStartTime = null;
       if (text.isNotEmpty) {
         debugPrint('[DG $source] END $sp "$text"');
         _events.add(
@@ -176,6 +193,7 @@ class DeepgramStream {
             phase: TurnPhase.end,
             turnIndex: 0,
             transcript: text,
+            timestamp: startTime,
           ),
         );
       }
