@@ -10,6 +10,7 @@ import 'l10n.dart';
 import 'services/config_store.dart';
 import 'services/deepgram_stream.dart';
 import 'services/history_store.dart';
+import 'services/hotkey_service.dart';
 import 'services/llm_service.dart';
 import 'services/window_service.dart';
 
@@ -684,6 +685,7 @@ ${withScreenshot ? '''
 
   @override
   Future<void> dispose() async {
+    await HotkeyService.unregisterAll();
     _saveDebounce?.cancel();
     await HistoryStore.save(turns);
     await _teardown();

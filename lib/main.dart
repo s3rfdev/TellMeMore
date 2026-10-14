@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:macos_window_utils/macos_window_utils.dart';
 
 import 'l10n.dart';
+import 'services/hotkey_service.dart';
 import 'session.dart';
 import 'ui/help_panel.dart';
 import 'ui/theme.dart';
@@ -24,6 +25,18 @@ Future<void> main() async {
   }
   session.applyTitlebar();
   await session.applyWindowSettings();
+  await HotkeyService.registerGlobalHotkeys(
+    onGetAnswer: () {
+      if (!session.helpLoading) {
+        session.getHelp();
+      }
+    },
+    onGetAnswerWithScreenshot: () {
+      if (!session.helpLoading) {
+        session.getHelpWithScreenshot();
+      }
+    },
+  );
   runApp(SobesApp(session: session));
 }
 

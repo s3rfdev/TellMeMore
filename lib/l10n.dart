@@ -18,12 +18,12 @@ const Map<String, Map<String, String>> _d = {
   'thinking': {'ru': 'Думаю…', 'en': 'Thinking…'},
   'hintPlaceholder': {
     'ru':
-        'Нажмите «Get answer» — получите короткую подсказку, что сказать дальше.',
-    'en': 'Press "Get answer" for a short hint on what to say next.',
+        'Нажмите «Get answer» (⌥1) — получите короткую подсказку, что сказать дальше.',
+    'en': 'Press "Get answer" (⌥1) for a short hint on what to say next.',
   },
   'screenshotAnswer': {
-    'ru': 'Скриншот экрана + подсказка (для задач по коду)',
-    'en': 'Screen capture + hint (for code challenges)',
+    'ru': 'Скриншот экрана + подсказка (⌥2) (для задач по коду)',
+    'en': 'Screen capture + hint (⌥2) (for code challenges)',
   },
   'chatHistoryMenu': {
     'ru': 'История чата (очистка, экспорт, импорт)',
@@ -243,5 +243,22 @@ const Map<String, Map<String, String>> _d = {
   'alwaysOnTopSub': {
     'ru': 'Окно остаётся поверх браузера и других приложений',
     'en': 'Keeps window above browser and other apps',
+  },
+  'sectionHotkeys': {
+    'ru': 'ГОРЯЧИЕ КЛАВИШИ (MAC)',
+    'en': 'GLOBAL SHORTCUTS (MAC)',
+  },
+  'hotkeyGetAnswer': {'ru': 'Получить ответ', 'en': 'Get answer'},
+  'hotkeyGetAnswerDesc': {
+    'ru': 'Работает глобально, даже когда окно не в фокусе',
+    'en': 'Works globally even when app is in background',
+  },
+  'hotkeyScreenshot': {
+    'ru': 'Ответ со скриншотом экрана',
+    'en': 'Answer with screen capture',
+  },
+  'hotkeyScreenshotDesc': {
+    'ru': 'Скриншот экрана + код задачи в LLM',
+    'en': 'Screen capture + code challenge to LLM',
   },
 };

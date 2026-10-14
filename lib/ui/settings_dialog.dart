@@ -536,7 +536,20 @@ class _SettingsDialogState extends State<SettingsDialog> {
             },
             subtitle: S.t('alwaysOnTopSub'),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
+          _section(S.t('sectionHotkeys')),
+          _hotkeyRow(
+            '⌥ 1',
+            S.t('hotkeyGetAnswer'),
+            S.t('hotkeyGetAnswerDesc'),
+          ),
+          const SizedBox(height: 6),
+          _hotkeyRow(
+            '⌥ 2',
+            S.t('hotkeyScreenshot'),
+            S.t('hotkeyScreenshotDesc'),
+          ),
+          const SizedBox(height: 12),
           _section(S.t('sectionText')),
           _fontSizeRow(),
           const SizedBox(height: 8),
@@ -1275,6 +1288,58 @@ class _SettingsDialogState extends State<SettingsDialog> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _hotkeyRow(String keyCombo, String title, String subtitle) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: Palette.panel,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Palette.border),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: Palette.bg,
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: Palette.border),
+            ),
+            child: Text(
+              keyCombo,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: Palette.green,
+                fontFamily: 'monospace',
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Palette.pri,
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: const TextStyle(fontSize: 11, color: Palette.faint),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
