@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:macos_window_utils/macos_window_utils.dart';
 import 'package:record/record.dart';
 
@@ -523,6 +524,8 @@ ${withScreenshot ? '''
         prompt: _buildPrompt(withScreenshot: true),
         imageBytes: imageBytes,
       );
+    } on PlatformException catch (e) {
+      helpError = e.message ?? e.code;
     } catch (e) {
       helpError = '$e';
     }

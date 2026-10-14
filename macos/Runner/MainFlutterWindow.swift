@@ -53,26 +53,36 @@ class MainFlutterWindow: NSWindow {
         self.level = onTop ? .floating : .normal
         result(nil)
       case "captureScreen":
-        let wasVisible = self.isVisible
+        if #available(macOS 10.15, *) {
+          if !CGPreflightScreenCaptureAccess() {
+            _ = CGRequestScreenCaptureAccess()
+            if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") {
+              NSWorkspace.shared.open(url)
+            }
+            result(FlutterError(
+              code: "PERMISSION_DENIED",
+              message: "Требуется разрешение «Запись экрана». Системные настройки открыты — включите тумблер для TellMeMore и повторите попытку.",
+              details: nil
+            ))
+            return
+          }
+        }
+        let originalAlpha = self.alphaValue
         let originalSharing = self.sharingType
         self.sharingType = .none
-        if wasVisible {
-          self.orderOut(nil)
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
+        self.alphaValue = 0.0
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.06) { [weak self] in
           guard let self = self else {
             result(FlutterError(code: "DEALLOCATED", message: "Window deallocated", details: nil))
             return
           }
           defer {
             self.sharingType = originalSharing
-            if wasVisible {
-              self.orderFront(nil)
-            }
+            self.alphaValue = originalAlpha
           }
           let displayID = (self.screen?.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber)?.uint32Value ?? CGMainDisplayID()
           guard let image = CGDisplayCreateImage(displayID) else {
-            result(FlutterError(code: "CAPTURE_FAILED", message: "Failed to capture display", details: nil))
+            result(FlutterError(code: "CAPTURE_FAILED", message: "Не удалось захватить экран. Проверьте разрешение «Запись экрана» в настройках macOS.", details: nil))
             return
           }
           let rep = NSBitmapImageRep(cgImage: image)
@@ -82,6 +92,11 @@ class MainFlutterWindow: NSWindow {
           }
           result(FlutterStandardTypedData(bytes: jpegData))
         }
+      case "openScreenCaptureSettings":
+        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") {
+          NSWorkspace.shared.open(url)
+        }
+        result(nil)
       default:
         result(FlutterMethodNotImplemented)
       }

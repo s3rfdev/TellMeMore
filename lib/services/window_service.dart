@@ -33,14 +33,16 @@ class WindowService {
   }
 
   /// Сделать скриншот экрана без окна TellMeMore.
-  /// Возвращает JPEG байты (Uint8List) или null при ошибке.
+  /// Возвращает JPEG байты (Uint8List).
   static Future<Uint8List?> captureScreen() async {
+    return _channel.invokeMethod<Uint8List>('captureScreen');
+  }
+
+  /// Открыть раздел настроек macOS: Запись экрана
+  static Future<void> openScreenCaptureSettings() async {
     try {
-      final bytes = await _channel.invokeMethod<Uint8List>('captureScreen');
-      return bytes;
-    } catch (_) {
-      return null;
-    }
+      await _channel.invokeMethod('openScreenCaptureSettings');
+    } catch (_) {}
   }
 }
 

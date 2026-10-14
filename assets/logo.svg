@@ -12,23 +12,7 @@
       <stop offset="100%" stop-color="#00ff9d" stop-opacity="0.6" />
     </linearGradient>
 
-    <!-- Neon Glow Filters -->
-    <filter id="neonGlow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="7" result="blur" />
-      <feMerge>
-        <feMergeNode in="blur" />
-        <feMergeNode in="blur" />
-        <feMergeNode in="SourceGraphic" />
-      </feMerge>
-    </filter>
 
-    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="3" result="blur" />
-      <feMerge>
-        <feMergeNode in="blur" />
-        <feMergeNode in="SourceGraphic" />
-      </feMerge>
-    </filter>
 
     <!-- Glass Gradients -->
     <linearGradient id="glassLeft" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -50,13 +34,13 @@
   <rect x="16" y="16" width="480" height="480" rx="112" fill="url(#bgGlow)" stroke="url(#borderGrad)" stroke-width="4" />
 
   <!-- Ambient Internal Glow -->
-  <circle cx="256" cy="230" r="140" fill="#00ff9d" opacity="0.08" filter="url(#neonGlow)" />
+  <circle cx="256" cy="230" r="140" fill="#00ff9d" opacity="0.08" />
 
   <!-- 1. Right Speech Bubble: Interlocutor / Sherlock Profile -->
   <g transform="translate(40, -10)">
     <!-- Bubble Body -->
     <path d="M 220 150 C 220 110, 370 110, 370 150 C 370 210, 370 230, 340 260 L 350 295 L 300 270 C 230 270, 220 220, 220 150 Z" 
-          fill="url(#glassRight)" stroke="#00ff9d" stroke-width="3" stroke-opacity="0.6" filter="url(#softGlow)"/>
+          fill="url(#glassRight)" stroke="#00ff9d" stroke-width="3" stroke-opacity="0.6"/>
     
     <!-- Target / Profile Scan Matrix (Sherlock / AI Scan) -->
     <circle cx="295" cy="180" r="28" fill="none" stroke="#00ff9d" stroke-width="2" stroke-opacity="0.4" stroke-dasharray="4 3"/>
@@ -75,7 +59,7 @@
   <g>
     <!-- Bubble Body -->
     <path d="M 90 220 C 90 145, 270 145, 270 220 C 270 295, 250 310, 195 310 L 140 345 L 150 310 C 105 305, 90 270, 90 220 Z" 
-          fill="url(#glassLeft)" stroke="#00ffa3" stroke-width="3.5" filter="url(#neonGlow)"/>
+          fill="url(#glassLeft)" stroke="#00ffa3" stroke-width="3.5"/>
 
     <!-- TMM Brand Wordmark -->
     <text x="180" y="215" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" 
@@ -103,7 +87,7 @@
     <rect x="0" y="0" width="240" height="48" rx="24" fill="#041a12" stroke="#00ff9d" stroke-width="2.5" stroke-opacity="0.9" />
     
     <!-- Neon Pulsing Core -->
-    <circle cx="34" cy="24" r="7" fill="#00ff9d" filter="url(#neonGlow)" />
+    <circle cx="34" cy="24" r="7" fill="#00ff9d" />
     <circle cx="34" cy="24" r="3.5" fill="#ffffff" />
     
     <!-- Button Label Text -->
