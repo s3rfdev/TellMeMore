@@ -273,24 +273,20 @@ class Session extends ChangeNotifier {
     try {
       WindowManipulator.disableShadow();
       switch (config.titlebarMode) {
-        case 'hidden':
-          WindowManipulator.makeTitlebarTransparent();
-          WindowManipulator.hideTitle();
-          WindowManipulator.hideCloseButton();
-          WindowManipulator.hideMiniaturizeButton();
-          WindowManipulator.hideZoomButton();
         case 'opaque':
           WindowManipulator.makeTitlebarOpaque();
           WindowManipulator.showTitle();
           WindowManipulator.showCloseButton();
           WindowManipulator.showMiniaturizeButton();
           WindowManipulator.showZoomButton();
+        case 'hidden':
+        case 'transparent':
         default:
           WindowManipulator.makeTitlebarTransparent();
           WindowManipulator.hideTitle();
-          WindowManipulator.showCloseButton();
-          WindowManipulator.showMiniaturizeButton();
-          WindowManipulator.showZoomButton();
+          WindowManipulator.hideCloseButton();
+          WindowManipulator.hideMiniaturizeButton();
+          WindowManipulator.hideZoomButton();
       }
     } catch (_) {}
   }

@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:macos_window_utils/macos_window_utils.dart';
 
 import '../l10n.dart';
@@ -14,9 +13,7 @@ import 'theme.dart';
 
 /// Виджет для плавного перетаскивания окна macOS при клике и движении мыши.
 class _WindowDragArea extends StatelessWidget {
-  const _WindowDragArea({this.child});
-
-  final Widget? child;
+  const _WindowDragArea();
 
   static void _drag() {
     WindowService.drag();
@@ -27,7 +24,6 @@ class _WindowDragArea extends StatelessWidget {
     return Listener(
       behavior: HitTestBehavior.translucent,
       onPointerDown: (_) => _drag(),
-      child: child,
     );
   }
 }
@@ -73,90 +69,27 @@ class HelpPanel extends StatelessWidget {
           // Вся фоновая область шапки — нативное перетаскивание окна
           const Positioned.fill(child: _WindowDragArea()),
 
-          // Левая часть: кнопки окна (если скрыта нативная шапка), логотип, заголовок, статус
+          // Левая часть: кнопка закрытия, сворачивания, меню чата (...), плашка Gemini
           Positioned(
             left: 0,
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (session.config.titlebarMode == 'hidden') ...[
-                  _winButton(
-                    icon: Icons.close,
-                    tooltip: S.t('winClose'),
-                    onTap: () => WindowManipulator.closeWindow(),
-                  ),
-                  const SizedBox(width: 6),
-                  _winButton(
-                    icon: Icons.remove,
-                    tooltip: S.t('winMinimize'),
-                    onTap: () => WindowManipulator.miniaturizeWindow(),
-                  ),
-                  const SizedBox(width: 10),
-                ],
-                _WindowDragArea(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
-                        child: SvgPicture.asset(
-                          'assets/logo.svg',
-                          width: 16,
-                          height: 16,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        S.t('helpTitle'),
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 1.1,
-                          color: Palette.sec,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Tooltip(
-                        message:
-                            '${p.label} · ${session.config.modelFor(p)} · ${hasKey ? S.t('keySet') : S.t('keyMissing')}',
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 7,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(999),
-                            border: Border.all(color: Palette.border),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Container(
-                                width: 5,
-                                height: 5,
-                                decoration: BoxDecoration(
-                                  color: hasKey ? Palette.green : Palette.red,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                p.shortLabel,
-                                style: const TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                  color: Palette.sec,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                _winButton(
+                  icon: Icons.close,
+                  tooltip: S.t('winClose'),
+                  onTap: () => WindowManipulator.closeWindow(),
                 ),
                 const SizedBox(width: 6),
+                _winButton(
+                  icon: Icons.remove,
+                  tooltip: S.t('winMinimize'),
+                  onTap: () => WindowManipulator.miniaturizeWindow(),
+                ),
+                const SizedBox(width: 8),
                 _chatMenuButton(context),
+                const SizedBox(width: 8),
+                _providerPill(p, hasKey),
               ],
             ),
           ),
@@ -197,6 +130,43 @@ class HelpPanel extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _providerPill(LlmProvider p, bool hasKey) {
+    return Tooltip(
+      message:
+          '${p.label} · ${session.config.modelFor(p)} · ${hasKey ? S.t('keySet') : S.t('keyMissing')}',
+      child: Container(
+        height: 20,
+        padding: const EdgeInsets.symmetric(horizontal: 7),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: Palette.border),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 5,
+              height: 5,
+              decoration: BoxDecoration(
+                color: hasKey ? Palette.green : Palette.red,
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Text(
+              p.shortLabel,
+              style: const TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: Palette.sec,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
