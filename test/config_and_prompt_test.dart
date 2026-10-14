@@ -24,10 +24,10 @@ void main() {
 
     test('llmContextTurns default, clamping and serialization', () {
       final cfg = AppConfig();
-      expect(cfg.llmContextTurns, equals(30));
+      expect(cfg.llmContextTurns, equals(10));
 
       final json = cfg.toJson();
-      expect(json['llmContextTurns'], equals(30));
+      expect(json['llmContextTurns'], equals(10));
 
       final parsed = AppConfig.fromJson({
         'llmContextTurns': 150,
@@ -42,7 +42,7 @@ void main() {
       final cloned = cfg.clone();
       cloned.llmContextTurns = 45;
       expect(cloned.llmContextTurns, equals(45));
-      expect(cfg.llmContextTurns, equals(30));
+      expect(cfg.llmContextTurns, equals(10));
     });
 
     test('clone preserves turnSpacing, hideFromScreenShare and alwaysOnTop', () {
@@ -293,13 +293,13 @@ void main() {
     test('AppConfig auto-compression defaults, clamping and serialization', () {
       final cfg = AppConfig();
       expect(cfg.autoCompressContext, isTrue);
-      expect(cfg.compressThresholdChars, equals(3500));
-      expect(cfg.compressKeepRecentTurns, equals(12));
+      expect(cfg.compressThresholdChars, equals(2500));
+      expect(cfg.compressKeepRecentTurns, equals(10));
 
       final json = cfg.toJson();
       expect(json['autoCompressContext'], isTrue);
-      expect(json['compressThresholdChars'], equals(3500));
-      expect(json['compressKeepRecentTurns'], equals(12));
+      expect(json['compressThresholdChars'], equals(2500));
+      expect(json['compressKeepRecentTurns'], equals(10));
 
       // Test clamping
       final clamped = AppConfig.fromJson({

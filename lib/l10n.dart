@@ -148,8 +148,8 @@ const Map<String, Map<String, String>> _d = {
     'en': 'Recent dialogue turns sent to LLM',
   },
   'llmContextTurnsHint': {
-    'ru': 'Профиль кандидата, собеседника и цели всегда передаются целиком.',
-    'en': 'Candidate profile, interviewer profile and goals are always sent in full.',
+    'ru': 'Рекомендуется 8–10 (4–5 раундов вопрос-ответ). Они всегда передаются дословно.',
+    'en': 'Recommended 8–10 (4–5 Q&A rounds). These are always sent verbatim.',
   },
   'autoCompressContext': {
     'ru': 'Автокомпрессия длинного диалога',
@@ -164,8 +164,8 @@ const Map<String, Map<String, String>> _d = {
     'en': 'Compression text volume threshold: {0} chars',
   },
   'compressThresholdHint': {
-    'ru': '~3500 символов — это примерно 10–15 минут активной речи',
-    'en': '~3500 characters is roughly 10–15 minutes of dialogue',
+    'ru': '~2500 символов — это 6–10 содержательных реплик старого диалога',
+    'en': '~2500 characters is roughly 6–10 substantive turns of older dialogue',
   },
   'compressKeepRecent': {
     'ru': 'Хранить свежих реплик без сжатия: {0}',

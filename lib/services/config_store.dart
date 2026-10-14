@@ -49,10 +49,10 @@ class AppConfig {
   static const defaultDeepgramToken = '';
   static const defaultDeepgramModel = 'flux-general-multi';
   static const defaultLanguageHint = 'ru';
-  static const defaultLlmContextTurns = 30;
+  static const defaultLlmContextTurns = 10;
   static const defaultAutoCompressContext = true;
-  static const defaultCompressThresholdChars = 3500;
-  static const defaultCompressKeepRecentTurns = 12;
+  static const defaultCompressThresholdChars = 2500;
+  static const defaultCompressKeepRecentTurns = 10;
   static const defaultGoals =
       'Пройти собеседование успешно и получить оффер: '
       'отвечать уверенно, структурированно (сначала суть, потом детали) и по делу; '

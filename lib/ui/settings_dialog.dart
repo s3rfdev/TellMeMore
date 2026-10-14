@@ -317,12 +317,13 @@ class _SettingsDialogState extends State<SettingsDialog> {
         SliderTheme(
           data: _sliderTheme(context),
           child: Slider(
-            value: c.llmContextTurns.toDouble(),
-            min: 5,
-            max: 100,
-            divisions: 19,
+            value: c.llmContextTurns.toDouble().clamp(4, 50),
+            min: 4,
+            max: 50,
+            divisions: 23,
             onChanged: (v) {
               c.llmContextTurns = v.round();
+              c.compressKeepRecentTurns = c.llmContextTurns;
               _touch();
             },
           ),
@@ -389,43 +390,6 @@ class _SettingsDialogState extends State<SettingsDialog> {
           ),
           Text(
             S.t('compressThresholdHint'),
-            style: const TextStyle(fontSize: 10, color: Palette.sec),
-          ),
-          const SizedBox(height: 10),
-          // Количество свежих реплик
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  S.t('compressKeepRecent', '${c.compressKeepRecentTurns}'),
-                  style: const TextStyle(fontSize: 12, color: Palette.sec),
-                ),
-              ),
-              Text(
-                '${c.compressKeepRecentTurns}',
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: Palette.pri,
-                ),
-              ),
-            ],
-          ),
-          SliderTheme(
-            data: _sliderTheme(context),
-            child: Slider(
-              value: c.compressKeepRecentTurns.toDouble().clamp(4, 40),
-              min: 4,
-              max: 40,
-              divisions: 36,
-              onChanged: (v) {
-                c.compressKeepRecentTurns = v.round();
-                _touch();
-              },
-            ),
-          ),
-          Text(
-            S.t('compressKeepRecentHint'),
             style: const TextStyle(fontSize: 10, color: Palette.sec),
           ),
           const SizedBox(height: 10),
