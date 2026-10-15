@@ -351,39 +351,40 @@
             </div>
           </div>
 
-          <!-- Mockup Frame -->
+          <!-- Interactive Real Screenshot Gallery -->
           <div class="product-mockup-side">
-            <div class="cyber-mockup-frame">
+            <div class="cyber-mockup-frame product-gallery-frame" id="tmm-gallery-frame">
               <div class="mockup-header-bar">
                 <div class="mockup-dots">
                   <span class="mockup-dot"></span>
                   <span class="mockup-dot"></span>
                   <span class="mockup-dot"></span>
                 </div>
-                <span class="mockup-title">TellMeMore • Live Voice HUD (⌥1 / ⌥2)</span>
+                <div class="gallery-tabs-nav" role="tablist">
+                  <button class="gallery-tab-btn active" data-gallery="tmm" data-img="assets/screenshots/tt_main.png" data-desc-key="tmmTab1Desc" role="tab" aria-selected="true">
+                    ⚡ <span data-i18n="tmmTab1">Live HUD</span>
+                  </button>
+                  <button class="gallery-tab-btn" data-gallery="tmm" data-img="assets/screenshots/tt_context.png" data-desc-key="tmmTab2Desc" role="tab" aria-selected="false">
+                    👤 <span data-i18n="tmmTab2">Профиль</span>
+                  </button>
+                  <button class="gallery-tab-btn" data-gallery="tmm" data-img="assets/screenshots/tt_llm.png" data-desc-key="tmmTab3Desc" role="tab" aria-selected="false">
+                    🧠 <span data-i18n="tmmTab3">LLM &amp; Память</span>
+                  </button>
+                  <button class="gallery-tab-btn" data-gallery="tmm" data-img="assets/screenshots/tt_ui.png" data-desc-key="tmmTab4Desc" role="tab" aria-selected="false">
+                    🔒 <span data-i18n="tmmTab4">Скрытность</span>
+                  </button>
+                </div>
               </div>
-              <div class="mockup-body-area">
-                <div style="background: var(--accent-blue-subtle); border: 1px solid var(--border-blue); border-radius: var(--radius-sm); padding: 14px; margin-bottom: 14px;">
-                  <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.72rem; font-weight: 600; color: var(--accent-blue);">
-                    <span data-i18n="voiceWhispererLabel">ПОДСКАЗКА СУФЛЁРА (ОТ ПЕРВОГО ЛИЦА)</span>
-                    <span class="mono">240ms</span>
-                  </div>
-                  <p style="font-size: 0.85rem; color: var(--text-title); line-height: 1.45;">
-                    «Да, в моём опыте с микросервисами на Go мы вынесли кэширование в Redis Cluster с LRU, что сократило p99 latency с 450мс до 12мс при 20k RPS».
-                  </p>
+              <div class="gallery-viewport" id="tmm-viewport" data-lightbox-src="assets/screenshots/tt_main.png" title="Нажмите для увеличения">
+                <img id="tmm-gallery-img" src="assets/screenshots/tt_main.png" alt="TellMeMore macOS Live Prompter" class="gallery-screenshot-img">
+                <div class="gallery-zoom-hint">
+                  <span>🔍 <span data-i18n="zoomHint">Нажмите для увеличения</span></span>
                 </div>
-
-                <div style="background: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 14px;">
-                  <div class="mono" style="font-size: 0.68rem; color: var(--text-muted); margin-bottom: 4px;" data-i18n="voiceInterviewerLabel">Интервьюер (Tech Lead):</div>
-                  <p style="font-size: 0.82rem; color: var(--text-body);" data-i18n="voiceInterviewerMsg">
-                    «Как вы решали проблему деградации базы данных при резких всплесках трафика на прошлом проекте?»
-                  </p>
-                </div>
-
-                <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--text-muted); padding-top: 8px; border-top: 1px solid var(--border-subtle);">
-                  <span class="mono" style="color: var(--accent-blue);">● Слушаю эфир (Deepgram Flux)</span>
-                  <span class="mono">⌥1 Подсказка • ⌥2 Код</span>
-                </div>
+              </div>
+              <div class="gallery-footer-bar">
+                <span id="tmm-gallery-desc" class="gallery-desc-text" data-i18n="tmmTab1Desc">
+                  Сверхбыстрый суфлёр поверх окон с ответом от первого лица и разделением спикеров
+                </span>
               </div>
             </div>
           </div>
@@ -424,8 +425,8 @@
             </ul>
 
             <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
-              <a href="https://github.com/s3rfdev" target="_blank" rel="noopener noreferrer" class="btn-pill-ghost">
-                <span data-i18n="tgBtnFollow">Следить за разработкой на GitHub →</span>
+              <a href="https://github.com/s3rfdev/TellMeMore_TG" target="_blank" rel="noopener noreferrer" class="btn-pill-ghost">
+                <span data-i18n="tgBtnFollow">Смотреть репозиторий на GitHub →</span>
               </a>
               <span class="mono" style="font-size: 0.8rem; color: var(--text-muted);">
                 Free &amp; Open Source
@@ -433,34 +434,40 @@
             </div>
           </div>
 
-          <!-- Mockup Frame -->
+          <!-- Interactive Real Screenshot Gallery -->
           <div class="product-mockup-side">
-            <div class="cyber-mockup-frame">
+            <div class="cyber-mockup-frame product-gallery-frame" id="tg-gallery-frame">
               <div class="mockup-header-bar">
                 <div class="mockup-dots">
                   <span class="mockup-dot"></span>
                   <span class="mockup-dot"></span>
                   <span class="mockup-dot"></span>
                 </div>
-                <span class="mockup-title">Telegram Client + TellMeMore Profiler</span>
+                <div class="gallery-tabs-nav" role="tablist">
+                  <button class="gallery-tab-btn active" data-gallery="tg" data-img="assets/screenshots/tg_overview.jpg" data-desc-key="tgTab1Desc" role="tab" aria-selected="true">
+                    💬 <span data-i18n="tgTab1">Мессенджер</span>
+                  </button>
+                  <button class="gallery-tab-btn" data-gallery="tg" data-img="assets/screenshots/tg_copilot.jpg" data-desc-key="tgTab2Desc" role="tab" aria-selected="false">
+                    🤖 <span data-i18n="tgTab2">AI Copilot</span>
+                  </button>
+                  <button class="gallery-tab-btn" data-gallery="tg" data-img="assets/screenshots/tg_sherlock.jpg" data-desc-key="tgTab3Desc" role="tab" aria-selected="false">
+                    🕵️ <span data-i18n="tgTab3">Sherlock</span>
+                  </button>
+                  <button class="gallery-tab-btn" data-gallery="tg" data-img="assets/screenshots/tg_dossier.jpg" data-desc-key="tgTab4Desc" role="tab" aria-selected="false">
+                    📋 <span data-i18n="tgTab4">CRM Досье</span>
+                  </button>
+                </div>
               </div>
-              <div class="mockup-body-area">
-                <div style="background: var(--bg-input); border-radius: 12px; padding: 10px 14px; margin-bottom: 10px; max-width: 85%;">
-                  <div class="mono" style="font-size: 0.68rem; color: var(--accent-blue); margin-bottom: 2px;">Александр (Заказчик)</div>
-                  <div style="font-size: 0.8rem; color: var(--text-body);">«Мы рассчитывали на более сжатые сроки. Другие команды делают это за неделю, а вы тянете...»</div>
+              <div class="gallery-viewport" id="tg-viewport" data-lightbox-src="assets/screenshots/tg_overview.jpg" title="Нажмите для увеличения">
+                <img id="tg-gallery-img" src="assets/screenshots/tg_overview.jpg" alt="TellMeMore TG Client" class="gallery-screenshot-img">
+                <div class="gallery-zoom-hint">
+                  <span>🔍 <span data-i18n="zoomHint">Нажмите для увеличения</span></span>
                 </div>
-
-                <div style="background: var(--accent-blue-subtle); border: 1px solid var(--border-blue); border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; max-width: 90%; margin-left: auto;">
-                  <div class="mono" style="font-size: 0.68rem; color: var(--accent-blue); margin-bottom: 2px;">Вы (с тактической подсказкой ИИ)</div>
-                  <div style="font-size: 0.8rem; color: var(--text-title);">«Понимаю ваше желание ускориться. Неделя возможна только при отказе от тестов, что создаст риск падения прод-базы. Фиксируем это?»</div>
-                </div>
-
-                <div style="background: var(--bg-card-inner); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px;">
-                  <div class="mono" style="font-size: 0.68rem; font-weight: 700; color: var(--accent-blue); margin-bottom: 4px;">РАДАР МАНИПУЛЯЦИЙ</div>
-                  <div style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.4;">
-                    <strong>Триггер:</strong> Попытка сбить цену и сроки через сравнение с конкурентами. Совет: вернуть ответственность за риски заказчику.
-                  </div>
-                </div>
+              </div>
+              <div class="gallery-footer-bar">
+                <span id="tg-gallery-desc" class="gallery-desc-text" data-i18n="tgTab1Desc">
+                  Полнофункциональный клиент Telegram со встроенной панелью быстрых ИИ-действий
+                </span>
               </div>
             </div>
           </div>
@@ -631,6 +638,15 @@
       </div>
     </div>
   </footer>
+
+  <!-- ==================== IMAGE LIGHTBOX MODAL ==================== -->
+  <div id="image-lightbox" class="image-lightbox-overlay" aria-hidden="true">
+    <div class="lightbox-dialog">
+      <button class="lightbox-close-btn" id="lightbox-close" aria-label="Закрыть">✕</button>
+      <img id="lightbox-img" src="" alt="Enlarged screenshot" class="lightbox-img">
+      <div id="lightbox-caption" class="lightbox-caption"></div>
+    </div>
+  </div>
 
   <script src="app.js"></script>
 </body>

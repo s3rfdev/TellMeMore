@@ -96,7 +96,24 @@
       q3Desc: 'Интеграция ИИ-помощника для закрытия сделок, клиентских переговоров и холодных продаж в Facebook Messenger на смартфонах и ПК.',
       footerTagline: 'Создано для того, чтобы убрать шум и всегда добиваться поставленных целей.',
       footerRepo: 'GitHub Репозиторий',
-      footerProfile: 'Профиль разработчика'
+      footerProfile: 'Профиль разработчика',
+      tmmTab1: 'Live HUD',
+      tmmTab1Desc: 'Сверхбыстрый суфлёр поверх окон с подсказками от первого лица и разделением спикеров',
+      tmmTab2: 'Профиль',
+      tmmTab2Desc: 'Заполнение резюме, заметки об интервьюере и формулирование целей встречи',
+      tmmTab3: 'LLM & Память',
+      tmmTab3Desc: 'Выбор Gemini / Claude, скользящее окно и умное сжатие истории диалога',
+      tmmTab4: 'Скрытность',
+      tmmTab4Desc: '100% невидимость в Zoom/Meet, прозрачность 0–100% и хоткеи ⌥1 / ⌥2',
+      tgTab1: 'Мессенджер',
+      tgTab1Desc: 'Полнофункциональный клиент Telegram с панелью быстрых ИИ-действий (автоответ, Copilot)',
+      tgTab2: 'AI Copilot',
+      tgTab2Desc: 'Персональный рабочий диалог с ассистентом, радар манипуляций и анализ мотивов',
+      tgTab3: 'Sherlock',
+      tgTab3Desc: 'Глубинный психологический аудит, детекция ловушек для эго и выработка тактики ответа',
+      tgTab4: 'CRM Досье',
+      tgTab4Desc: 'Психотип контакта, Tone of Voice, цели коммуникации и реестр ключевых договоренностей',
+      zoomHint: 'Нажмите для увеличения'
     },
     en: {
       navProducts: 'Products',
@@ -185,7 +202,24 @@
       q3Desc: 'AI deal-closer and sales negotiation advisor integrated into Facebook Messenger across mobile and desktop.',
       footerTagline: 'Engineered to eliminate noise and always achieve your target.',
       footerRepo: 'GitHub Repository',
-      footerProfile: 'Developer Profile'
+      footerProfile: 'Developer Profile',
+      tmmTab1: 'Live HUD',
+      tmmTab1Desc: 'Ultra-low latency floating HUD with first-person interview prompts and dual-stream transcription',
+      tmmTab2: 'Profile',
+      tmmTab2Desc: 'Candidate resume context, target company intel, and strategic evaluation goals',
+      tmmTab3: 'LLM & Memory',
+      tmmTab3Desc: 'Multi-LLM engine (Gemini/Claude), sliding dialogue window, and auto-compression',
+      tmmTab4: 'Stealth & UI',
+      tmmTab4Desc: '100% Zoom/Meet stealth mode, window transparency (0–100%), and global hotkeys ⌥1 / ⌥2',
+      tgTab1: 'Messenger',
+      tgTab1Desc: 'Full-featured Telegram client with quick AI actions bar (Auto-reply, Copilot chat)',
+      tgTab2: 'AI Copilot',
+      tgTab2Desc: 'Dedicated contact AI assistant workspace, manipulation radar, and tactical prompts',
+      tgTab3: 'Sherlock',
+      tgTab3Desc: 'Deep psychological breakdown, ego trap detection, and strategic negotiation tactics',
+      tgTab4: 'CRM Dossier',
+      tgTab4Desc: 'Contact psychotype map, Tone of Voice selector, goals, and agreed terms registry',
+      zoomHint: 'Click to expand'
     }
   };
 
@@ -306,6 +340,108 @@
     });
   }
 
+  // ==================== PRODUCT SCREENSHOT GALLERIES ====================
+  function initProductGalleries() {
+    const tabBtns = document.querySelectorAll('.gallery-tab-btn');
+
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const galleryName = btn.getAttribute('data-gallery');
+        const targetImgSrc = btn.getAttribute('data-img');
+        const descKey = btn.getAttribute('data-desc-key');
+
+        // Deactivate siblings in this gallery
+        document.querySelectorAll(`.gallery-tab-btn[data-gallery="${galleryName}"]`).forEach(b => {
+          b.classList.remove('active');
+          b.setAttribute('aria-selected', 'false');
+        });
+        btn.classList.add('active');
+        btn.setAttribute('aria-selected', 'true');
+
+        // Target image & container
+        const imgEl = document.getElementById(`${galleryName}-gallery-img`);
+        const descEl = document.getElementById(`${galleryName}-gallery-desc`);
+        const viewportEl = document.getElementById(`${galleryName}-viewport`);
+
+        if (imgEl && targetImgSrc) {
+          imgEl.style.opacity = '0.25';
+          setTimeout(() => {
+            imgEl.src = targetImgSrc;
+            imgEl.style.opacity = '1';
+          }, 140);
+        }
+
+        if (viewportEl && targetImgSrc) {
+          viewportEl.setAttribute('data-lightbox-src', targetImgSrc);
+        }
+
+        if (descEl && descKey) {
+          descEl.setAttribute('data-i18n', descKey);
+          if (translations[currentLang] && translations[currentLang][descKey]) {
+            descEl.textContent = translations[currentLang][descKey];
+          }
+        }
+      });
+    });
+  }
+
+  // ==================== LIGHTBOX MODAL ====================
+  function initLightbox() {
+    const lightbox = document.getElementById('image-lightbox');
+    const lightboxImg = document.getElementById('lightbox-img');
+    const lightboxCaption = document.getElementById('lightbox-caption');
+    const closeBtn = document.getElementById('lightbox-close');
+
+    if (!lightbox || !lightboxImg) return;
+
+    function openLightbox(src, caption) {
+      lightboxImg.src = src;
+      if (lightboxCaption) {
+        lightboxCaption.textContent = caption || '';
+      }
+      lightbox.classList.add('active');
+      lightbox.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeLightbox() {
+      lightbox.classList.remove('active');
+      lightbox.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+      setTimeout(() => {
+        lightboxImg.src = '';
+      }, 250);
+    }
+
+    document.querySelectorAll('.gallery-viewport').forEach(vp => {
+      vp.addEventListener('click', () => {
+        const src = vp.getAttribute('data-lightbox-src');
+        const gallery = vp.id && vp.id.includes('tmm') ? 'tmm' : 'tg';
+        const descEl = document.getElementById(`${gallery}-gallery-desc`);
+        const caption = descEl ? descEl.textContent.trim() : '';
+        if (src) {
+          openLightbox(src, caption);
+        }
+      });
+    });
+
+    if (closeBtn) {
+      closeBtn.addEventListener('click', closeLightbox);
+    }
+
+    lightbox.addEventListener('click', (e) => {
+      if (e.target === lightbox) {
+        closeLightbox();
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && lightbox.classList.contains('active')) {
+        closeLightbox();
+      }
+    });
+  }
+
   // ==================== INITIALIZATION ====================
   document.addEventListener('DOMContentLoaded', () => {
     // 1. Language Setup
@@ -332,8 +468,10 @@
       });
     }
 
-    // 3. Tab Switcher
+    // 3. Tab Switchers
     initInspectorTabs();
+    initProductGalleries();
+    initLightbox();
 
     // 4. Smooth Anchor Scrolling
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {

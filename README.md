@@ -1,6 +1,10 @@
 # TellMeMore — Real-Time AI Interview Co-Pilot & Teleprompter
 
 <p align="center">
+  <a href="README.md"><b>English</b></a> • <a href="README_RU.md"><b>Русский</b></a>
+</p>
+
+<p align="center">
   <img src="assets/screenshots/main.png" alt="TellMeMore Main Window" width="880">
 </p>
 
@@ -13,7 +17,7 @@
   <a href="https://github.com/s3rfdev/TellMeMore/releases"><img src="https://img.shields.io/github/v/release/s3rfdev/TellMeMore?color=2FBF71&label=Release" alt="Release"></a>
   <img src="https://img.shields.io/badge/Platform-macOS%2013%2B-blue?logo=apple" alt="macOS 13+">
   <img src="https://img.shields.io/badge/Flutter-3.29%2B-02569B?logo=flutter" alt="Flutter">
-  <img src="https://img.shields.io/badge/STT-Deepgram%20Nova--3-green" alt="Deepgram Nova-3">
+  <img src="https://img.shields.io/badge/STT-Deepgram%20Nova--3%20%7C%20Flux-green" alt="Deepgram STT">
   <img src="https://img.shields.io/badge/LLMs-Gemini%20%7C%20Claude%20%7C%20OpenAI%20%7C%20GLM-orange" alt="LLMs">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-lightgrey" alt="MIT License"></a>
 </p>
@@ -27,8 +31,9 @@ Job interviews are stressful. Even experienced engineers freeze under pressure, 
 **TellMeMore** acts as your personal, invisible co-pilot:
 1. **Listens in real time** to both your microphone and your interviewer's voice via independent audio streams.
 2. **Maintains a chronological live transcript** with instant speaker identification ("Me" vs. "Interviewer").
-3. **Generates targeted, high-impact suggestions** on demand (`Get answer`), structured around your resume, the interviewer's background, and your target interview goals.
-4. **Completely invisible to screen sharing** (`NSWindow.SharingType.none`): even if you share your entire desktop in Zoom, Google Meet, Microsoft Teams, or Slack, TellMeMore remains invisible to participants.
+3. **Generates targeted, first-person answers** on demand (`Get answer`), structured around your resume, the interviewer's background, and your target interview goals.
+4. **Captures screen code challenges** (`⌥ 2`): snaps code or diagrams from your IDE / browser and provides an immediate solution.
+5. **Completely invisible to screen sharing** (`NSWindow.SharingType.none`): even if you share your entire desktop in Zoom, Google Meet, Microsoft Teams, or Slack, TellMeMore remains invisible to participants.
 
 ---
 
@@ -39,25 +44,25 @@ Job interviews are stressful. Even experienced engineers freeze under pressure, 
     <tr>
       <td width="50%">
         <img src="assets/screenshots/main.png" alt="Live Dialogue & Teleprompter" /><br />
-        <b>1. Live Dialogue & Teleprompter Overlay</b><br />
-        <i>Real-time dual-stream transcription with speaker separation and one-click answers.</i>
+        <b>1. Live Dialogue & Invisible Teleprompter HUD</b><br />
+        <i>Real-time dual-stream transcription, instant first-person answer generation, and active engine status.</i>
       </td>
       <td width="50%">
         <img src="assets/screenshots/1.png" alt="Context & Candidate Profile" /><br />
         <b>2. Tailored Candidate & Interview Context</b><br />
-        <i>Upload your CV, interviewer background, and desired answers/evaluation criteria.</i>
+        <i>Custom resume profile, target interviewer notes, and strategic goals/criteria for hint generation.</i>
       </td>
     </tr>
     <tr>
       <td width="50%">
-        <img src="assets/screenshots/2.png" alt="LLM & Audio Devices" /><br />
-        <b>3. LLM Model & Clean Audio Device Routing</b><br />
-        <i>Multi-provider support (Gemini, Claude, GPT, GLM) with sliding window history and BlackHole.</i>
+        <img src="assets/screenshots/2.png" alt="LLM & Context Memory Compression" /><br />
+        <b>3. Multi-LLM Engine & Context Compression</b><br />
+        <i>Google Gemini, Claude, GPT, GLM integration with sliding window and automatic history compression.</i>
       </td>
       <td width="50%">
         <img src="assets/screenshots/3.png" alt="UI & Stealth Customization" /><br />
-        <b>4. Stealth & Appearance Controls</b><br />
-        <i>Hide from screen share, window transparency (0–100%), always-on-top, and font scaling.</i>
+        <b>4. Stealth & Customization Controls</b><br />
+        <i>Hide from screen share, opacity slider (0–100%), global hotkeys (⌥1 / ⌥2), and custom typography.</i>
       </td>
     </tr>
   </table>
