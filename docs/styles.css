@@ -146,7 +146,7 @@ a {
 
 .container {
   width: 100%;
-  max-width: 1180px;
+  max-width: 1340px;
   margin: 0 auto;
   padding: 0 24px;
   position: relative;
@@ -369,16 +369,28 @@ a {
   transform: translateY(-2px);
 }
 
-/* ==================== HERO SECTION ==================== */
+.play-circle {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1.5px solid currentColor;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  padding-left: 2px;
+}
+
+/* ==================== HERO SECTION (3-COLUMN TRIPTYCH) ==================== */
 .hero-section {
-  padding: 135px 0 70px;
+  padding: 130px 0 70px;
   position: relative;
 }
 
 .hero-layout-grid {
   display: grid;
-  grid-template-columns: 1.05fr 1fr;
-  grid-gap: 48px;
+  grid-template-columns: 1fr 1.05fr 1fr;
+  grid-gap: 28px;
   align-items: center;
 }
 
@@ -393,11 +405,61 @@ a {
 }
 
 .hero-main-title {
-  font-size: 3.4rem;
+  font-size: 2.85rem;
   font-weight: 700;
   letter-spacing: -0.04em;
   line-height: 1.08;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
+}
+
+.hero-main-desc {
+  font-size: 1.02rem;
+  color: var(--text-body);
+  line-height: 1.55;
+  margin-bottom: 28px;
+  max-width: 420px;
+}
+
+/* Center Visual: The Faces with glowing blue slash lines */
+.hero-center-visual {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.faces-frame {
+  position: relative;
+  width: 100%;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 24px 60px -10px rgba(0, 0, 0, 0.95), 0 0 35px rgba(59, 130, 246, 0.25);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  background: #000;
+}
+
+.faces-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.faces-frame:hover .faces-img {
+  transform: scale(1.02);
+}
+
+.faces-sub-caption {
+  margin-top: 14px;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  text-align: center;
 }
 
 .hero-main-desc {
@@ -1020,10 +1082,27 @@ a {
 }
 
 /* ==================== RESPONSIVE ==================== */
+@media (max-width: 1180px) {
+  .hero-layout-grid {
+    grid-template-columns: 1fr 1fr;
+    grid-gap: 32px;
+  }
+  .hero-center-visual {
+    grid-column: span 2;
+    order: -1;
+    max-width: 580px;
+    margin: 0 auto;
+  }
+}
+
 @media (max-width: 960px) {
   .hero-layout-grid {
     grid-template-columns: 1fr;
     grid-gap: 36px;
+  }
+  .hero-center-visual {
+    grid-column: span 1;
+    order: 0;
   }
   .product-showcase-grid,
   .product-showcase-card.reverse .product-showcase-grid {
