@@ -240,6 +240,11 @@
     htmlEl.setAttribute('data-theme', theme);
     localStorage.setItem(THEME_STORAGE_KEY, theme);
 
+    const heroFacesImg = document.getElementById('hero-faces-img');
+    if (heroFacesImg) {
+      heroFacesImg.src = theme === 'light' ? 'assets/hero-faces-light.jpg' : 'assets/hero-faces.jpg';
+    }
+
     const themeIcon = document.getElementById('theme-icon');
     if (themeIcon) {
       if (theme === 'dark') {
