@@ -1,43 +1,286 @@
 // ==========================================================================
-// TellMeMore Landing Page Scripts
-// Theme switcher, smooth scroll, micro-interactions
+// TellMeMore Ecosystem — Core Application Script
+// Bilingual i18n (RU/EN with auto-detect), Dark/Light theme, interactive HUD
 // ==========================================================================
 
 (function () {
   'use strict';
 
-  // 1. Theme Management (Dark / Light)
+  // ==================== I18N DICTIONARY ====================
+  const translations = {
+    ru: {
+      navPhilosophy: 'Суть',
+      navProducts: 'Продукты',
+      navLive: 'TellMeMore macOS',
+      navTg: 'TellMeMore TG',
+      navRoadmap: 'Роадмап',
+      badgeOpenSource: 'Бесплатная Open Source экосистема',
+      heroTitlePrefix: 'Удалить лишний шум.',
+      heroTitleGradient: 'Всегда добиваться поставленной цели.',
+      heroDesc: 'Серия персональных ИИ-советников и суфлёров для живых переговоров, собеседований и мессенджеров. Распознавание скрытого подтекста, защита от манипуляций и точные, выигрышные формулировки от вашего лица в реальном времени.',
+      btnExplore: 'Изучить продукты линейки',
+      btnPhilosophy: 'В чём суть идеи?',
+      statLatency: 'Задержка слуха',
+      statInvisible: 'Невидимость',
+      statInvisibleVal: '100% Zoom/Meet',
+      statMemory: 'Контекст',
+      statMemoryVal: 'Автокомпрессия',
+      statLicense: 'Доступность',
+      statLicenseVal: 'Free & Open Source',
+      radarStatus: 'Радар активности речи',
+      pillar1Title: 'Не отходить от объекта',
+      pillar1Desc: 'В спорах и интервью нас постоянно уводят в сторону встречными вопросами. TellMeMore непрерывно держит главную цель в фокусе и возвращает диалог в нужное русло.',
+      pillar2Title: 'Удалить лишний шум',
+      pillar2Desc: 'Никаких долгих пауз, растерянности и размытых фраз. ИИ мгновенно вычленяет суть и формулирует лаконичную, сильную реплику прямо в процессе диалога.',
+      pillar3Title: 'Скрытый контекст и подтекст',
+      pillar3Desc: 'Люди редко говорят то, что думают на самом деле. Система анализирует подтекст, скрытые сомнения, пассивную агрессию и истинные мотивы собеседника.',
+      pillar4Title: 'Защита от манипуляций',
+      pillar4Desc: 'Выявление психологических уловок и ловушек. При необходимости — выдача стратегических реплик для перехвата инициативы и управления исходом беседы.',
+      sectionPhilosophyPill: 'В ЧЁМ СУТЬ ПОДХОДА',
+      sectionPhilosophyTitle: 'Коммуникация как точный инструмент',
+      sectionPhilosophySub: 'Побеждает не тот, кто говорит громче, а тот, кто отсекает лишний шум, контролирует скрытый контекст и не отходит от поставленной цели.',
+      sectionProductsPill: 'ЛИНЕЙКА ПРОДУКТОВ',
+      sectionProductsTitle: 'Единая экосистема для голоса и текста',
+      sectionProductsSub: 'Бесплатные инструменты с открытым исходным кодом, созданные для победы в любой дискуссии.',
+      tmmBadgeStatus: 'v1.0 Релиз • Готово к загрузке',
+      tmmTitle: 'TellMeMore',
+      tmmDesc: 'Персональный ИИ-суфлёр реального времени для онлайн-собеседований и переговоров по видео- и аудиосвязи на macOS. Невидимое плавающее окно подсказывает точные формулировки прямо во время речи собеседника.',
+      tmmFeat1: '<strong>Сверхбыстрый слух (<300 мс):</strong> потоковая транскрибация вашего микрофона и звука собеседника через Deepgram Nova-2 / Flux.',
+      tmmFeat2: '<strong>Суфлёр от первого лица:</strong> подсказки голосом кандидата с учётом вашего опыта, резюме и целей встречи.',
+      tmmFeat3: '<strong>Умная автокомпрессия диалога:</strong> сжимает часовую беседу по объёму символов в плотную память, предотвращая переполнение контекста.',
+      tmmFeat4: '<strong>Решение задач с экрана (⌥2):</strong> делает мгновенный снимок IDE/терминала и выдаёт готовый код с объяснением.',
+      tmmFeat5: '<strong>100% невидимость:</strong> полностью скрыто от демонстрации экрана и записи в Zoom, Google Meet и Teams.',
+      tmmBtnDownload: 'Скачать / Репозиторий на GitHub',
+      tmmLicenseNote: 'Лицензия MIT • Полностью бесплатно',
+      tmmHudPromptHeader: 'ПОДСКАЗКА СУФЛЁРА (ОТ ПЕРВОГО ЛИЦА)',
+      tmmHudModelBadge: 'Gemini 3.8 Flash • 240мс',
+      tmmInterviewerLabel: 'Интервьюер (Tech Lead):',
+      tmmInterviewerQuote: '«Как вы решали проблему деградации базы данных при резких всплесках трафика на прошлом проекте?»',
+      tmmHudListening: 'Слушаю эфир (Deepgram Flux)',
+      tmmHudShortcuts: '⌥1 Подсказка • ⌥2 Код с экрана',
+      tgBadgeStatus: 'В активной разработке • Скоро',
+      tgPlatformsBadge: 'Android • Win • Linux • macOS',
+      tgTitle: 'TellMeMore TG',
+      tgDesc: 'Полноценный кроссплатформенный клиент Telegram со встроенным ИИ-мозгом для глубокого анализа переписок, профайлинга участников, детекции скрытых манипуляций и формирования тактических рекомендаций.',
+      tgFeat1: '<strong>Психологический профайлинг:</strong> сканирует историю чатов, составляет карту психотипа, слабых мест и манеры общения собеседника.',
+      tgFeat2: '<strong>Радар манипуляций:</strong> мгновенно подсвечивает попытки давления, пассивной агрессии, газлайтинга или увода от темы.',
+      tgFeat3: '<strong>Тактический генератор фраз:</strong> предлагает 2–3 варианта ответа — от дипломатичного выхода до решительного перехвата контроля.',
+      tgFeat4: '<strong>Кроссплатформенная база:</strong> работает на смартфонах Android и десктопах Linux, Windows, macOS.',
+      tgBtnFollow: 'Следить за разработкой на GitHub',
+      tgClientTitle: 'Telegram Client + TellMeMore AI Profiler',
+      tgSenderOther: 'Александр (Заказчик):',
+      tgMsgOther: '«Мы рассчитывали на более сжатые сроки. Другие команды делают это за неделю, а вы тянете...»',
+      tgSenderMe: 'Вы (с тактической подсказкой ИИ):',
+      tgMsgMe: '«Понимаю ваше желание ускориться. Давайте сверим ТЗ: неделя возможна только при отказе от тестов, что создаст риск падения прод-базы. Фиксируем это?»',
+      tgTacticTag: 'АНАЛИЗ МАНИПУЛЯЦИИ',
+      tgTacticInsight: '<strong>Триггер:</strong> Чувство вины и сравнение с конкурентами. Попытка сбить цену и сроки без изменения объёма.',
+      tgTacticAdvice: '<strong>Совет:</strong> Не оправдываться. Вернуть ответственность за риски заказчику через прямой выбор.',
+      fbBadgeStatus: 'В планах • Roadmap',
+      fbTitle: 'TellMeMore FB',
+      fbDesc: 'Специализированный ИИ-помощник для коммерческих и деловых переписок в Facebook и Messenger. Ориентирован на продажи, удержание клиентов, холодные переговоры и заключение соглашений без уступок в позициях.',
+      fbFeat1: '<strong>Фокус на сделку:</strong> ведение собеседника по стадиям переговоров без навязчивости.',
+      fbFeat2: '<strong>Отработка возражений:</strong> моментальный подбор аргументов на «дорого», «подумаем», «не сейчас».',
+      fbFeat3: '<strong>Кроссплатформенность:</strong> единая кодовая база на Android, Windows, Linux, macOS.',
+      fbNote: 'Старт разработки запланирован после релиза TG-версии',
+      fbBlueprintTitle: 'Facebook Messenger AI Co-Pilot • Blueprint',
+      fbBlueprintSubtitle: 'Deal-Making & Client Negotiation',
+      fbBlueprintDesc: 'ИИ-ассистент для международных продаж, маркетплейсов и бизнес-связей в Meta-экосистеме.',
+      roadmapPill: 'ПЛАН РАЗВИТИЯ',
+      roadmapTitle: 'Дорожная карта экосистемы',
+      roadmapSub: 'От локального суфлёра собеседований на macOS до глобальной мультиязычной платформы осознанной коммуникации.',
+      q4Period: 'Q4 2026 • ЗАВЕРШЕНО',
+      q4Title: 'TellMeMore macOS — Живой суфлёр для собеседований',
+      q4Desc: 'Потоковое распознавание Deepgram (<300 мс), Gemini 3.8/Claude 3.5, режим невидимости от захвата экрана в Zoom/Meet, горячие клавиши ⌥1 / ⌥2, автокомпрессия контекста по объёму текста, экспорт/импорт истории.',
+      q1Period: 'Q1 2027 • В РАЗРАБОТКЕ',
+      q1Title: 'TellMeMore TG — Клон Telegram с ИИ-профайлингом',
+      q1Desc: 'Полноценный клиент Telegram на Android, Windows, Linux и macOS. Разбор психологического типа собеседников, радар манипуляций и подсказки стратегии ведения дискуссий в чатах.',
+      q2Period: 'Q2 2027 • ЗАПЛАНИРОВАНО',
+      q2Title: 'TellMeMore Desktop для Windows и Linux',
+      q2Desc: 'Перенос голосового суфлёра реального времени с macOS на Windows и Linux (захват системного звука через WASAPI и PulseAudio/PipeWire).',
+      q3Period: 'Q3 2027 • ЗАПЛАНИРОВАНО',
+      q3Title: 'TellMeMore FB — Ассистент деловых переписок',
+      q3Desc: 'Интеграция ИИ-помощника для закрытия сделок, клиентских переговоров и холодных продаж в Facebook Messenger на смартфонах и ПК.',
+      footerTagline: 'Создано для того, чтобы убрать шум и всегда добиваться поставленных целей.',
+      footerRepo: 'GitHub Репозиторий',
+      footerProfile: 'Профиль разработчика'
+    },
+    en: {
+      navPhilosophy: 'Philosophy',
+      navProducts: 'Products',
+      navLive: 'TellMeMore macOS',
+      navTg: 'TellMeMore TG',
+      navRoadmap: 'Roadmap',
+      badgeOpenSource: 'Free Open Source Ecosystem',
+      heroTitlePrefix: 'Eliminate the Noise.',
+      heroTitleGradient: 'Always Achieve Your Target.',
+      heroDesc: 'A suite of personal AI co-pilots and strategic advisors for live interviews, negotiations, and messenger discussions. Decode hidden context, shield against manipulation, and deliver winning answers in your voice in real time.',
+      btnExplore: 'Explore Product Lineup',
+      btnPhilosophy: 'The Core Philosophy',
+      statLatency: 'Speech Latency',
+      statInvisible: 'Screen Share',
+      statInvisibleVal: '100% Invisible',
+      statMemory: 'Context Memory',
+      statMemoryVal: 'Auto-Compression',
+      statLicense: 'Access',
+      statLicenseVal: 'Free & Open Source',
+      radarStatus: 'Speech Radar Active',
+      pillar1Title: 'Stay on Target',
+      pillar1Desc: 'In heated debates and interviews, tricky questions constantly derail you. TellMeMore anchors the main objective and steers the conversation back to your agenda.',
+      pillar2Title: 'Eliminate the Noise',
+      pillar2Desc: 'No awkward silences, panic, or vague fluff. The AI extracts the essence instantly and formulates a razor-sharp, confident response on the fly.',
+      pillar3Title: 'Hidden Context & Subtext',
+      pillar3Desc: 'People rarely say what they actually mean. The system analyzes subtext, passive aggression, unstated doubts, and the true motivations of the other party.',
+      pillar4Title: 'Shield & Strategic Influence',
+      pillar4Desc: 'Spot psychological traps, guilt trips, and deflections. When needed, deploy strategic phrasing to seize the initiative and guide the outcome.',
+      sectionPhilosophyPill: 'THE CORE PHILOSOPHY',
+      sectionPhilosophyTitle: 'Communication as a Precision Instrument',
+      sectionPhilosophySub: 'The winner is not who talks the loudest, but who cuts the noise, reads the subtext, and never deviates from the target.',
+      sectionProductsPill: 'PRODUCT LINEUP',
+      sectionProductsTitle: 'Unified Ecosystem for Voice and Text',
+      sectionProductsSub: 'Free open-source tools engineered to help you triumph in any high-stakes interaction.',
+      tmmBadgeStatus: 'v1.0 Release • Ready to Download',
+      tmmTitle: 'TellMeMore',
+      tmmDesc: 'Personal real-time AI co-pilot for online job interviews and high-stakes negotiations via voice and video on macOS. An invisible floating HUD whispers exact, winning answers while the other person is speaking.',
+      tmmFeat1: '<strong>Ultra-low latency (<300 ms):</strong> live streaming transcription of your mic and interviewer voice via Deepgram Nova-2 / Flux.',
+      tmmFeat2: '<strong>First-person whisperer:</strong> crafts confident answers in your voice based on your resume, experience, and interview goals.',
+      tmmFeat3: '<strong>Smart text volume auto-compression:</strong> condenses hours of dialogue into dense structured memory, preventing context overflow.',
+      tmmFeat4: '<strong>On-screen code solver (⌥2):</strong> captures your IDE or terminal window and produces working solutions with concise rationale.',
+      tmmFeat5: '<strong>100% invisible:</strong> excluded from screen recording and sharing in Zoom, Google Meet, and Microsoft Teams.',
+      tmmBtnDownload: 'Download / GitHub Repository',
+      tmmLicenseNote: 'MIT License • 100% Free & Open Source',
+      tmmHudPromptHeader: 'AI WHISPERER HINT (FIRST PERSON)',
+      tmmHudModelBadge: 'Gemini 3.8 Flash • 240ms',
+      tmmInterviewerLabel: 'Interviewer (Tech Lead):',
+      tmmInterviewerQuote: '“How did you handle database degradation during sudden traffic spikes in your previous project?”',
+      tmmHudListening: 'Listening to stream (Deepgram Flux)',
+      tmmHudShortcuts: '⌥1 Hint • ⌥2 Code Challenge Snapshot',
+      tgBadgeStatus: 'In Active Development • Coming Soon',
+      tgPlatformsBadge: 'Android • Win • Linux • macOS',
+      tgTitle: 'TellMeMore TG',
+      tgDesc: 'A full-featured cross-platform Telegram client with built-in AI profiling, manipulation detection, and real-time tactical suggestions for chat negotiation.',
+      tgFeat1: '<strong>Psychological profiling:</strong> analyzes chat history to chart the temperament, vulnerabilities, and communication style of any user.',
+      tgFeat2: '<strong>Manipulation radar:</strong> flags gaslighting, passive aggression, guilt-tripping, and deflection in real time.',
+      tgFeat3: '<strong>Tactical reply generator:</strong> offers calibrated replies — from graceful de-escalation to decisive dominance.',
+      tgFeat4: '<strong>Multi-platform codebase:</strong> built for Android smartphones and desktop Linux, Windows, and macOS.',
+      tgBtnFollow: 'Follow Development on GitHub',
+      tgClientTitle: 'Telegram Client + TellMeMore AI Profiler',
+      tgSenderOther: 'Alexander (Client):',
+      tgMsgOther: '“We expected tighter delivery. Other teams pull this off in a week, but you keep dragging your feet...”',
+      tgSenderMe: 'You (with AI tactical recommendation):',
+      tgMsgMe: '“I understand your urgency. Let us review the spec: one week is only possible if we skip automated tests, which creates production risk. Do you approve this tradeoff?”',
+      tgTacticTag: 'MANIPULATION ANALYSIS',
+      tgTacticInsight: '<strong>Trigger:</strong> Guilt trip & competitor comparison. Attempting to squeeze price and timeline without scope reduction.',
+      tgTacticAdvice: '<strong>Tip:</strong> Do not apologize. Pass the risk accountability directly back to the client via binary choice.',
+      fbBadgeStatus: 'Planned • Roadmap',
+      fbTitle: 'TellMeMore FB',
+      fbDesc: 'Specialized AI assistant for business messaging and commercial negotiation in Facebook & Messenger. Tuned for social selling, client retention, and closing deals without conceding ground.',
+      fbFeat1: '<strong>Deal focus:</strong> guides prospects through negotiation stages without appearing pushy.',
+      fbFeat2: '<strong>Objection handling:</strong> instant counter-arguments against “too expensive”, “we need to think”, “not now”.',
+      fbFeat3: '<strong>Cross-platform:</strong> unified experience across Android, Windows, Linux, and macOS.',
+      fbNote: 'Development begins following the TellMeMore TG release',
+      fbBlueprintTitle: 'Facebook Messenger AI Co-Pilot • Blueprint',
+      fbBlueprintSubtitle: 'Deal-Making & Client Negotiation',
+      fbBlueprintDesc: 'AI co-pilot for international sales, social commerce, and business connections in the Meta ecosystem.',
+      roadmapPill: 'ECOSYSTEM ROADMAP',
+      roadmapTitle: 'Development Roadmap',
+      roadmapSub: 'From a local interview co-pilot on macOS to a global cross-platform suite for conscious communication.',
+      q4Period: 'Q4 2026 • COMPLETED',
+      q4Title: 'TellMeMore macOS — Live Voice Co-Pilot for Interviews',
+      q4Desc: 'Deepgram streaming (<300 ms), Gemini 3.8/Claude 3.5, screen recording stealth mode for Zoom/Meet, global hotkeys ⌥1 / ⌥2, text volume context compression, history export/import.',
+      q1Period: 'Q1 2027 • IN DEVELOPMENT',
+      q1Title: 'TellMeMore TG — Telegram Client with AI Profiling',
+      q1Desc: 'Multiplatform Telegram client for Android, Windows, Linux, and macOS. Participant profiling, manipulation radar, and tactical dialogue prompts.',
+      q2Period: 'Q2 2027 • PLANNED',
+      q2Title: 'TellMeMore Desktop for Windows & Linux',
+      q2Desc: 'Expanding the real-time voice co-pilot from macOS to Windows and Linux (system audio capture via WASAPI and PulseAudio/PipeWire).',
+      q3Period: 'Q3 2027 • PLANNED',
+      q3Title: 'TellMeMore FB — Business Messenger Assistant',
+      q3Desc: 'AI deal-closer and sales negotiation advisor integrated into Facebook Messenger across mobile and desktop.',
+      footerTagline: 'Engineered to eliminate noise and always achieve your target.',
+      footerRepo: 'GitHub Repository',
+      footerProfile: 'Developer Profile'
+    }
+  };
+
+  // Rotating hints for interactive HUD mockup
+  const rotatingHints = {
+    ru: [
+      '«Да, в моём опыте с микросервисами на Go мы вынесли кэширование в Redis Cluster с LRU, что сократило p99 latency с 450мс до 12мс при 20k RPS».',
+      '«Для этой задачи оптимально использовать очередь с приоритетом (Min-Heap). Временная сложность O(N log K), пространственная O(K)».',
+      '«Хороший вопрос. Прежде чем писать архитектуру, уточните: какой планируется RPS и допустимо ли eventual consistency при репликации?»'
+    ],
+    en: [
+      '“Yes, in my experience with Go microservices, we offloaded hot caching to Redis Cluster with LRU, shrinking p99 latency from 450ms down to 12ms at 20k RPS.”',
+      '“For this problem, a Min-Heap priority queue is optimal. Time complexity is O(N log K), auxiliary space is O(K).”',
+      '“Good question. Before architecting the storage layer, what is the expected write RPS and is eventual consistency acceptable?”'
+    ]
+  };
+
+  // ==================== STATE MANAGEMENT ====================
+  const LANG_STORAGE_KEY = 'tellmemore_lang';
   const THEME_STORAGE_KEY = 'tellmemore_theme';
   const htmlEl = document.documentElement;
-  const themeToggleBtn = document.getElementById('theme-toggle');
-  const themeIcon = document.getElementById('theme-icon');
 
-  function getPreferredTheme() {
+  let currentLang = 'ru';
+
+  function detectLanguage() {
+    const saved = localStorage.getItem(LANG_STORAGE_KEY);
+    if (saved === 'ru' || saved === 'en') {
+      return saved;
+    }
+    const browserLang = (navigator.language || navigator.userLanguage || '').toLowerCase();
+    return browserLang.startsWith('ru') || browserLang.startsWith('be') || browserLang.startsWith('uk') ? 'ru' : 'en';
+  }
+
+  function setLanguage(lang) {
+    if (!translations[lang]) return;
+    currentLang = lang;
+    localStorage.setItem(LANG_STORAGE_KEY, lang);
+    htmlEl.setAttribute('lang', lang);
+
+    // Update text elements with data-i18n
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      if (translations[lang][key]) {
+        el.innerHTML = translations[lang][key];
+      }
+    });
+
+    // Update language switch buttons
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+      if (btn.getAttribute('data-lang') === lang) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+
+    // Update active HUD prompt immediately
+    updateHudPromptText();
+  }
+
+  // ==================== THEME MANAGEMENT ====================
+  function detectTheme() {
     const saved = localStorage.getItem(THEME_STORAGE_KEY);
     if (saved === 'dark' || saved === 'light') {
       return saved;
     }
-    // Check OS preference
-    return window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches
-      ? 'light'
-      : 'dark';
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
   }
 
-  function applyTheme(theme) {
+  function setTheme(theme) {
     htmlEl.setAttribute('data-theme', theme);
     localStorage.setItem(THEME_STORAGE_KEY, theme);
 
+    const themeIcon = document.getElementById('theme-icon');
     if (themeIcon) {
       if (theme === 'dark') {
-        // Moon icon
         themeIcon.innerHTML = `
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
           </svg>
         `;
-        themeToggleBtn.setAttribute('title', 'Включить светлую тему');
       } else {
-        // Sun icon
         themeIcon.innerHTML = `
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="5"></circle>
@@ -51,65 +294,74 @@
             <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
           </svg>
         `;
-        themeToggleBtn.setAttribute('title', 'Включить тёмную тему');
       }
     }
   }
 
-  // Initialize theme immediately
-  const initialTheme = getPreferredTheme();
-  applyTheme(initialTheme);
-
-  if (themeToggleBtn) {
-    themeToggleBtn.addEventListener('click', () => {
-      const current = htmlEl.getAttribute('data-theme') || 'dark';
-      const next = current === 'dark' ? 'light' : 'dark';
-      applyTheme(next);
-    });
+  // ==================== INTERACTIVE HUD TEXT ====================
+  let hintIdx = 0;
+  function updateHudPromptText() {
+    const hintEl = document.getElementById('hud-prompt-text');
+    if (!hintEl) return;
+    const list = rotatingHints[currentLang] || rotatingHints.en;
+    hintEl.style.opacity = '0';
+    setTimeout(() => {
+      hintEl.textContent = list[hintIdx % list.length];
+      hintEl.style.opacity = '1';
+    }, 200);
   }
 
-  // Listen to OS theme changes if user hasn't explicitly set preference
-  if (window.matchMedia) {
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-      if (!localStorage.getItem(THEME_STORAGE_KEY)) {
-        applyTheme(e.matches ? 'dark' : 'light');
-      }
-    });
-  }
+  // ==================== INITIALIZATION ====================
+  document.addEventListener('DOMContentLoaded', () => {
+    // 1. Language Init
+    const initialLang = detectLanguage();
+    setLanguage(initialLang);
 
-  // 2. Smooth scrolling for internal anchor links
-  document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
-    anchor.addEventListener('click', function (e) {
-      const targetId = this.getAttribute('href');
-      if (targetId === '#') return;
-      const targetEl = document.querySelector(targetId);
-      if (targetEl) {
-        e.preventDefault();
-        targetEl.scrollIntoView({
-          behavior: 'smooth',
-          block: 'start',
-        });
-      }
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const targetLang = btn.getAttribute('data-lang');
+        setLanguage(targetLang);
+      });
     });
-  });
 
-  // 3. Interactive mockup micro-effect (HUD simulation)
-  const hintTextEl = document.querySelector('.hud-hint-text');
-  if (hintTextEl) {
-    const hints = [
-      '«Да, в моём опыте с высоконагруженными сервисами на Go мы вынесли кэширование в Redis Cluster с LRU, что сократило latency p99 с 450мс до 12мс».',
-      '«Для этой задачи оптимально использовать очередь с приоритетом (Min-Heap). Временная сложность O(N log K), пространственная O(K)».',
-      '«Хороший вопрос. Прежде чем писать архитектуру, уточните: какой планируется RPS и допустимо ли eventual consistency при репликации?»'
-    ];
-    let hintIdx = 0;
+    // 2. Theme Init
+    const initialTheme = detectTheme();
+    setTheme(initialTheme);
+
+    const themeToggleBtn = document.getElementById('theme-toggle');
+    if (themeToggleBtn) {
+      themeToggleBtn.addEventListener('click', () => {
+        const current = htmlEl.getAttribute('data-theme') || 'dark';
+        const next = current === 'dark' ? 'light' : 'dark';
+        setTheme(next);
+      });
+    }
+
+    if (window.matchMedia) {
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+        if (!localStorage.getItem(THEME_STORAGE_KEY)) {
+          setTheme(e.matches ? 'dark' : 'light');
+        }
+      });
+    }
+
+    // 3. Smooth Scrolling
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        const id = this.getAttribute('href');
+        if (id === '#') return;
+        const target = document.querySelector(id);
+        if (target) {
+          e.preventDefault();
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    });
+
+    // 4. Rotate HUD hints every 7 seconds
     setInterval(() => {
-      hintIdx = (hintIdx + 1) % hints.length;
-      hintTextEl.style.opacity = '0';
-      setTimeout(() => {
-        hintTextEl.textContent = hints[hintIdx];
-        hintTextEl.style.opacity = '1';
-      }, 250);
+      hintIdx++;
+      updateHudPromptText();
     }, 7000);
-    hintTextEl.style.transition = 'opacity 0.25s ease';
-  }
+  });
 })();
