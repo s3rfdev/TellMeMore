@@ -876,13 +876,30 @@ a {
 
 .product-showcase-grid {
   display: grid;
-  grid-template-columns: 1.1fr 1fr;
-  grid-gap: 44px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-gap: 40px;
   align-items: center;
 }
 
 .product-showcase-card.reverse .product-showcase-grid {
-  grid-template-columns: 1fr 1.1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.product-showcase-grid > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.product-text-side {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.product-mockup-side {
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+  overflow: hidden;
 }
 
 .product-showcase-card.reverse .product-text-side {
@@ -1001,62 +1018,95 @@ a {
 .product-gallery-frame {
   display: flex;
   flex-direction: column;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-blue);
+  background: var(--bg-surface);
+  overflow: hidden;
+  box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.7), 0 0 25px rgba(59, 130, 246, 0.12);
+  transition: var(--transition);
+}
+
+.product-gallery-frame:hover {
+  border-color: var(--accent-blue);
+}
+
+.gallery-tabs-toolbar {
+  background: var(--bg-input);
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--border-subtle);
+  width: 100%;
+  overflow-x: auto;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.gallery-tabs-toolbar::-webkit-scrollbar {
+  display: none;
 }
 
 .gallery-tabs-nav {
   display: flex;
   align-items: center;
-  gap: 4px;
-  overflow-x: auto;
-  padding: 2px 0;
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-.gallery-tabs-nav::-webkit-scrollbar {
-  display: none;
+  gap: 6px;
+  width: 100%;
+  flex-wrap: nowrap;
 }
 
 .gallery-tab-btn {
-  background: transparent;
-  border: 1px solid transparent;
+  background: var(--bg-card-inner);
+  border: 1px solid var(--border);
   color: var(--text-muted);
-  font-size: 0.73rem;
+  font-size: 0.74rem;
   font-weight: 600;
-  padding: 4px 10px;
+  padding: 5px 12px;
   border-radius: var(--radius-pill);
   cursor: pointer;
   white-space: nowrap;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   transition: var(--transition);
+  flex-shrink: 0;
 }
 
 .gallery-tab-btn:hover {
   color: var(--text-title);
-  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--border-blue);
+  background: rgba(59, 130, 246, 0.08);
 }
 
 .gallery-tab-btn.active {
   background: var(--accent-blue-subtle);
-  border-color: var(--border-blue);
+  border-color: var(--accent-blue);
   color: var(--accent-blue);
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.25);
+}
+
+[data-theme="light"] .gallery-tab-btn {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.12);
 }
 
 [data-theme="light"] .gallery-tab-btn:hover {
-  background: rgba(0, 0, 0, 0.04);
+  background: #f8fafc;
+  border-color: var(--accent-blue);
 }
 
 [data-theme="light"] .gallery-tab-btn.active {
-  background: rgba(37, 99, 235, 0.08);
-  border-color: rgba(37, 99, 235, 0.3);
+  background: rgba(37, 99, 235, 0.1);
+  border-color: var(--accent-blue);
   color: var(--accent-blue);
 }
 
 .gallery-viewport {
   position: relative;
   width: 100%;
-  height: 380px;
+  aspect-ratio: 16 / 10;
+  max-height: 340px;
   background: #020408;
   display: flex;
   align-items: center;
@@ -1073,10 +1123,12 @@ a {
 .gallery-screenshot-img {
   width: 100%;
   height: 100%;
+  max-width: 100%;
+  max-height: 100%;
   object-fit: contain;
   display: block;
-  transition: opacity 0.22s ease, transform 0.3s ease;
-  padding: 6px;
+  transition: opacity 0.2s ease, transform 0.25s ease;
+  padding: 4px;
 }
 
 .gallery-viewport:hover .gallery-screenshot-img {
@@ -1355,6 +1407,24 @@ a {
   }
   .hero-main-title {
     font-size: 2.4rem;
+  }
+}
+
+/* 2.5 Tablets / Small Screens (up to 1024px): Stack product showcase cleanly */
+@media (max-width: 1024px) {
+  .product-showcase-grid,
+  .product-showcase-card.reverse .product-showcase-grid {
+    grid-template-columns: 1fr;
+    grid-gap: 30px;
+  }
+  .product-showcase-card.reverse .product-text-side {
+    order: 1;
+  }
+  .product-showcase-card.reverse .product-mockup-side {
+    order: 2;
+  }
+  .product-showcase-card {
+    padding: 30px;
   }
 }
 
