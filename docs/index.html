@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TellMeMore Ecosystem — Удалить лишний шум. Достигать поставленной цели.</title>
+  <meta name="description" content="Линейка интеллектуальных ИИ-суфлёров и советников для живых собеседований, переговоров и переписок в Telegram и Facebook. Защита от манипуляций, понимание скрытого контекста и точные ответы.">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎙️</text></svg>">
+</head>
+<body>
+
+  <!-- ==================== HEADER ==================== -->
+  <header class="navbar">
+    <div class="container nav-inner">
+      <a href="#" class="brand">
+        <div class="brand-icon">✦</div>
+        <span>TellMeMore</span>
+      </a>
+
+      <ul class="nav-links">
+        <li><a href="#philosophy">Суть</a></li>
+        <li><a href="#products">Продукты</a></li>
+        <li><a href="#tellmemore-live">TellMeMore macOS</a></li>
+        <li><a href="#tellmemore-tg">TellMeMore TG</a></li>
+        <li><a href="#roadmap">Роадмап</a></li>
+      </ul>
+
+      <div class="nav-actions">
+        <button id="theme-toggle" class="theme-btn" aria-label="Переключить тему" title="Переключить тему">
+          <span id="theme-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+          </span>
+        </button>
+        <a href="https://github.com/s3rfdev/TellMeMore" target="_blank" rel="noopener noreferrer" class="btn btn-secondary mono">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
+          </svg>
+          GitHub
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== HERO SECTION ==================== -->
+  <section class="hero-section">
+    <div class="hero-glow"></div>
+    <div class="container hero-content">
+      <div class="hero-pill">
+        <span class="badge badge-green">
+          <span class="badge-dot"></span> Бесплатная Open Source линейка
+        </span>
+      </div>
+
+      <h1 class="hero-title">
+        Удалить лишний шум.<br>
+        <span>Всегда добиваться поставленной цели.</span>
+      </h1>
+
+      <p class="hero-desc">
+        Персональные ИИ-советники и суфлёры для живых собеседований, переговоров и сложных переписок. Понимание скрытого подтекста, защита от манипуляций и точные, выигрышные формулировки от вашего лица в реальном времени.
+      </p>
+
+      <div class="hero-cta">
+        <a href="#products" class="btn btn-primary">
+          Изучить продукты линейки
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+          </svg>
+        </a>
+        <a href="#philosophy" class="btn btn-outline">
+          В чём суть подхода?
+        </a>
+      </div>
+
+      <div class="platforms-row">
+        <div class="platform-pill">
+          <svg viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.85c.67-.82 1.13-1.96.99-3.1-.98.04-2.16.66-2.85 1.47-.61.71-1.15 1.87-.99 2.98 1.09.09 2.19-.53 2.85-1.35z"/></svg>
+          macOS
+        </div>
+        <div class="platform-pill">
+          <svg viewBox="0 0 24 24"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/></svg>
+          Windows
+        </div>
+        <div class="platform-pill">
+          <svg viewBox="0 0 24 24"><path d="M12.01 0C5.38 0 0 5.38 0 12.01c0 5.3 3.44 9.79 8.21 11.38.6.11.82-.26.82-.58v-2.03c-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.75.08-.73.08-.73 1.2.08 1.84 1.24 1.84 1.24 1.07 1.84 2.81 1.31 3.5.99.11-.78.42-1.31.76-1.61-2.66-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.13-.3-.54-1.52.12-3.18 0 0 1.01-.32 3.3 1.23.96-.27 1.98-.4 3-.4s2.04.13 3 .4c2.29-1.55 3.3-1.23 3.3-1.23.66 1.66.25 2.88.12 3.18.77.84 1.23 1.91 1.23 3.22 0 4.61-2.81 5.62-5.48 5.92.43.37.82 1.1.82 2.22v3.29c0 .32.22.7.83.58 4.77-1.6 8.2-6.08 8.2-11.38C24.02 5.38 18.64 0 12.01 0z"/></svg>
+          Linux
+        </div>
+        <div class="platform-pill">
+          <svg viewBox="0 0 24 24"><path d="M17.523 15.3414c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.551 0 .9993.4482.9993.9993.0001.5511-.4483.9997-.9993.9997m-11.046 0c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.5511 0 .9993.4482.9993.9993 0 .5511-.4482.9997-.9993.9997m11.4045-6.02l1.9973-3.4592a.416.416 0 00-.1521-.5676.416.416 0 00-.5676.1521l-2.0223 3.503C15.5902 8.4116 13.8533 8.125 12 8.125c-1.8533 0-3.5902.2866-5.1368.8247L4.8409 5.4467a.4161.4161 0 00-.5677-.1521.4157.4157 0 00-.1521.5676l1.9973 3.4592C2.6889 11.1867.3432 14.6589 0 18.761h24c-.3432-4.1021-2.6889-7.5743-6.1185-9.4396"/></svg>
+          Android
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== PHILOSOPHY / CORE MISSION ==================== -->
+  <section id="philosophy" class="section">
+    <div class="container">
+      <div class="section-head">
+        <span class="badge badge-blue section-pill">В ЧЁМ СУТЬ ИДЕИ</span>
+        <h2 class="section-title">Коммуникация как точный инструмент</h2>
+        <p class="section-subtitle">
+          В современных переговорах побеждает не тот, кто говорит громче или больше, а тот, кто отсекает лишний информационный шум, контролирует скрытый контекст и не отходит от своей цели ни на шаг.
+        </p>
+      </div>
+
+      <div class="philosophy-grid">
+        <div class="philosophy-card">
+          <div class="philosophy-icon" style="background: var(--accent-blue-bg); color: var(--accent-blue);">🎯</div>
+          <h3>Не отходить от объекта</h3>
+          <p>
+            В спорах и интервью нас постоянно уводят в сторону встречными вопросами и водой. TellMeMore непрерывно держит главную цель в фокусе и возвращает диалог в нужное вам русло.
+          </p>
+        </div>
+
+        <div class="philosophy-card">
+          <div class="philosophy-icon" style="background: var(--accent-green-bg); color: var(--accent-green);">🔇</div>
+          <h3>Удалить лишний шум</h3>
+          <p>
+            Никаких долгих пауз, паники и невнятных ответов. ИИ фильтрует поток речи, моментально вычленяет суть и формулирует лаконичную, сильную реплику прямо в процессе диалога.
+          </p>
+        </div>
+
+        <div class="philosophy-card">
+          <div class="philosophy-icon" style="background: var(--accent-purple-bg); color: var(--accent-purple);">👁️</div>
+          <h3>Скрытый контекст</h3>
+          <p>
+            Люди редко говорят то, что думают на самом деле. Система анализирует подтекст, скрытые сомнения, пассивную агрессию и настоящие мотивы собеседника в аудио и текстах.
+          </p>
+        </div>
+
+        <div class="philosophy-card">
+          <div class="philosophy-icon" style="background: var(--accent-amber-bg); color: var(--accent-amber);">🛡️</div>
+          <h3>Защита и влияние</h3>
+          <p>
+            Выявление манипуляторов, газлайтинга и ловушек. А если ситуация требует — выдача стратегических реплик для перехвата инициативы и управления исходом дискуссии.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== PRODUCTS SHOWCASE ==================== -->
+  <section id="products" class="section">
+    <div class="container">
+      <div class="section-head">
+        <span class="badge badge-purple section-pill">ЛИНЕЙКА ПРОДУКТОВ</span>
+        <h2 class="section-title">Единая экосистема для голоса и текста</h2>
+        <p class="section-subtitle">
+          Бесплатные инструменты с открытым исходным кодом, созданные для достижения ваших целей в любой среде общения.
+        </p>
+      </div>
+
+      <!-- PRODUCT 1: TellMeMore (macOS) -->
+      <div id="tellmemore-live" class="product-card">
+        <div class="product-layout">
+          <div class="product-info">
+            <div class="product-header-row">
+              <span class="badge badge-green">
+                <span class="badge-dot"></span> v1.0 Релиз • Готово
+              </span>
+              <span class="badge badge-blue">macOS</span>
+            </div>
+
+            <h3 class="product-title">TellMeMore</h3>
+            <p class="product-desc">
+              Персональный ИИ-суфлёр реального времени для онлайн-собеседований и ответственных переговоров по видео- и аудиосвязи. Невидимое плавающее окно, которое подсказывает точные формулировки прямо во время речи собеседника.
+            </p>
+
+            <ul class="feature-list">
+              <li>
+                <span class="feature-check">✓</span>
+                <div><strong>Сверхбыстрый слух (<300 мс):</strong> потоковая транскрибация вашего микрофона и звука собеседника через Deepgram Nova-2 / Flux.</div>
+              </li>
+              <li>
+                <span class="feature-check">✓</span>
+                <div><strong>Суфлёр от первого лица:</strong> формулирует готовые уверенные реплики под ваш опыт, резюме и цель собеседования.</div>
+              </li>
+              <li>
+                <span class="feature-check">✓</span>
+                <div><strong>Умная автокомпрессия диалога:</strong> сжимает часовую беседу по объёму символов в плотную память, предотвращая переполнение контекста.</div>
+              </li>
+              <li>
+                <span class="feature-check">✓</span>
+                <div><strong>Решение задач с экрана (⌥2):</strong> делает снимок IDE, терминала или кода на экране и выдаёт готовое решение задачи с объяснением.</div>
+              </li>
+              <li>
+                <span class="feature-check">✓</span>
+                <div><strong>100% невидимость:</strong> полностью скрыто от демонстрации экрана и записи в Zoom, Google Meet и Teams.</div>
+              </li>
+            </ul>
+
+            <div class="product-meta-row">
+              <a href="https://github.com/s3rfdev/TellMeMore" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
+                Скачать / Репозиторий
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                  <polyline points="15 3 21 3 21 9"></polyline>
+                  <line x1="10" y1="14" x2="21" y2="3"></line>
+                </svg>
+              </a>
+              <span class="mono" style="font-size: 0.8rem; color: var(--text-muted);">
+                Лицензия: MIT • Бесплатно
+              </span>
+            </div>
+          </div>
+
+          <!-- Mockup: macOS Window -->
+          <div class="product-mockup">
+            <div class="mockup-window">
+              <div class="mockup-bar">
+                <span class="traffic-light tl-red"></span>
+                <span class="traffic-light tl-yellow"></span>
+                <span class="traffic-light tl-green"></span>
+                <span class="mockup-title mono">TellMeMore • Live HUD (⌥1 / ⌥2)</span>
+              </div>
+              <div class="mockup-body">
+                <div class="hud-hint-box">
+                  <div class="hud-hint-header">
+                    <span class="hud-hint-title">ПОДСКАЗКА СУФЛЁРА (ГОЛОС КАНДИДАТА)</span>
+                    <span class="mono" style="font-size: 0.68rem; color: var(--accent-green);">Gemini 3.8 Flash • 240ms</span>
+                  </div>
+                  <p class="hud-hint-text">
+                    «Да, в моём опыте с микросервисами на Go мы вынесли кэширование в Redis Cluster с LRU, что сократило p99 latency с 450мс до 12мс при 20k RPS».
+                  </p>
+                </div>
+
+                <div class="hud-transcript-row">
+                  <div class="transcript-bubble bubble-interviewer">
+                    <div class="bubble-author">Интервьюер (Tech Lead)</div>
+                    <div>«Как вы решали проблему деградации базы данных при резких всплесках трафика на прошлом проекте?»</div>
+                  </div>
+                </div>
+
+                <div class="hud-status-bar">
+                  <span class="pulse-indicator">
+                    <span class="pulse-dot"></span> Слушаю эфир (Deepgram Flux)
+                  </span>
+                  <span class="mono">⌥1 Подсказка • ⌥2 Скриншот кода</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PRODUCT 2: TellMeMore TG (Telegram Client) -->
+      <div id="tellmemore-tg" class="product-card reversed">
+        <div class="product-layout">
+          <div class="product-info">
+            <div class="product-header-row">
+              <span class="badge badge-purple">
+                <span class="badge-dot"></span> В активной разработке • Скоро
+              </span>
+              <span class="badge badge-blue">Android • Win • Linux • macOS</span>
+            </div>
+
+            <h3 class="product-title">TellMeMore TG</h3>
+            <p class="product-desc">
+              Полноценный кроссплатформенный клиент Telegram со встроенным ИИ-мозгом для глубокого анализа переписок, профайлинга участников, детекции скрытых манипуляций и формирования тактических рекомендаций.
+            </p>
+
+            <ul class="feature-list">
+              <li>
+                <span class="feature-check">✓</span>
+                <div><strong>Психологический профайлинг собеседников:</strong> сканирует историю сообщений, составляет профиль темперамента, болевых точек и стиля речи.</div>
+              </li>
+              <li>
+                <span class="feature-check">✓</span>
+                <div><strong>Радар манипуляций:</strong> мгновенно подсвечивает попытки давления, пассивной агрессии, газлайтинга или увода от темы.</div>
+              </li>
+              <li>
+                <span class="feature-check">✓</span>
+                <div><strong>Тактический генератор фраз:</strong> предлагает 2–3 варианта ответа — от дипломатичного погашения конфликта до перехвата контроля над перепиской.</div>
+              </li>
+              <li>
+                <span class="feature-check">✓</span>
+                <div><strong>Кроссплатформенность:</strong> адаптируется под Android-смартфоны, рабочие ноутбуки на Linux, Windows и macOS.</div>
+              </li>
+            </ul>
+
+            <div class="product-meta-row">
+              <a href="https://github.com/s3rfdev" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">
+                Следить за разработкой на GitHub
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                  <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+              </a>
+              <span class="mono" style="font-size: 0.8rem; color: var(--text-muted);">
+                Бесплатно • Open Source
+              </span>
+            </div>
+          </div>
+
+          <!-- Mockup: Telegram Interface with AI Sidebar -->
+          <div class="product-mockup">
+            <div class="mockup-window">
+              <div class="mockup-bar">
+                <span class="traffic-light tl-red"></span>
+                <span class="traffic-light tl-yellow"></span>
+                <span class="traffic-light tl-green"></span>
+                <span class="mockup-title mono">Telegram Client + TellMeMore AI Profiler</span>
+              </div>
+              <div class="mockup-body">
+                <div class="tg-layout">
+                  <div class="tg-chat-pane">
+                    <div class="tg-bubble tg-other">
+                      <div class="mono" style="font-size: 0.65rem; color: var(--accent-blue); margin-bottom: 2px;">Александр (Заказчик)</div>
+                      <div>«Мы рассчитывали на более сжатые сроки. Другие команды делают это за неделю, а вы тянете...»</div>
+                    </div>
+                    <div class="tg-bubble" style="background: var(--bg-card); border: 1px solid var(--border); align-self: flex-end;">
+                      <div class="mono" style="font-size: 0.65rem; color: var(--accent-green); margin-bottom: 2px;">Вы (с подсказкой ИИ)</div>
+                      <div>«Понимаю ваше желание ускориться. Давайте сверим ТЗ: неделя возможна только при отказе от тестов, что создаст риск падения прод-базы. Фиксируем это?»</div>
+                    </div>
+                  </div>
+
+                  <div class="tg-ai-pane">
+                    <span class="tg-ai-tag">АНАЛИЗ МАНИПУЛЯЦИИ</span>
+                    <p class="tg-ai-insight">
+                      <strong>Триггер:</strong> Чувство вины и сравнение с конкурентами. Попытка сбить цену и сроки без изменения объёма.
+                    </p>
+                    <p class="tg-ai-advice">
+                      <strong>Совет:</strong> Не оправдываться. Вернуть ответственность за риски заказчику через прямой выбор.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PRODUCT 3: TellMeMore FB (Messenger) -->
+      <div id="tellmemore-fb" class="product-card">
+        <div class="product-layout">
+          <div class="product-info">
+            <div class="product-header-row">
+              <span class="badge badge-amber">
+                <span class="badge-dot"></span> В планах • Roadmap
+              </span>
+              <span class="badge badge-blue">Android • Win • Linux • macOS</span>
+            </div>
+
+            <h3 class="product-title">TellMeMore FB</h3>
+            <p class="product-desc">
+              Специализированный ИИ-помощник для коммерческих и деловых переписок в Facebook и Messenger. Ориентирован на продажи, удержание клиентов, холодные переговоры и заключение соглашений без уступок в позициях.
+            </p>
+
+            <ul class="feature-list">
+              <li>
+                <span class="feature-check">✓</span>
+                <div><strong>Фокус на сделку:</strong> ведение собеседника по стадиям переговоров без навязчивости.</div>
+              </li>
+              <li>
+                <span class="feature-check">✓</span>
+                <div><strong>Отработка возражений:</strong> моментальный подбор неоспоримых аргументов на «дорого», «подумаем», «не сейчас».</div>
+              </li>
+              <li>
+                <span class="feature-check">✓</span>
+                <div><strong>Кроссплатформенный запуск:</strong> единая кодовая база на мобильных и десктопных платформах.</div>
+              </li>
+            </ul>
+
+            <div class="product-meta-row">
+              <span class="mono" style="font-size: 0.82rem; color: var(--accent-amber);">
+                Старт разработки запланирован после релиза TG-версии
+              </span>
+            </div>
+          </div>
+
+          <!-- Mockup: Blueprint -->
+          <div class="product-mockup">
+            <div class="mockup-window" style="background: var(--bg-subtle); border-style: dashed;">
+              <div class="mockup-bar">
+                <span class="traffic-light tl-red"></span>
+                <span class="traffic-light tl-yellow"></span>
+                <span class="traffic-light tl-green"></span>
+                <span class="mockup-title mono">Facebook Messenger AI Co-Pilot • Blueprint</span>
+              </div>
+              <div class="mockup-body" style="text-align: center; padding: 40px 20px;">
+                <div style="font-size: 28px; margin-bottom: 12px;">💬 ➔ 🎯</div>
+                <h4 style="font-size: 1rem; margin-bottom: 6px;">Deal-Making & Client Negotiation</h4>
+                <p style="font-size: 0.8rem; color: var(--text-muted); max-width: 320px; margin: 0 auto;">
+                  ИИ-ассистент для международных продаж, маркетплейсов и бизнес-связей в Meta-экосистеме.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ==================== ROADMAP ==================== -->
+  <section id="roadmap" class="section">
+    <div class="container">
+      <div class="section-head">
+        <span class="badge badge-green section-pill">ПЛАН РАЗВИТИЯ</span>
+        <h2 class="section-title">Дорожная карта экосистемы</h2>
+        <p class="section-subtitle">
+          От локального суфлёра собеседований на macOS до глобальной мультиязычной платформы осознанной коммуникации.
+        </p>
+      </div>
+
+      <div class="roadmap-timeline">
+        <!-- Item 1 -->
+        <div class="roadmap-item completed">
+          <div class="roadmap-dot"></div>
+          <div class="roadmap-card">
+            <div class="roadmap-header">
+              <span class="roadmap-quarter">Q4 2026 • ЗАВЕРШЕНО</span>
+              <span class="badge badge-green">v1.0 Релиз</span>
+            </div>
+            <h3>TellMeMore macOS — Живой суфлёр для собеседований</h3>
+            <p>
+              Потоковое распознавание Deepgram (<300 мс), Gemini 3.8/Claude 3.5, режим невидимости от захвата экрана в Zoom/Meet, горячие клавиши ⌥1 / ⌥2, автокомпрессия контекста по объёму символов, экспорт/импорт истории.
+            </p>
+          </div>
+        </div>
+
+        <!-- Item 2 -->
+        <div class="roadmap-item active">
+          <div class="roadmap-dot"></div>
+          <div class="roadmap-card">
+            <div class="roadmap-header">
+              <span class="roadmap-quarter">Q1 2027 • В РАЗРАБОТКЕ</span>
+              <span class="badge badge-purple">Beta</span>
+            </div>
+            <h3>TellMeMore TG — Клон Telegram с ИИ-профайлингом</h3>
+            <p>
+              Полноценный клиент Telegram на Android, Windows, Linux и macOS. Разбор психологического типа собеседников, радар манипуляций и подсказки стратегии ведения дискуссий в чатах.
+            </p>
+          </div>
+        </div>
+
+        <!-- Item 3 -->
+        <div class="roadmap-item">
+          <div class="roadmap-dot"></div>
+          <div class="roadmap-card">
+            <div class="roadmap-header">
+              <span class="roadmap-quarter">Q2 2027 • ЗАПЛАНИРОВАНО</span>
+              <span class="badge badge-blue">Desktop</span>
+            </div>
+            <h3>TellMeMore Desktop для Windows и Linux</h3>
+            <p>
+              Перенос голосового суфлёра реального времени с macOS на Windows и Linux (захват системного звука через WASAPI и PulseAudio/PipeWire).
+            </p>
+          </div>
+        </div>
+
+        <!-- Item 4 -->
+        <div class="roadmap-item">
+          <div class="roadmap-dot"></div>
+          <div class="roadmap-card">
+            <div class="roadmap-header">
+              <span class="roadmap-quarter">Q3 2027 • ЗАПЛАНИРОВАНО</span>
+              <span class="badge badge-amber">Concept</span>
+            </div>
+            <h3>TellMeMore FB — Ассистент деловых переписок</h3>
+            <p>
+              Интеграция ИИ-помощника для закрытия сделок, клиентских переговоров и холодных продаж в Facebook Messenger на смартфонах и ПК.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div>
+        <div class="brand" style="margin-bottom: 6px;">
+          <div class="brand-icon">✦</div>
+          <span>TellMeMore Ecosystem</span>
+        </div>
+        <p style="font-size: 0.78rem; color: var(--text-faint);">
+          Создано для того, чтобы убрать шум и всегда добиваться поставленных целей.
+        </p>
+      </div>
+
+      <div class="footer-links mono">
+        <a href="https://github.com/s3rfdev/TellMeMore" target="_blank" rel="noopener noreferrer">GitHub Репозиторий</a>
+        <a href="https://github.com/s3rfdev" target="_blank" rel="noopener noreferrer">Профиль разработчика</a>
+        <a href="#tellmemore-live">macOS</a>
+        <a href="#tellmemore-tg">Telegram</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
