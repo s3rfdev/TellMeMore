@@ -1333,60 +1333,331 @@ class _SettingsDialogState extends State<SettingsDialog> {
     );
   }
 
-  /// Минималистичный выбор цвета: 8 свотчей, выбранный обведён.
+  /// Выбор цвета текста: свотчи, шкала яркости/затемнения и ультра-компактный color picker.
   Widget _colorSwatchesRow() {
     const swatches = <int>[
-      0xFFE8EAED,
       0xFFFFFFFF,
+      0xFFE8EAED,
+      0xFFCCCCCC,
+      0xFFA0A5AD,
       0xFF2FBF71,
-      0xFF5B9DFF,
       0xFF56C8D8,
+      0xFF5B9DFF,
       0xFFF5A524,
       0xFFE5484D,
       0xFFB58CFF,
     ];
-    return Row(
+
+    final currentColor = Color(c.hintColor);
+    final currentHsv = HSVColor.fromColor(currentColor);
+    final brightness = currentHsv.value.clamp(0.2, 1.0);
+    final isCustomSelected = !swatches.contains(c.hintColor);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          S.t('textColor'),
-          style: const TextStyle(fontSize: 12, color: Palette.sec),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Row(
-            children: [
-              for (final argb in swatches)
-                Padding(
-                  padding: const EdgeInsets.only(right: 6),
-                  child: InkWell(
-                    onTap: () {
-                      c.hintColor = argb;
-                      _touch();
-                      widget.session.saveConfig();
-                    },
-                    customBorder: const CircleBorder(),
-                    child: Container(
-                      width: 20,
-                      height: 20,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Color(argb),
-                        border: Border.all(
-                          color:
-                              c.hintColor == argb
-                                  ? Palette.pri
-                                  : Palette.border,
-                          width: c.hintColor == argb ? 2 : 1,
+        Row(
+          children: [
+            Text(
+              S.t('textColor'),
+              style: const TextStyle(fontSize: 12, color: Palette.sec),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    for (final argb in swatches)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: _swatchCircle(
+                          Color(argb),
+                          isSelected: c.hintColor == argb,
+                          onTap: () {
+                            c.hintColor = argb;
+                            _touch();
+                            widget.session.saveConfig();
+                          },
+                        ),
+                      ),
+                    if (isCustomSelected)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: _swatchCircle(
+                          currentColor,
+                          isSelected: true,
+                          onTap: () => _openCustomColorPicker(context),
+                        ),
+                      ),
+                    // Кнопка вызова компактного Color Picker
+                    Tooltip(
+                      message: S.t('customColor'),
+                      child: InkWell(
+                        onTap: () => _openCustomColorPicker(context),
+                        borderRadius: BorderRadius.circular(6),
+                        child: Container(
+                          width: 22,
+                          height: 22,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: isCustomSelected ? Palette.green : Palette.border,
+                              width: 1.2,
+                            ),
+                            gradient: const SweepGradient(
+                              colors: [
+                                Colors.red,
+                                Colors.yellow,
+                                Colors.green,
+                                Colors.cyan,
+                                Colors.blue,
+                                Colors.purple,
+                                Colors.red,
+                              ],
+                            ),
+                          ),
+                          child: const Center(
+                            child: Icon(
+                              Icons.colorize_rounded,
+                              size: 11,
+                              color: Colors.white,
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
-            ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        // Шкала яркости / затемнения выбранного цвета
+        Row(
+          children: [
+            Text(
+              S.t('brightness'),
+              style: const TextStyle(fontSize: 11, color: Palette.sec),
+            ),
+            const Spacer(),
+            Text(
+              '${(brightness * 100).round()}%',
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: Palette.pri,
+              ),
+            ),
+          ],
+        ),
+        SliderTheme(
+          data: _sliderTheme(context),
+          child: Slider(
+            value: brightness,
+            min: 0.2,
+            max: 1.0,
+            divisions: 16,
+            onChanged: (v) {
+              final newColor = currentHsv.withValue(v).toColor();
+              c.hintColor = newColor.toARGB32();
+              _touch();
+              widget.session.saveConfig();
+            },
           ),
         ),
       ],
     );
+  }
+
+  Widget _swatchCircle(
+    Color color, {
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      customBorder: const CircleBorder(),
+      child: Container(
+        width: 20,
+        height: 20,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: color,
+          border: Border.all(
+            color: isSelected ? Palette.green : Palette.border,
+            width: isSelected ? 2.2 : 1,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: Palette.green.withValues(alpha: 0.4),
+                    blurRadius: 4,
+                  ),
+                ]
+              : null,
+        ),
+      ),
+    );
+  }
+
+  /// Ультра-минималистичный Color Picker для задания любого кастомного оттенка
+  Future<void> _openCustomColorPicker(BuildContext context) async {
+    final initial = Color(c.hintColor);
+    var hsv = HSVColor.fromColor(initial);
+
+    final result = await showDialog<Color>(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setPickerState) {
+            final activeColor = hsv.toColor();
+            final hex = activeColor.toARGB32().toRadixString(16).padLeft(8, '0').substring(2).toUpperCase();
+
+            return Dialog(
+              backgroundColor: Palette.dialogBg,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+                side: const BorderSide(color: Palette.border),
+              ),
+              child: Container(
+                width: 280,
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Шапка: заголовок и предпросмотр
+                    Row(
+                      children: [
+                        Text(
+                          S.t('customColor'),
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: Palette.pri,
+                          ),
+                        ),
+                        const Spacer(),
+                        Container(
+                          width: 32,
+                          height: 20,
+                          decoration: BoxDecoration(
+                            color: activeColor,
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(color: Palette.border),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          '#$hex',
+                          style: const TextStyle(
+                            fontFamily: 'Menlo',
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: Palette.sec,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Оттенок (Hue)
+                    Text(
+                      S.t('hue'),
+                      style: const TextStyle(fontSize: 10, color: Palette.sec),
+                    ),
+                    SliderTheme(
+                      data: _sliderTheme(context),
+                      child: Slider(
+                        value: hsv.hue,
+                        min: 0,
+                        max: 360,
+                        onChanged: (v) {
+                          setPickerState(() => hsv = hsv.withHue(v));
+                        },
+                      ),
+                    ),
+
+                    // Насыщенность (Saturation)
+                    Text(
+                      S.t('saturation'),
+                      style: const TextStyle(fontSize: 10, color: Palette.sec),
+                    ),
+                    SliderTheme(
+                      data: _sliderTheme(context),
+                      child: Slider(
+                        value: hsv.saturation,
+                        min: 0,
+                        max: 1.0,
+                        onChanged: (v) {
+                          setPickerState(() => hsv = hsv.withSaturation(v));
+                        },
+                      ),
+                    ),
+
+                    // Яркость / Затемнение (Value)
+                    Text(
+                      S.t('brightness'),
+                      style: const TextStyle(fontSize: 10, color: Palette.sec),
+                    ),
+                    SliderTheme(
+                      data: _sliderTheme(context),
+                      child: Slider(
+                        value: hsv.value.clamp(0.15, 1.0),
+                        min: 0.15,
+                        max: 1.0,
+                        onChanged: (v) {
+                          setPickerState(() => hsv = hsv.withValue(v));
+                        },
+                      ),
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    // Кнопки действий
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.of(ctx).pop(null),
+                          style: TextButton.styleFrom(
+                            foregroundColor: Palette.sec,
+                            visualDensity: VisualDensity.compact,
+                          ),
+                          child: Text(S.t('cancel'), style: const TextStyle(fontSize: 12)),
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          onPressed: () => Navigator.of(ctx).pop(hsv.toColor()),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Palette.green,
+                            foregroundColor: const Color(0xFF06130C),
+                            visualDensity: VisualDensity.compact,
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                          ),
+                          child: Text(
+                            S.t('save'),
+                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    if (result != null) {
+      c.hintColor = result.toARGB32();
+      _touch();
+      widget.session.saveConfig();
+    }
   }
 
   /// Микро-переключатель: серые иконки+текст, активный подсвечен зелёным.

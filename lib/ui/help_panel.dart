@@ -8,6 +8,7 @@ import '../l10n.dart';
 import '../services/llm_service.dart';
 import '../services/window_service.dart';
 import '../session.dart';
+import 'formatted_answer.dart';
 import 'settings_dialog.dart';
 import 'theme.dart';
 
@@ -61,86 +62,86 @@ class HelpPanel extends StatelessWidget {
   Widget _header(BuildContext context) {
     final p = session.config.provider;
     final hasKey = session.config.keyFor(p).trim().isNotEmpty;
-    return SizedBox(
-      height: 32,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          // Вся фоновая область шапки — нативное перетаскивание окна
-          const Positioned.fill(child: _WindowDragArea()),
 
-          // Левая часть: кнопка закрытия, сворачивания, меню чата (...), плашка Gemini
-          Positioned(
-            left: 0,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _winButton(
-                  icon: Icons.close,
-                  tooltip: S.t('winClose'),
-                  onTap: () => WindowManipulator.closeWindow(),
-                ),
-                const SizedBox(width: 6),
-                _winButton(
-                  icon: Icons.remove,
-                  tooltip: S.t('winMinimize'),
-                  onTap: () => WindowManipulator.miniaturizeWindow(),
-                ),
-                const SizedBox(width: 8),
-                _chatMenuButton(context),
-                const SizedBox(width: 8),
-                _providerPill(p, hasKey),
-              ],
-            ),
-          ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final w = constraints.maxWidth;
+        final isNarrow = w < 540;
+        final isUltraNarrow = w < 400;
 
-          // Центр: Get answer + Camera (скриншот экрана + код)
-          Center(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                GradientButton(
-                  icon: Icons.bolt,
-                  label: 'Get answer',
-                  height: 28,
-                  fontSize: 12,
-                  onTap: session.helpLoading ? null : session.getHelp,
-                  tooltip: S.t('hintPlaceholder'),
-                ),
-                const SizedBox(width: 6),
-                _cameraButton(context),
-              ],
-            ),
-          ),
+        return SizedBox(
+          height: 32,
+          child: Stack(
+            children: [
+              // Вся фоновая область шапки — нативное перетаскивание окна
+              const Positioned.fill(child: _WindowDragArea()),
 
-          // Правая часть: переключение языка и настройки
-          Positioned(
-            right: 0,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _langToggle(),
-                IconButton(
-                  tooltip: S.t('settings'),
-                  icon: const Icon(Icons.tune, size: 18, color: Palette.sec),
-                  onPressed: () => showSettingsDialog(context, session),
-                  visualDensity: VisualDensity.compact,
-                ),
-              ],
-            ),
+              Row(
+                children: [
+                  // Левая часть: кнопка закрытия, сворачивания, меню чата (...), плашка модели
+                  _winButton(
+                    icon: Icons.close,
+                    tooltip: S.t('winClose'),
+                    onTap: () => WindowManipulator.closeWindow(),
+                  ),
+                  const SizedBox(width: 5),
+                  _winButton(
+                    icon: Icons.remove,
+                    tooltip: S.t('winMinimize'),
+                    onTap: () => WindowManipulator.miniaturizeWindow(),
+                  ),
+                  const SizedBox(width: 6),
+                  _chatMenuButton(context),
+                  if (!isUltraNarrow) ...[
+                    const SizedBox(width: 6),
+                    _providerPill(p, hasKey, compact: isNarrow),
+                  ],
+
+                  const Spacer(),
+
+                  // Центр: Get answer + Camera (скриншот экрана + код)
+                  GradientButton(
+                    icon: Icons.bolt,
+                    label: isNarrow ? '' : 'Get answer',
+                    height: 28,
+                    fontSize: 12,
+                    onTap: session.helpLoading ? null : session.getHelp,
+                    tooltip: S.t('hintPlaceholder'),
+                  ),
+                  const SizedBox(width: 5),
+                  _cameraButton(context),
+
+                  const Spacer(),
+
+                  // Правая часть: переключение языка и настройки
+                  if (!isUltraNarrow) ...[
+                    _langToggle(),
+                    const SizedBox(width: 2),
+                  ],
+                  IconButton(
+                    tooltip: S.t('settings'),
+                    icon: const Icon(Icons.tune, size: 18, color: Palette.sec),
+                    onPressed: () => showSettingsDialog(context, session),
+                    visualDensity: VisualDensity.compact,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                  ),
+                ],
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
-  Widget _providerPill(LlmProvider p, bool hasKey) {
+  Widget _providerPill(LlmProvider p, bool hasKey, {bool compact = false}) {
     return Tooltip(
       message:
           '${p.label} · ${session.config.modelFor(p)} · ${hasKey ? S.t('keySet') : S.t('keyMissing')}',
       child: Container(
         height: 20,
-        padding: const EdgeInsets.symmetric(horizontal: 7),
+        padding: EdgeInsets.symmetric(horizontal: compact ? 6 : 7),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(999),
           border: Border.all(color: Palette.border),
@@ -156,15 +157,17 @@ class HelpPanel extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
             ),
-            const SizedBox(width: 4),
-            Text(
-              p.shortLabel,
-              style: const TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-                color: Palette.sec,
+            if (!compact) ...[
+              const SizedBox(width: 4),
+              Text(
+                p.shortLabel,
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: Palette.sec,
+                ),
               ),
-            ),
+            ],
           ],
         ),
       ),
@@ -492,16 +495,11 @@ class HelpPanel extends StatelessWidget {
     }
     if (session.helpAnswer != null) {
       final c = session.config;
-      return SingleChildScrollView(
-        child: SelectableText(
-          session.helpAnswer!,
-          style: TextStyle(
-            color: Color(c.hintColor),
-            fontSize: c.fontSize,
-            height: 1.45,
-            fontWeight: c.boldText ? FontWeight.w700 : FontWeight.w400,
-          ),
-        ),
+      return FormattedAnswerView(
+        text: session.helpAnswer!,
+        baseColor: Color(c.hintColor),
+        fontSize: c.fontSize,
+        isBold: c.boldText,
       );
     }
     return Text(

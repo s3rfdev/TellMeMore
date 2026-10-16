@@ -11,7 +11,7 @@ class MainFlutterWindow: NSWindow {
     self.contentViewController = flutterViewController
     self.setFrame(NSRect(x: 0, y: 0, width: 1040, height: 760), display: true)
     self.center()
-    self.minSize = NSSize(width: 720, height: 520)
+    self.minSize = NSSize(width: 320, height: 360)
     self.title = "TellMeMore"
 
     // Прозрачное окно: фон рисует Flutter (альфа задаётся в настройках приложения).

@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sobes123/services/config_store.dart';
-import 'package:sobes123/services/deepgram_stream.dart';
-import 'package:sobes123/session.dart';
+import 'package:tellmemore/services/config_store.dart';
+import 'package:tellmemore/services/deepgram_stream.dart';
+import 'package:tellmemore/session.dart';
 
 void main() {
   group('AppConfig tests', () {
@@ -160,7 +160,7 @@ void main() {
       expect(prompt, contains('<turn speaker="interviewer">How do you handle background state isolation?</turn>'));
       expect(prompt, contains('</live_transcript>'));
       expect(prompt, contains('<current_situation>'));
-      expect(prompt, contains('Последним говорил собеседник / интервьюер'));
+      expect(prompt, contains('Последним говорил оппонент'));
       expect(prompt, contains('</current_situation>'));
       expect(prompt, contains('<instructions>'));
       expect(prompt, contains('Отвечай строго на русском языке.'));
@@ -206,7 +206,7 @@ void main() {
       final prompt = session.buildPrompt();
       expect(prompt, contains('Answer strictly in English.'));
       expect(prompt, contains('<turn speaker="candidate">I worked on high load streaming applications.</turn>'));
-      expect(prompt, contains('Последнюю реплику говорил я (кандидат)'));
+      expect(prompt, contains('Последнюю реплику говорил я'));
     });
 
     test('Prompt includes screen_context and technical code instructions when withScreenshot is true', () {

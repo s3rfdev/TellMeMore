@@ -9,7 +9,7 @@
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIconFile</key>
-	<string></string>
+	<string>AppIcon</string>
 	<key>CFBundleIdentifier</key>
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
@@ -29,10 +29,10 @@
 	<key>NSMainNibFile</key>
 	<string>MainMenu</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Приложение транскрибирует вашу речь в реальном времени, чтобы помогать вам на собеседовании.</string>
+	<string>Приложение транскрибирует вашу речь в реальном времени, чтобы помогать вам во время переговоров и собеседований.</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 	<key>NSScreenCaptureUsageDescription</key>
-	<string>Приложение захватывает системный звук (голос собеседника в звонке) для транскрибации. Экран не записывается.</string>
+	<string>Приложение захватывает снимок экрана для анализа кода и системный звук звонка для транскрибации.</string>
 </dict>
 </plist>

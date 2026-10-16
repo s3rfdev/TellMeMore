@@ -74,8 +74,8 @@ const Map<String, Map<String, String>> _d = {
   'statusListening': {'ru': 'Слушаю…', 'en': 'Listening…'},
   'startStream': {'ru': 'Начать стрим', 'en': 'Start Stream'},
   'stop': {'ru': 'Остановить', 'en': 'Stop'},
-  'you': {'ru': 'Вы', 'en': 'Me'},
-  'interviewer': {'ru': 'Собеседник', 'en': 'Interviewer'},
+  'you': {'ru': 'Me', 'en': 'Me'},
+  'interviewer': {'ru': 'Оппонент', 'en': 'Оппонент'},
   'emptyTranscript': {
     'ru':
         'Нажмите «Начать стрим» и говорите —\nздесь появится текст разговора с метками спикеров.',
@@ -210,6 +210,10 @@ const Map<String, Map<String, String>> _d = {
     'en': 'Transparent titlebar',
   },
   'textColor': {'ru': 'Цвет текста', 'en': 'Text color'},
+  'brightness': {'ru': 'Яркость / тон', 'en': 'Text brightness / shade'},
+  'customColor': {'ru': 'Свой цвет', 'en': 'Custom color'},
+  'hue': {'ru': 'Оттенок', 'en': 'Hue'},
+  'saturation': {'ru': 'Насыщенность', 'en': 'Saturation'},
   'fontSize': {'ru': 'Размер шрифта', 'en': 'Font size'},
   'boldText': {'ru': 'Жирный шрифт', 'en': 'Bold text'},
   'resizeHint': {
@@ -232,20 +236,20 @@ const Map<String, Map<String, String>> _d = {
   'openaiKey': {'ru': 'OpenAI API Key', 'en': 'OpenAI API Key'},
   'anthropicKey': {'ru': 'Anthropic API Key', 'en': 'Anthropic API Key'},
   'myProfile': {
-    'ru': 'Информация обо мне (кандидате)',
-    'en': 'About me (the candidate)',
+    'ru': 'Обо мне',
+    'en': 'About me',
   },
   'myProfileHint': {
-    'ru': 'опыт, навыки, проекты — чтобы подсказки были от вашего лица',
-    'en': 'experience, skills, projects — hints will speak in your voice',
+    'ru': 'опыт, навыки, позиция, контекст — чтобы подсказки были от вашего лица',
+    'en': 'experience, skills, context — hints will speak in your voice',
   },
   'interviewerProfile': {
-    'ru': 'Информация о собеседнике',
-    'en': 'About the interviewer',
+    'ru': 'Об оппоненте',
+    'en': 'About the opponent',
   },
   'interviewerHint': {
-    'ru': 'роль, компания, что ценит, стиль общения',
-    'en': 'role, company, what they value, style',
+    'ru': 'роль, компания, позиция, стиль общения, цели на переговорах',
+    'en': 'role, company, position, style, negotiation goals',
   },
   'goals': {
     'ru': 'Мои цели и критерии (учитываются в подсказках)',

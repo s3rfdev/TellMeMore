@@ -37,11 +37,11 @@ Future<void> main() async {
       }
     },
   );
-  runApp(SobesApp(session: session));
+  runApp(TellMeMoreApp(session: session));
 }
 
-class SobesApp extends StatelessWidget {
-  const SobesApp({super.key, required this.session});
+class TellMeMoreApp extends StatelessWidget {
+  const TellMeMoreApp({super.key, required this.session});
 
   final Session session;
 
