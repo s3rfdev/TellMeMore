@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
 import 'package:macos_window_utils/macos_window_utils.dart';
 import 'package:record/record.dart';
 
@@ -81,6 +82,8 @@ class Session extends ChangeNotifier {
   bool helpLoading = false;
   String? helpAnswer;
   String? helpError;
+  StreamSubscription<String>? _helpSub;
+  http.Client? _activeHelpClient;
 
   /// Статус второго потока (голос собеседника).
   String? themError;
@@ -801,9 +804,89 @@ ${hasSummary ? '4. Опирайся на контекст из <conversation_sum
   String buildPrompt({bool withScreenshot = false}) =>
       _buildPrompt(withScreenshot: withScreenshot);
 
+  /// Остановка текущей потоковой генерации ответа пользователем.
+  void stopHelp() {
+    if (!helpLoading) return;
+    _cancelHelpStream();
+    helpLoading = false;
+    notifyListeners();
+  }
+
+  Future<void> _cancelHelpStream() async {
+    final sub = _helpSub;
+    _helpSub = null;
+    await sub?.cancel();
+    _activeHelpClient?.close();
+    _activeHelpClient = null;
+  }
+
+  Future<void> _streamHelp({
+    required LlmProvider provider,
+    required String apiKey,
+    required String model,
+    required String prompt,
+    Uint8List? imageBytes,
+  }) async {
+    await _cancelHelpStream();
+    helpLoading = true;
+    helpAnswer = null;
+    helpError = null;
+    notifyListeners();
+
+    final client = http.Client();
+    _activeHelpClient = client;
+    final completer = Completer<void>();
+
+    try {
+      final stream = LlmService.askStream(
+        provider: provider,
+        apiKey: apiKey,
+        model: model,
+        prompt: prompt,
+        imageBytes: imageBytes,
+        client: client,
+      );
+
+      _helpSub = stream.listen(
+        (chunk) {
+          if (helpAnswer == null) {
+            helpAnswer = chunk;
+          } else {
+            helpAnswer = helpAnswer! + chunk;
+          }
+          notifyListeners();
+        },
+        onError: (e) {
+          helpError = '$e';
+          helpLoading = false;
+          _activeHelpClient = null;
+          notifyListeners();
+          if (!completer.isCompleted) completer.complete();
+        },
+        onDone: () {
+          if ((helpAnswer ?? '').trim().isEmpty && helpError == null) {
+            helpError = 'LLM вернул пустой ответ';
+          }
+          helpLoading = false;
+          _activeHelpClient = null;
+          notifyListeners();
+          if (!completer.isCompleted) completer.complete();
+        },
+        cancelOnError: true,
+      );
+    } catch (e) {
+      helpError = '$e';
+      helpLoading = false;
+      _activeHelpClient = null;
+      notifyListeners();
+      if (!completer.isCompleted) completer.complete();
+    }
+
+    return completer.future;
+  }
+
   Future<void> getHelp() async {
     if (helpLoading) return;
-    helpAnswer = null;
     final provider = config.provider;
     final apiKey = config.keyFor(provider).trim();
     if (apiKey.isEmpty) {
@@ -818,27 +901,17 @@ ${hasSummary ? '4. Опирайся на контекст из <conversation_sum
       notifyListeners();
       return;
     }
-    helpLoading = true;
-    helpError = null;
-    notifyListeners();
-    try {
-      helpAnswer = await LlmService.ask(
-        provider: provider,
-        apiKey: apiKey,
-        model: config.modelFor(provider),
-        prompt: _buildPrompt(),
-      );
-    } catch (e) {
-      helpError = '$e';
-    }
-    helpLoading = false;
-    notifyListeners();
+    await _streamHelp(
+      provider: provider,
+      apiKey: apiKey,
+      model: config.modelFor(provider),
+      prompt: _buildPrompt(),
+    );
   }
 
   /// Получить подсказку с анализом скриншота экрана кандидата (для задач по коду / IDE).
   Future<void> getHelpWithScreenshot() async {
     if (helpLoading) return;
-    helpAnswer = null;
     final provider = config.provider;
     final apiKey = config.keyFor(provider).trim();
     if (apiKey.isEmpty) {
@@ -847,6 +920,7 @@ ${hasSummary ? '4. Опирайся на контекст из <conversation_sum
       return;
     }
     helpLoading = true;
+    helpAnswer = null;
     helpError = null;
     notifyListeners();
     try {
@@ -859,7 +933,7 @@ ${hasSummary ? '4. Опирайся на контекст из <conversation_sum
         );
       }
 
-      helpAnswer = await LlmService.ask(
+      await _streamHelp(
         provider: provider,
         apiKey: apiKey,
         model: config.modelFor(provider),
@@ -868,15 +942,18 @@ ${hasSummary ? '4. Опирайся на контекст из <conversation_sum
       );
     } on PlatformException catch (e) {
       helpError = e.message ?? e.code;
+      helpLoading = false;
+      notifyListeners();
     } catch (e) {
       helpError = '$e';
+      helpLoading = false;
+      notifyListeners();
     }
-    helpLoading = false;
-    notifyListeners();
   }
 
   @override
   Future<void> dispose() async {
+    await _cancelHelpStream();
     await HotkeyService.unregisterAll();
     _saveDebounce?.cancel();
     _compressDebounce?.cancel();

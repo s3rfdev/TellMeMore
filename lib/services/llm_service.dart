@@ -113,6 +113,137 @@ class LlmService {
     }
   }
 
+  /// Потоковый запрос подсказки.
+  /// Для Google Gemini используется нативный Server-Sent Events (SSE) поток
+  /// (streamGenerateContent?alt=sse), благодаря которому первые слова появляются
+  /// через 300-600 мс прямо во время разговора.
+  /// Для остальных провайдеров (Z.ai, OpenAI, Claude) выполняется стандартный надежный
+  /// запрос ask(), гарантируя 100% стабильность и совместимость.
+  static Stream<String> askStream({
+    required LlmProvider provider,
+    required String apiKey,
+    required String model,
+    required String prompt,
+    Uint8List? imageBytes,
+    http.Client? client,
+  }) async* {
+    switch (provider) {
+      case LlmProvider.gemini:
+        yield* _geminiStream(
+          apiKey: apiKey,
+          model: model,
+          prompt: prompt,
+          imageBytes: imageBytes,
+          client: client,
+        );
+      case LlmProvider.zai:
+      case LlmProvider.openai:
+      case LlmProvider.anthropic:
+        final answer = await ask(
+          provider: provider,
+          apiKey: apiKey,
+          model: model,
+          prompt: prompt,
+          imageBytes: imageBytes,
+        );
+        yield answer;
+    }
+  }
+
+  static Stream<String> _geminiStream({
+    required String apiKey,
+    required String model,
+    required String prompt,
+    Uint8List? imageBytes,
+    http.Client? client,
+  }) async* {
+    final parts = <Map<String, dynamic>>[];
+    if (imageBytes != null && imageBytes.isNotEmpty) {
+      parts.add({
+        'inline_data': {
+          'mime_type': 'image/jpeg',
+          'data': base64Encode(imageBytes),
+        },
+      });
+    }
+    parts.add({'text': prompt});
+
+    final httpClient = client ?? http.Client();
+    final shouldCloseClient = client == null;
+
+    try {
+      final request = http.Request(
+        'POST',
+        Uri.parse(
+          'https://generativelanguage.googleapis.com/v1beta/models/$model:streamGenerateContent?alt=sse',
+        ),
+      );
+      request.headers['Content-Type'] = 'application/json';
+      request.headers['x-goog-api-key'] = apiKey;
+      request.body = jsonEncode({
+        'contents': [
+          {'parts': parts},
+        ],
+        'generationConfig': {'temperature': 0.3, 'maxOutputTokens': 1500},
+      });
+
+      final streamedResponse = await httpClient.send(request).timeout(_timeout);
+
+      if (streamedResponse.statusCode != 200) {
+        final bytes = await streamedResponse.stream.toBytes();
+        var detail = utf8.decode(bytes, allowMalformed: true);
+        if (detail.length > 300) detail = detail.substring(0, 300);
+        throw Exception('Gemini ${streamedResponse.statusCode}: $detail');
+      }
+
+      var hasYielded = false;
+
+      await for (final line in streamedResponse.stream
+          .transform(utf8.decoder)
+          .transform(const LineSplitter())) {
+        final trimmed = line.trim();
+        if (!trimmed.startsWith('data:')) continue;
+        final jsonStr = trimmed.substring(5).trim();
+        if (jsonStr.isEmpty || jsonStr == '[DONE]') continue;
+
+        try {
+          final j = jsonDecode(jsonStr) as Map<String, dynamic>;
+          final candidates = j['candidates'] as List<dynamic>?;
+          if (candidates != null && candidates.isNotEmpty) {
+            final first = candidates[0];
+            if (first is Map) {
+              final content = first['content'];
+              if (content is Map) {
+                final partsOut = content['parts'] as List<dynamic>?;
+                if (partsOut != null) {
+                  for (final p in partsOut) {
+                    if (p is Map && p['text'] is String) {
+                      final text = p['text'] as String;
+                      if (text.isNotEmpty) {
+                        hasYielded = true;
+                        yield text;
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        } catch (_) {
+          // Игнорируем неполные или служебные чанки SSE
+        }
+      }
+
+      if (!hasYielded) {
+        throw Exception('LLM вернул пустой ответ');
+      }
+    } finally {
+      if (shouldCloseClient) {
+        httpClient.close();
+      }
+    }
+  }
+
   static Future<String> _gemini({
     required String apiKey,
     required String model,

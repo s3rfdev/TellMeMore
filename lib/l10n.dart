@@ -16,6 +16,8 @@ const Map<String, Map<String, String>> _d = {
   // --- Помощь (верхняя панель) ---
   'helpTitle': {'ru': 'ПОДСКАЗКА', 'en': 'HINT'},
   'thinking': {'ru': 'Думаю…', 'en': 'Thinking…'},
+  'generating': {'ru': 'Печатает…', 'en': 'Generating…'},
+  'stopGeneration': {'ru': 'Остановить ответ', 'en': 'Stop generation'},
   'hintPlaceholder': {
     'ru':
         'Нажмите «Get answer» (⌥1) — получите короткую подсказку, что сказать дальше.',

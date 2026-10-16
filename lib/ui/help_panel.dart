@@ -99,14 +99,20 @@ class HelpPanel extends StatelessWidget {
 
                   const Spacer(),
 
-                  // Центр: Get answer + Camera (скриншот экрана + код)
+                  // Центр: Get answer / Stop + Camera (скриншот экрана + код)
                   GradientButton(
-                    icon: Icons.bolt,
-                    label: isNarrow ? '' : 'Get answer',
+                    icon: session.helpLoading ? Icons.stop_rounded : Icons.bolt,
+                    label: isNarrow
+                        ? ''
+                        : (session.helpLoading ? S.t('stop') : 'Get answer'),
                     height: 28,
                     fontSize: 12,
-                    onTap: session.helpLoading ? null : session.getHelp,
-                    tooltip: S.t('hintPlaceholder'),
+                    onTap: session.helpLoading
+                        ? session.stopHelp
+                        : session.getHelp,
+                    tooltip: session.helpLoading
+                        ? S.t('stopGeneration')
+                        : S.t('hintPlaceholder'),
                   ),
                   const SizedBox(width: 5),
                   _cameraButton(context),
@@ -476,6 +482,33 @@ class HelpPanel extends StatelessWidget {
   }
 
   Widget _body() {
+    if (session.helpError != null) {
+      return SingleChildScrollView(
+        child: Text(
+          session.helpError!,
+          style: const TextStyle(color: Palette.red, fontSize: 13, height: 1.4),
+        ),
+      );
+    }
+    if (session.helpAnswer != null && session.helpAnswer!.isNotEmpty) {
+      final c = session.config;
+      return Stack(
+        children: [
+          FormattedAnswerView(
+            text: session.helpAnswer!,
+            baseColor: Color(c.hintColor),
+            fontSize: c.fontSize,
+            isBold: c.boldText,
+          ),
+          if (session.helpLoading)
+            const Positioned(
+              right: 6,
+              bottom: 2,
+              child: _StreamingBadge(),
+            ),
+        ],
+      );
+    }
     if (session.helpLoading) {
       return Row(
         children: [
@@ -485,26 +518,74 @@ class HelpPanel extends StatelessWidget {
         ],
       );
     }
-    if (session.helpError != null) {
-      return SingleChildScrollView(
-        child: Text(
-          session.helpError!,
-          style: const TextStyle(color: Palette.red, fontSize: 13, height: 1.4),
-        ),
-      );
-    }
-    if (session.helpAnswer != null) {
-      final c = session.config;
-      return FormattedAnswerView(
-        text: session.helpAnswer!,
-        baseColor: Color(c.hintColor),
-        fontSize: c.fontSize,
-        isBold: c.boldText,
-      );
-    }
     return Text(
       S.t('hintPlaceholder'),
       style: const TextStyle(color: Palette.sec, fontSize: 13, height: 1.4),
+    );
+  }
+}
+
+/// Анимированный бейдж текущей потоковой генерации ответа модели
+class _StreamingBadge extends StatefulWidget {
+  const _StreamingBadge();
+
+  @override
+  State<_StreamingBadge> createState() => _StreamingBadgeState();
+}
+
+class _StreamingBadgeState extends State<_StreamingBadge>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: Tween<double>(begin: 0.45, end: 1.0).animate(_controller),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+        decoration: BoxDecoration(
+          color: Palette.dialogBg.withValues(alpha: 0.92),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: Palette.green.withValues(alpha: 0.5)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 6,
+              height: 6,
+              decoration: const BoxDecoration(
+                color: Palette.green,
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 5),
+            Text(
+              S.t('generating'),
+              style: const TextStyle(
+                fontSize: 10,
+                color: Palette.green,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
