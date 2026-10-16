@@ -177,6 +177,16 @@ open build/macos/Build/Products/Release/TellMeMore.app
 
 ---
 
+## 🌐 Экосистема TellMeMore
+
+TellMeMore входит в единую экосистему инструментов для осознанной коммуникации:
+- **[TellMeMore macOS](https://github.com/s3rfdev/TellMeMore)**: Невидимый живой суфлёр для собеседований с потоковым распознаванием речи и решением задач с экрана.
+- **[TellMeMore TG](https://github.com/s3rfdev/TellMeMore_TG)**: Кроссплатформенный клиент Telegram с психологическим профайлингом контактов, анализом уловок Sherlock и RAG-досье.
+- **[TellMeMore Copilot (Chrome Extension)](https://github.com/s3rfdev/tellmemore-chrome)**: Расширение Manifest V3 для Facebook Messenger и Telegram Web с радаром манипуляций и быстрой вставкой тактических ответов.
+- **[Официальный сайт и интерактивная документация](https://s3rfdev.github.io/TellMeMore/)**
+
+---
+
 ## Приватность и безопасность
 
 - **Полное отсутствие телеметрии:** Никакого трекинга, аналитики и передачи логов.

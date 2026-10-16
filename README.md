@@ -177,6 +177,16 @@ All credentials are saved locally in `~/.sobes_helper.json` on your machine. No 
 
 ---
 
+## 🌐 The TellMeMore Ecosystem
+
+TellMeMore is part of an integrated communication intelligence suite:
+- **[TellMeMore macOS](https://github.com/s3rfdev/TellMeMore)**: Invisible real-time HUD and interview prompter with voice & screen capture.
+- **[TellMeMore TG](https://github.com/s3rfdev/TellMeMore_TG)**: Cross-platform Telegram client with psychological profiling, Sherlock analysis, and RAG dossier.
+- **[TellMeMore Copilot (Chrome Extension)](https://github.com/s3rfdev/tellmemore-chrome)**: Manifest V3 extension for Facebook Messenger & Telegram Web with live manipulation radar and 1-click strategic reply injection.
+- **[Official Landing & Documentation](https://s3rfdev.github.io/TellMeMore/)**
+
+---
+
 ## Privacy & Security
 
 - **Zero Telemetry**: No analytics, tracking, or remote error reporting.
