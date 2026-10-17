@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/services.dart';
 
 /// Сервис взаимодействия с нативным окном macOS:
@@ -33,8 +35,28 @@ class WindowService {
   }
 
   /// Сделать скриншот экрана без окна TellMeMore.
+  /// При указании remoteMacHost выполняет удалённый захват экрана Mac через SSH.
   /// Возвращает JPEG байты (Uint8List).
-  static Future<Uint8List?> captureScreen() async {
+  static Future<Uint8List?> captureScreen({
+    String remoteMacHost = '',
+    String remoteMacUser = '',
+  }) async {
+    if (remoteMacHost.isNotEmpty) {
+      try {
+        final user = remoteMacUser.isNotEmpty ? remoteMacUser : 'vanmac';
+        final cmd =
+            "screencapture -x -t jpg /tmp/mac_cap.jpg && sips -Z 1536 /tmp/mac_cap.jpg >/dev/null && cat /tmp/mac_cap.jpg";
+        final result = await Process.run(
+          'ssh',
+          ['-T', '-q', '-o', 'StrictHostKeyChecking=no', '$user@$remoteMacHost', cmd],
+          stdoutEncoding: null,
+        );
+        if (result.exitCode == 0 && result.stdout is List<int>) {
+          final bytes = Uint8List.fromList(result.stdout as List<int>);
+          if (bytes.isNotEmpty) return bytes;
+        }
+      } catch (_) {}
+    }
     return _channel.invokeMethod<Uint8List>('captureScreen');
   }
 

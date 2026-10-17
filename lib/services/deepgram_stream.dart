@@ -63,8 +63,19 @@ class DeepgramStream {
   Stream<DeepgramTurnEvent> get events => _events.stream;
   Stream<String> get errors => _errors.stream;
 
+  bool _isReconnecting = false;
+  int _reconnectAttempts = 0;
+  Timer? _reconnectTimer;
+
   Future<void> start() async {
     _manuallyClosed = false;
+    _reconnectAttempts = 0;
+    _isReconnecting = false;
+    _reconnectTimer?.cancel();
+    await _connect();
+  }
+
+  Future<void> _connect() async {
     // Все потоки ходят в v1 nova-3 (стабильно работает с ключами без v2-скоупа).
     // diarize=true добавляет разделение спикеров по голосам (простой режим).
     final lang = languageHint == 'en' ? 'en' : 'multi';
@@ -90,6 +101,7 @@ class DeepgramStream {
 
     channel.stream.listen(
       (data) {
+        _reconnectAttempts = 0;
         if (data is! String) return;
         final Map<String, dynamic> j;
         try {
@@ -102,18 +114,48 @@ class DeepgramStream {
       onError: (Object e) {
         _keepAliveTimer?.cancel();
         if (!_manuallyClosed) {
-          debugPrint('[DG $source] ERROR: $e');
-          _errors.add('Deepgram ($model): $e');
+          debugPrint('[DG $source] error: $e, attempting recovery...');
+          _scheduleReconnect();
         }
       },
       onDone: () {
         _keepAliveTimer?.cancel();
-        debugPrint('[DG $source] closed');
-        if (!_manuallyClosed && !_errors.isClosed) {
-          _errors.add(S.t('errDgClosed'));
+        if (!_manuallyClosed) {
+          debugPrint('[DG $source] closed unexpectedly, attempting recovery...');
+          _scheduleReconnect();
+        } else {
+          debugPrint('[DG $source] closed normally');
         }
       },
     );
+  }
+
+  void _scheduleReconnect() {
+    if (_manuallyClosed || _isReconnecting) return;
+    if (_reconnectAttempts >= 5) {
+      debugPrint('[DG $source] max reconnect attempts reached');
+      if (!_manuallyClosed && !_errors.isClosed) {
+        _errors.add(S.t('errDgClosed'));
+      }
+      return;
+    }
+    _isReconnecting = true;
+    _reconnectAttempts++;
+    final delay = Duration(milliseconds: 600 * _reconnectAttempts);
+    debugPrint(
+        '[DG $source] reconnecting in ${delay.inMilliseconds}ms (attempt $_reconnectAttempts)...');
+    _reconnectTimer?.cancel();
+    _reconnectTimer = Timer(delay, () async {
+      if (_manuallyClosed) return;
+      try {
+        await _connect();
+        _isReconnecting = false;
+        debugPrint('[DG $source] reconnected successfully!');
+      } catch (e) {
+        _isReconnecting = false;
+        _scheduleReconnect();
+      }
+    });
   }
 
   /// v1 + diarize: спикера определяет Deepgram по голосу.
@@ -201,15 +243,22 @@ class DeepgramStream {
   }
 
   void send(Uint8List chunk) {
-    _channel?.sink.add(chunk);
+    if (_manuallyClosed) return;
+    try {
+      _channel?.sink.add(chunk);
+    } catch (_) {}
   }
 
   Future<void> stop() async {
     _manuallyClosed = true;
+    _reconnectTimer?.cancel();
+    _reconnectTimer = null;
     _keepAliveTimer?.cancel();
     _keepAliveTimer = null;
     final c = _channel;
     _channel = null;
-    await c?.sink.close();
+    try {
+      await c?.sink.close();
+    } catch (_) {}
   }
 }

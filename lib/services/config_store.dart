@@ -44,6 +44,8 @@ class AppConfig {
     this.titlebarMode = 'transparent',
     this.myDeviceId = '',
     this.themDeviceId = '',
+    this.remoteMacHost = '',
+    this.remoteMacUser = '',
   }) : customModels = customModels ?? {};
 
   static const defaultDeepgramToken = '';
@@ -131,6 +133,12 @@ class AppConfig {
   /// Входное аудиоустройство для голоса собеседника ('' = выключено).
   String themDeviceId;
 
+  /// Удалённый хост Mac для скриншотов и стриминга звука по SSH.
+  String remoteMacHost;
+
+  /// Пользователь SSH на удалённом Mac.
+  String remoteMacUser;
+
   String modelFor(LlmProvider p) => switch (p) {
     LlmProvider.gemini => geminiModel,
     LlmProvider.zai => zaiModel,
@@ -212,6 +220,8 @@ class AppConfig {
     titlebarMode: titlebarMode,
     myDeviceId: myDeviceId,
     themDeviceId: themDeviceId,
+    remoteMacHost: remoteMacHost,
+    remoteMacUser: remoteMacUser,
   );
 
   Map<String, dynamic> toJson() => {
@@ -248,6 +258,8 @@ class AppConfig {
     'titlebarMode': titlebarMode,
     'myDeviceId': myDeviceId,
     'themDeviceId': themDeviceId,
+    'remoteMacHost': remoteMacHost,
+    'remoteMacUser': remoteMacUser,
   };
 
   factory AppConfig.fromJson(Map<String, dynamic> j) => AppConfig(
@@ -308,11 +320,23 @@ class AppConfig {
       final dev = (j['themDeviceId'] as String?) ?? '';
       return dev == '__sckit__' ? '' : dev;
     }(),
+    remoteMacHost: (j['remoteMacHost'] as String?) ?? '',
+    remoteMacUser: (j['remoteMacUser'] as String?) ?? '',
   );
 
   static File get _file {
-    final home = Platform.environment['APPDATA'] ??
-        Platform.environment['USERPROFILE'] ??
+    final userProfile = Platform.environment['USERPROFILE'];
+    if (userProfile != null) {
+      final f = File('$userProfile/.sobes_helper.json');
+      if (f.existsSync()) return f;
+    }
+    final appData = Platform.environment['APPDATA'];
+    if (appData != null) {
+      final f = File('$appData/.sobes_helper.json');
+      if (f.existsSync()) return f;
+    }
+    final home = userProfile ??
+        appData ??
         Platform.environment['HOME'] ??
         '.';
     return File('$home/.sobes_helper.json');

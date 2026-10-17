@@ -20,8 +20,18 @@ class HistoryData {
 /// и стартами сессий.
 class HistoryStore {
   static File get _file {
-    final home = Platform.environment['APPDATA'] ??
-        Platform.environment['USERPROFILE'] ??
+    final userProfile = Platform.environment['USERPROFILE'];
+    if (userProfile != null) {
+      final f = File('$userProfile/.tellmemore_history.json');
+      if (f.existsSync()) return f;
+    }
+    final appData = Platform.environment['APPDATA'];
+    if (appData != null) {
+      final f = File('$appData/.tellmemore_history.json');
+      if (f.existsSync()) return f;
+    }
+    final home = userProfile ??
+        appData ??
         Platform.environment['HOME'] ??
         '.';
     return File('$home/.tellmemore_history.json');

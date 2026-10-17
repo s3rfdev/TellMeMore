@@ -92,6 +92,8 @@ class Session extends ChangeNotifier {
 
   AudioRecorder? _recorder;
   AudioRecorder? _themRecorder;
+  Socket? _remoteSocket;
+  Process? _remoteAudioProcess;
   DeepgramStream? _micStream;
   DeepgramStream? _themStream;
   StreamSubscription<Uint8List>? _audioSub;
@@ -222,6 +224,15 @@ ${dialogueSliceBuf.toString().trim()}
       final list = await rec.listInputDevices();
       await rec.dispose();
       audioDevices = list.where(_isUserFacingDevice).toList();
+      if (config.remoteMacHost.isNotEmpty) {
+        audioDevices.insert(
+          0,
+          const InputDevice(
+            id: '__remote_mac__',
+            label: 'Звук с Mac (BlackHole по SSH)',
+          ),
+        );
+      }
       if (config.myDeviceId.isNotEmpty &&
           !audioDevices.any((d) => d.id == config.myDeviceId)) {
         config.myDeviceId = '';
@@ -232,6 +243,10 @@ ${dialogueSliceBuf.toString().trim()}
   }
 
   void _ensureDefaultThemDevice() {
+    if (config.remoteMacHost.isNotEmpty) {
+      config.themDeviceId = '__remote_mac__';
+      return;
+    }
     final currentThemExists = config.themDeviceId.isNotEmpty &&
         config.themDeviceId != '__sckit__' &&
         audioDevices.any((d) => d.id == config.themDeviceId);
@@ -503,8 +518,11 @@ ${dialogueSliceBuf.toString().trim()}
     notifyListeners();
   }
 
+  int _sessionGeneration = 0;
+
   Future<void> startStream() async {
     if (isStreaming) return;
+    final gen = ++_sessionGeneration;
     status = SessionStatus.connecting;
     statusMessage = null;
     themError = null;
@@ -512,6 +530,10 @@ ${dialogueSliceBuf.toString().trim()}
     try {
       _recorder = AudioRecorder();
       final granted = await _recorder!.hasPermission();
+      if (_sessionGeneration != gen) {
+        await _teardown();
+        return;
+      }
       if (!granted) {
         throw Exception(S.t('errMicDenied'));
       }
@@ -548,8 +570,85 @@ ${dialogueSliceBuf.toString().trim()}
         _micStream?.send(chunk);
       }, onError: (Object e) => onStreamError('Микрофон: $e'));
 
-      // Второй поток — голос собеседника (BlackHole или выбранное аудиоустройство).
-      if (config.themDeviceId.isNotEmpty &&
+      // Второй поток — голос собеседника (BlackHole, Remote Mac через SSH или выбранное аудиоустройство).
+      if (config.themDeviceId == '__remote_mac__' &&
+          config.remoteMacHost.isNotEmpty) {
+        try {
+          debugPrint('[THEM remote] ssh stream starting from ${config.remoteMacHost}...');
+          _themStream = DeepgramStream(
+            source: Speaker.them,
+            token: config.deepgramToken,
+            model: config.deepgramModel,
+            languageHint: config.languageHint,
+            diarize: false,
+          );
+          _eventSubs.add(_themStream!.events.listen(onTurnEvent));
+          _eventSubs.add(_themStream!.errors.listen(_onThemError));
+          await _themStream!.start();
+          debugPrint('[THEM remote] ws requested');
+
+          var themChunks = 0;
+          final themBuffer = BytesBuilder(copy: false);
+          const targetChunkSize = 3200; // 100ms at 16kHz 16-bit mono
+
+          void handleData(List<int> chunk) {
+            themBuffer.add(chunk);
+            while (themBuffer.length >= targetChunkSize) {
+              final bytes = themBuffer.takeBytes();
+              final toSend = bytes.sublist(0, targetChunkSize);
+              if (bytes.length > targetChunkSize) {
+                themBuffer.add(bytes.sublist(targetChunkSize));
+              }
+              themChunks++;
+              if (themChunks % 50 == 1) {
+                debugPrint(
+                    '[AUDIO them remote] chunk #$themChunks ${toSend.length}B');
+              }
+              _themStream?.send(toSend);
+            }
+          }
+
+          try {
+            debugPrint('[THEM remote] connecting to TCP ${config.remoteMacHost}:5005...');
+            final socket = await Socket.connect(
+              config.remoteMacHost,
+              5005,
+              timeout: const Duration(milliseconds: 2000),
+            );
+            _remoteSocket = socket;
+            debugPrint('[THEM remote] TCP connected successfully!');
+            _themAudioSub = socket.listen(
+              handleData,
+              onError: (Object e) => _onThemError('Собеседник (Mac TCP): $e'),
+              onDone: () => debugPrint('[THEM remote] TCP disconnected'),
+            );
+          } catch (e) {
+            debugPrint('[THEM remote] TCP connect failed ($e), falling back to SSH...');
+            final user =
+                config.remoteMacUser.isNotEmpty ? config.remoteMacUser : 'vanmac';
+            _remoteAudioProcess = await Process.start('ssh', [
+              '-T',
+              '-q',
+              '-o',
+              'StrictHostKeyChecking=no',
+              '$user@${config.remoteMacHost}',
+              "/usr/local/bin/ffmpeg -nostdin -loglevel error -f avfoundation -i ':BlackHole 2ch' -ar 16000 -ac 1 -f s16le -",
+            ]);
+            _remoteAudioProcess!.stderr.listen((err) {
+              debugPrint('[THEM remote stderr] ${String.fromCharCodes(err)}');
+            });
+            _remoteAudioProcess!.exitCode.then((code) {
+              debugPrint('[THEM remote] ssh exited with code $code');
+            });
+            _themAudioSub = _remoteAudioProcess!.stdout.listen(
+              handleData,
+              onError: (Object e) => _onThemError('Собеседник (Mac): $e'),
+            );
+          }
+        } catch (e) {
+          _onThemError('Собеседник (Mac): $e');
+        }
+      } else if (config.themDeviceId.isNotEmpty &&
           config.themDeviceId != kSystemAudioDeviceId) {
         try {
           debugPrint('[THEM] init: device=${config.themDeviceId}');
@@ -600,36 +699,83 @@ ${dialogueSliceBuf.toString().trim()}
   }
 
   Future<void> stopStream() async {
-    await _teardown();
+    _sessionGeneration++;
     status = SessionStatus.idle;
     statusMessage = null;
     notifyListeners();
+    await _teardown();
   }
 
   Future<void> _teardown() async {
-    await _audioSub?.cancel();
+    try {
+      await _audioSub?.cancel();
+    } catch (_) {}
     _audioSub = null;
-    await _themAudioSub?.cancel();
+
+    try {
+      await _themAudioSub?.cancel();
+    } catch (_) {}
     _themAudioSub = null;
-    await _micStream?.stop();
+
+    try {
+      _remoteSocket?.destroy();
+    } catch (_) {}
+    _remoteSocket = null;
+
+    try {
+      _remoteAudioProcess?.kill();
+    } catch (_) {}
+    _remoteAudioProcess = null;
+
+    final mic = _micStream;
     _micStream = null;
-    await _themStream?.stop();
+    if (mic != null) {
+      try {
+        await mic.stop().timeout(const Duration(milliseconds: 300),
+            onTimeout: () => null);
+      } catch (_) {}
+    }
+
+    final them = _themStream;
     _themStream = null;
+    if (them != null) {
+      try {
+        await them.stop().timeout(const Duration(milliseconds: 300),
+            onTimeout: () => null);
+      } catch (_) {}
+    }
+
     for (final s in _eventSubs) {
-      await s.cancel();
+      try {
+        await s.cancel();
+      } catch (_) {}
     }
     _eventSubs.clear();
-    try {
-      await _recorder?.stop();
-    } finally {
-      await _recorder?.dispose();
-      _recorder = null;
+
+    final rec = _recorder;
+    _recorder = null;
+    if (rec != null) {
+      try {
+        await rec.stop().timeout(const Duration(milliseconds: 300),
+            onTimeout: () => null);
+      } catch (_) {}
+      try {
+        await rec.dispose().timeout(const Duration(milliseconds: 300),
+            onTimeout: () => null);
+      } catch (_) {}
     }
-    try {
-      await _themRecorder?.stop();
-    } finally {
-      await _themRecorder?.dispose();
-      _themRecorder = null;
+
+    final themRec = _themRecorder;
+    _themRecorder = null;
+    if (themRec != null) {
+      try {
+        await themRec.stop().timeout(const Duration(milliseconds: 300),
+            onTimeout: () => null);
+      } catch (_) {}
+      try {
+        await themRec.dispose().timeout(const Duration(milliseconds: 300),
+            onTimeout: () => null);
+      } catch (_) {}
     }
   }
 
@@ -652,6 +798,7 @@ ${dialogueSliceBuf.toString().trim()}
     if (!isStreaming) return;
     status = SessionStatus.error;
     statusMessage = msg;
+    _teardown();
     notifyListeners();
   }
 
@@ -938,7 +1085,10 @@ ${hasSummary ? '4. Опирайся на контекст из <conversation_sum
     helpError = null;
     notifyListeners();
     try {
-      final imageBytes = await WindowService.captureScreen();
+      final imageBytes = await WindowService.captureScreen(
+        remoteMacHost: config.remoteMacHost,
+        remoteMacUser: config.remoteMacUser,
+      );
       if (imageBytes == null || imageBytes.isEmpty) {
         throw Exception(
           S.lang == 'ru'
