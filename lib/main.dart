@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:macos_window_utils/macos_window_utils.dart';
 
@@ -16,14 +18,16 @@ Future<void> main() async {
   // Настоящая per-pixel прозрачность окна macOS: фон и титлбар полностью
   // прозрачны (0%), сквозь окно виден рабочий стол. Без этого движок Flutter
   // рисует непрозрачную поверхность.
-  try {
-    WindowManipulator.initialize();
-    WindowManipulator.makeWindowFullyTransparent();
-    WindowManipulator.disableShadow();
-  } catch (_) {
-    /* без прозрачности приложение работает как раньше */
+  if (Platform.isMacOS) {
+    try {
+      WindowManipulator.initialize();
+      WindowManipulator.makeWindowFullyTransparent();
+      WindowManipulator.disableShadow();
+    } catch (_) {
+      /* без прозрачности приложение работает как раньше */
+    }
+    session.applyTitlebar();
   }
-  session.applyTitlebar();
   await session.applyWindowSettings();
   await HotkeyService.registerGlobalHotkeys(
     onGetAnswer: () {

@@ -310,8 +310,13 @@ class AppConfig {
     }(),
   );
 
-  static File get _file =>
-      File('${Platform.environment['HOME']}/.sobes_helper.json');
+  static File get _file {
+    final home = Platform.environment['APPDATA'] ??
+        Platform.environment['USERPROFILE'] ??
+        Platform.environment['HOME'] ??
+        '.';
+    return File('$home/.sobes_helper.json');
+  }
 
   static Future<AppConfig> load() async {
     try {

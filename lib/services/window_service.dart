@@ -44,5 +44,19 @@ class WindowService {
       await _channel.invokeMethod('openScreenCaptureSettings');
     } catch (_) {}
   }
+
+  /// Закрыть окно приложения
+  static Future<void> close() async {
+    try {
+      await _channel.invokeMethod('closeWindow');
+    } catch (_) {}
+  }
+
+  /// Свернуть окно приложения
+  static Future<void> minimize() async {
+    try {
+      await _channel.invokeMethod('minimizeWindow');
+    } catch (_) {}
+  }
 }
 

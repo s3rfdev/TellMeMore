@@ -82,13 +82,25 @@ class HelpPanel extends StatelessWidget {
                   _winButton(
                     icon: Icons.close,
                     tooltip: S.t('winClose'),
-                    onTap: () => WindowManipulator.closeWindow(),
+                    onTap: () {
+                      if (Platform.isMacOS) {
+                        WindowManipulator.closeWindow();
+                      } else {
+                        WindowService.close();
+                      }
+                    },
                   ),
                   const SizedBox(width: 5),
                   _winButton(
                     icon: Icons.remove,
                     tooltip: S.t('winMinimize'),
-                    onTap: () => WindowManipulator.miniaturizeWindow(),
+                    onTap: () {
+                      if (Platform.isMacOS) {
+                        WindowManipulator.miniaturizeWindow();
+                      } else {
+                        WindowService.minimize();
+                      }
+                    },
                   ),
                   const SizedBox(width: 6),
                   _chatMenuButton(context),
