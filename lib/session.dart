@@ -222,24 +222,36 @@ ${dialogueSliceBuf.toString().trim()}
       final list = await rec.listInputDevices();
       await rec.dispose();
       audioDevices = list.where(_isUserFacingDevice).toList();
+      if (config.myDeviceId.isNotEmpty &&
+          !audioDevices.any((d) => d.id == config.myDeviceId)) {
+        config.myDeviceId = '';
+      }
       _ensureDefaultThemDevice();
       notifyListeners();
     } catch (_) {}
   }
 
   void _ensureDefaultThemDevice() {
-    if (config.themDeviceId.isEmpty || config.themDeviceId == '__sckit__') {
-      InputDevice? blackHole;
+    final currentThemExists = config.themDeviceId.isNotEmpty &&
+        config.themDeviceId != '__sckit__' &&
+        audioDevices.any((d) => d.id == config.themDeviceId);
+    if (!currentThemExists) {
+      InputDevice? virtualDevice;
       for (final d in audioDevices) {
         final l = d.label.toLowerCase();
         final id = d.id.toLowerCase();
-        if (l.contains('blackhole') || id.contains('blackhole')) {
-          blackHole = d;
+        if (l.contains('blackhole') ||
+            id.contains('blackhole') ||
+            l.contains('cable') ||
+            id.contains('cable')) {
+          virtualDevice = d;
           break;
         }
       }
-      if (blackHole != null) {
-        config.themDeviceId = blackHole.id;
+      if (virtualDevice != null) {
+        config.themDeviceId = virtualDevice.id;
+      } else {
+        config.themDeviceId = '';
       }
     }
   }

@@ -17,7 +17,17 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   // plugins.
   ::CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
 
-  flutter::DartProject project(L"data");
+  wchar_t exe_path[MAX_PATH];
+  ::GetModuleFileNameW(nullptr, exe_path, MAX_PATH);
+  std::wstring exe_dir(exe_path);
+  size_t last_slash = exe_dir.find_last_of(L"\\/");
+  if (last_slash != std::wstring::npos) {
+    exe_dir = exe_dir.substr(0, last_slash);
+  }
+  ::SetCurrentDirectoryW(exe_dir.c_str());
+
+  std::wstring data_path = exe_dir + L"\\data";
+  flutter::DartProject project(data_path);
 
   std::vector<std::string> command_line_arguments =
       GetCommandLineArguments();
@@ -26,8 +36,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
 
   FlutterWindow window(project);
   Win32Window::Point origin(10, 10);
-  Win32Window::Size size(1280, 720);
-  if (!window.Create(L"tellmemore", origin, size)) {
+  Win32Window::Size size(1040, 760);
+  if (!window.Create(L"TellMeMore", origin, size)) {
     return EXIT_FAILURE;
   }
   window.SetQuitOnClose(true);
