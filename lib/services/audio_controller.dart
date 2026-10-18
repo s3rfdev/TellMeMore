@@ -265,6 +265,7 @@ class AudioController {
         }
       }
 
+      socket.setOption(SocketOption.tcpNoDelay, true);
       _remoteMicSocket = socket;
       debugPrint('[MIC remote] TCP connected successfully!');
       _remoteMicSub = socket.listen(
@@ -339,6 +340,7 @@ class AudioController {
         }
       }
 
+      socket.setOption(SocketOption.tcpNoDelay, true);
       _remoteSocket = socket;
       debugPrint('[THEM remote] TCP connected successfully!');
       _themAudioSub = socket.listen(

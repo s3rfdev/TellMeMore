@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+import os
 import socket
 import subprocess
 import threading
@@ -7,10 +7,15 @@ import time
 
 def handle_client(conn, addr, input_device, label, extra_filter=None):
     print(f"[{label}] Connected from {addr}")
+    try:
+        conn.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+    except Exception:
+        pass
     cmd = [
         "/usr/local/bin/ffmpeg",
         "-nostdin",
         "-loglevel", "error",
+        "-thread_queue_size", "2048",
         "-f", "avfoundation",
         "-i", input_device,
     ]
@@ -23,9 +28,10 @@ def handle_client(conn, addr, input_device, label, extra_filter=None):
         "-"
     ])
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+    fd = proc.stdout.fileno()
     try:
         while True:
-            data = proc.stdout.read(3200)
+            data = os.read(fd, 4096)
             if not data:
                 break
             conn.sendall(data)
