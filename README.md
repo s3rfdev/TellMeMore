@@ -1,4 +1,4 @@
-# TellMeMore — Real-Time AI Interview Co-Pilot & Teleprompter
+# TellMeMore — Real-Time AI Negotiation & Meeting Intelligence Copilot
 
 <p align="center">
   <a href="README.md"><b>English</b></a> • <a href="README_RU.md"><b>Русский</b></a>
@@ -9,8 +9,8 @@
 </p>
 
 <p align="center">
-  <strong>An undetectable, floating, real-time AI assistant for technical and behavioural interviews on macOS.</strong><br>
-  Dual-stream live speech-to-text, zero-latency prompt suggestions, screen-share stealth mode, and multi-LLM support.
+  <strong>An intelligent, non-intrusive floating HUD and real-time copilot for high-stakes business negotiations, client calls, and technical consultations on macOS.</strong><br>
+  Dual-stream live speech-to-text, multi-screenshot visual inspection, zero-latency tactical cues, presenter privacy mode, and multi-LLM orchestration.
 </p>
 
 <p align="center">
@@ -26,14 +26,14 @@
 
 ## Why TellMeMore?
 
-Job interviews are stressful. Even experienced engineers freeze under pressure, forget syntax, or blank on specific system design details. Traditional cheatsheets and second monitors require constant eye movement that is immediately noticeable on camera.
+High-stakes calls — whether commercial negotiations, architecture reviews, enterprise sales, or executive meetings — demand razor-sharp focus. Leaders and senior engineers must process complex arguments, recall exact technical specs or commercial terms, and counter manipulation tactics on the fly. Traditional notes on secondary monitors disrupt eye contact with the camera and break rapport.
 
-**TellMeMore** acts as your personal, invisible co-pilot:
-1. **Listens in real time** to both your microphone and your interviewer's voice via independent audio streams.
-2. **Maintains a chronological live transcript** with instant speaker identification ("Me" vs. "Interviewer").
-3. **Generates targeted, first-person answers** on demand (`Get answer`), structured around your resume, the interviewer's background, and your target interview goals.
-4. **Captures screen code challenges** (`⌥ 2`): snaps code or diagrams from your IDE / browser and provides an immediate solution.
-5. **Completely invisible to screen sharing** (`NSWindow.SharingType.none`): even if you share your entire desktop in Zoom, Google Meet, Microsoft Teams, or Slack, TellMeMore remains invisible to participants.
+**TellMeMore** acts as your augmented intelligence co-pilot:
+1. **Listens in real time:** Captures both your microphone and your counterpart's voice via isolated, independent audio streams.
+2. **Maintains a chronological live transcript:** Accurately separates speakers in real time ("Me" vs. "Opponent / Counterpart").
+3. **Synthesizes tactical insights on demand (`⌥ 1` / `Get advice`):** Delivers calibrated, first-person talking points, objection counters, and value anchors tailored to your background, the counterpart's profile, and your strategic meeting goals.
+4. **Inspects multi-screenshot visual context (`⌥ 2`):** Instantly captures one or multiple screenshots of diagrams, slide decks, competitor offers, or code on screen, feeding multi-modal LLMs for immediate situational analysis.
+5. **Guarantees Presenter Privacy (`NSWindow.SharingType.none`):** When you share your screen to present slides, software demos, or financial models in Zoom, Google Meet, Microsoft Teams, or Slack, TellMeMore's floating HUD and private strategic notes remain completely invisible to attendees and video recordings.
 
 ---
 
@@ -43,26 +43,26 @@ Job interviews are stressful. Even experienced engineers freeze under pressure, 
   <table>
     <tr>
       <td width="50%">
-        <img src="assets/screenshots/main.png" alt="Live Dialogue & Teleprompter" /><br />
-        <b>1. Live Dialogue & Invisible Teleprompter HUD</b><br />
-        <i>Real-time dual-stream transcription, instant first-person answer generation, and active engine status.</i>
+        <img src="assets/screenshots/main.png" alt="Live Dialogue & Tactical HUD" /><br />
+        <b>1. Live Dialogue & Real-Time Tactical HUD</b><br />
+        <i>Real-time dual-stream transcription, instant first-person response generation, and live LLM engine status.</i>
       </td>
       <td width="50%">
-        <img src="assets/screenshots/1.png" alt="Context & Candidate Profile" /><br />
-        <b>2. Tailored Candidate & Interview Context</b><br />
-        <i>Custom resume profile, target interviewer notes, and strategic goals/criteria for hint generation.</i>
+        <img src="assets/screenshots/1.png" alt="Context & Strategy Profile" /><br />
+        <b>2. Tailored Profile & Strategic Call Goals</b><br />
+        <i>Custom background profile, counterpart/client dossier notes, and defined strategic objectives for calibrated advice.</i>
       </td>
     </tr>
     <tr>
       <td width="50%">
-        <img src="assets/screenshots/2.png" alt="LLM & Context Memory Compression" /><br />
+        <img src="assets/screenshots/2.png" alt="Multi-LLM Engine & Memory Compression" /><br />
         <b>3. Multi-LLM Engine & Context Compression</b><br />
-        <i>Google Gemini, Claude, GPT, GLM integration with sliding window and automatic history compression.</i>
+        <i>Google Gemini, Claude, GPT, and GLM integration with sliding window history and automatic memory compression.</i>
       </td>
       <td width="50%">
-        <img src="assets/screenshots/3.png" alt="UI & Stealth Customization" /><br />
-        <b>4. Stealth & Customization Controls</b><br />
-        <i>Hide from screen share, opacity slider (0–100%), global hotkeys (⌥1 / ⌥2), and custom typography.</i>
+        <img src="assets/screenshots/3.png" alt="Presenter Privacy & HUD Customization" /><br />
+        <b>4. Presenter Privacy & HUD Customization</b><br />
+        <i>Screen-share isolation mode, per-pixel opacity slider (0–100%), global hotkeys (⌥1 / ⌥2), and custom typography.</i>
       </td>
     </tr>
   </table>
@@ -72,32 +72,35 @@ Job interviews are stressful. Even experienced engineers freeze under pressure, 
 
 ## Key Features
 
-- **Dual-Stream Audio Isolation (100% Speaker Accuracy):**
+- **Dual-Stream Audio Isolation (100% Speaker Separation):**
   - Your voice is captured directly from your hardware microphone.
-  - The interviewer's voice is routed through [BlackHole](https://existential.audio/blackhole/) (a lightweight, open-source macOS virtual audio driver).
-  - Both streams are processed simultaneously via Deepgram Nova-3 WebSocket connections. Zero crosstalk, zero hallucinated speaker labels.
+  - The counterpart's voice is captured via [BlackHole](https://existential.audio/blackhole/) (a lightweight, open-source macOS virtual audio driver).
+  - Both streams are processed simultaneously via Deepgram Nova-3 WebSocket connections. Zero crosstalk, zero acoustic feedback, zero hallucinated speaker labels.
 - **Strict Chronological Dialogue Interleaving:**
   - Sentences are timestamped and segmented on natural grammatical boundaries (`.`, `!`, `?`, or length thresholds).
-  - Even during rapid back-and-forth dialogue or uninterrupted monologue, turns are rendered in chronological timeline order.
-- **Screen Sharing Protection (Stealth Mode):**
+  - Even during rapid back-and-forth arguments or long monologues, turns are rendered in chronological timeline order.
+- **Presenter Privacy Protection (Zero Screen-Share Leak):**
   - Integrated macOS native `NSWindow.SharingType.none`.
   - The window is excluded at the window-server level from desktop captures, window shares, and screenshot tools (Zoom, Google Meet, Teams, Slack, OBS).
-- **Floating Translucent UI Overlay:**
-  - True per-pixel transparency (0–100%) so you can read hints naturally while looking directly at your camera or IDE.
+- **Multi-Screenshot Visual Analysis (`⌥ 2`):**
+  - Quickly capture single or multiple screenshots of the active workspace, client presentation, architecture diagram, or code editor.
+  - Multi-modal vision models analyze images alongside the active audio transcript to provide actionable, holistic insights.
+- **Floating Translucent HUD Overlay:**
+  - True per-pixel transparency (0–100%) so you can read tactical cues while maintaining direct eye contact with your camera.
   - Hidden / translucent / solid titlebar modes with custom window dragging areas.
   - Optional `Always on Top` floating window level.
-  - Draggable split-ratio handle between hint prompt and transcript.
+  - Draggable split-ratio handle between prompt advice and transcript stack.
   - Customizable typography (font size from 6px to 24px, bold toggle, turn spacing, color presets).
 - **Multi-LLM Provider Engine:**
   - **Google Gemini** (Gemini 2.5 Flash, 3.8 Flash, Pro, custom models).
   - **Anthropic Claude** (Claude 3.7 Sonnet, Haiku, Opus).
   - **OpenAI** (GPT-4o, GPT-4o-mini, o3-mini).
   - **Z.ai / Zhipu GLM** (GLM-4.7-Flash, GLM-4.5-Flash).
-  - Live model testing tool directly inside the settings modal.
-- **Configurable Context History:**
-  - Adjust dialogue history from 5 to 100 turns via slider.
-  - Candidate profile, interviewer notes, and goals are **always attached in full** to every LLM request.
-  - Automatic dialogue truncation protects against memory leaks during marathon interview sessions.
+  - Live model latency and availability tester directly inside the settings modal.
+- **Intelligent Context Compression:**
+  - Configurable dialogue memory window (from 5 to 100 turns).
+  - Automatic compression: upon reaching character thresholds (e.g., 3,500 characters), earlier turns are summarized into dense situational memory while recent turns remain verbatim.
+  - Your background profile, counterpart dossier, and strategic call goals are **always attached in full** to every LLM request.
 
 ---
 
@@ -128,7 +131,7 @@ cd TellMeMore
 # 2. Install dependencies
 flutter pub get
 
-# 3. Build debug or release bundle
+# 3. Build release bundle
 flutter build macos --release
 
 # 4. Launch the application
@@ -139,7 +142,7 @@ open build/macos/Build/Products/Release/TellMeMore.app
 
 ## Audio Setup (2-Minute One-Time Configuration)
 
-To capture the interviewer's voice without sending feedback through your microphone, we recommend using **BlackHole 2ch**:
+To capture the counterpart's voice without sending feedback through your microphone, we recommend using **BlackHole 2ch**:
 
 1. **Install BlackHole**:
    ```bash
@@ -151,14 +154,14 @@ To capture the interviewer's voice without sending feedback through your microph
    - Check **your headphones/speakers** AND **BlackHole 2ch**.
    - Keep your headphones at the top of the list as the primary output device (Drift Correction enabled on BlackHole).
 3. **Configure Your Call (Zoom / Google Meet / Teams / Browser)**:
-   - In your calling app or macOS sound settings, set **Output / Speaker** to the new **Multi-Output Device**.
+   - In your meeting app or macOS sound settings, set **Output / Speaker** to the new **Multi-Output Device**.
    - Set **Input / Microphone** to your real hardware microphone.
 4. **Configure TellMeMore**:
    - Open TellMeMore **Settings (⚙) -> LLM -> AUDIO**:
      - **Your microphone:** `System default` (or your headset mic).
-     - **Interviewer voice:** `BlackHole 2ch`.
+     - **Counterpart voice:** `BlackHole 2ch`.
 
-Now, when your interviewer speaks, you hear them clearly in your headphones, and TellMeMore captures their audio in real time!
+Now, when your counterpart speaks, you hear them clearly in your headphones, and TellMeMore captures their audio in real time!
 
 ---
 
@@ -169,9 +172,9 @@ TellMeMore requires a speech-to-text API key and an LLM API key:
 | Service | Purpose | Free Tier / Cost | Where to Get |
 |---|---|---|---|
 | **Deepgram** | Real-time dual STT (`nova-3`) | **$200 free credit** on signup | [console.deepgram.com](https://console.deepgram.com) |
-| **Google Gemini** | Answer suggestion LLM | Free tier available | [aistudio.google.com](https://aistudio.google.com) |
+| **Google Gemini** | Tactical advice & vision LLM | Free tier available | [aistudio.google.com](https://aistudio.google.com) |
 | **Z.ai (GLM)** | High-speed LLM alternative | Free flash models available | [z.ai](https://z.ai) |
-| **OpenAI / Anthropic** | Answer suggestion LLM | Pay-as-you-go | [platform.openai.com](https://platform.openai.com) / [console.anthropic.com](https://console.anthropic.com) |
+| **OpenAI / Anthropic** | Tactical advice & vision LLM | Pay-as-you-go | [platform.openai.com](https://platform.openai.com) / [console.anthropic.com](https://console.anthropic.com) |
 
 All credentials are saved locally in `~/.sobes_helper.json` on your machine. No keys or conversation transcripts are ever sent to third-party tracking servers.
 
@@ -180,8 +183,8 @@ All credentials are saved locally in `~/.sobes_helper.json` on your machine. No 
 ## 🌐 The TellMeMore Ecosystem
 
 TellMeMore is part of an integrated communication intelligence suite:
-- **[TellMeMore macOS](https://github.com/s3rfdev/TellMeMore)**: Invisible real-time HUD and interview prompter with voice & screen capture.
-- **[TellMeMore TG](https://github.com/s3rfdev/TellMeMore_TG)**: Cross-platform Telegram client with psychological profiling, Sherlock analysis, and RAG dossier.
+- **[TellMeMore macOS](https://github.com/s3rfdev/TellMeMore)**: Intelligent real-time HUD and strategic negotiation copilot with dual-audio & multi-screenshot visual inspection.
+- **[TellMeMore TG](https://github.com/s3rfdev/TellMeMore_TG)**: Cross-platform Telegram client with psychological profiling, manipulation detection, and strategic negotiation tactics.
 - **[TellMeMore Copilot (Chrome Extension)](https://github.com/s3rfdev/tellmemore-chrome)**: Manifest V3 extension for Facebook Messenger & Telegram Web with live manipulation radar and 1-click strategic reply injection.
 - **[Official Landing & Documentation](https://s3rfdev.github.io/TellMeMore/)**
 
@@ -199,12 +202,6 @@ TellMeMore is part of an integrated communication intelligence suite:
 
 Contributions, issues, and feature requests are welcome!
 Feel free to check [issues page](https://github.com/s3rfdev/TellMeMore/issues) or open a PR.
-
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
 
 ---
 
