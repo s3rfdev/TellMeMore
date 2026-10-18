@@ -52,3 +52,4 @@ app.*.map.json
 *.pem
 .sobes_helper.json
 dist/
+DUAL_STATION_SETUP.md
