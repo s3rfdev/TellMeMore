@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TellMeMore Ecosystem — Глубокий анализ собеседника</title>
-  <meta name="description" content="Линейка интеллектуальных ИИ-суфлёров и советников для живых собеседований, переговоров и переписок в Telegram и Facebook. Распознавание скрытого контекста, защита от манипуляций и точные ответы.">
+  <title>TellMeMore Ecosystem — ИИ-копилот для сложных переговоров</title>
+  <meta name="description" content="Интеллектуальный ИИ-копилот и плавающий HUD для ключевых переговоров, презентаций и переписок в Telegram и Facebook. Двухпоточный слух, мульти-скриншотный анализ и защита от манипуляций.">
   <link rel="stylesheet" href="styles.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>👁️</text></svg>">
   <script>
@@ -213,27 +213,27 @@
             </div>
           </div>
 
-          <!-- TAB 2: Voice Analysis (macOS Whisperer Co-Pilot) -->
+          <!-- TAB 2: Voice Analysis (macOS Negotiation Co-Pilot) -->
           <div id="voice-inspector-view" class="voice-inspector-view">
-            <!-- Incoming Interviewer Voice -->
+            <!-- Incoming Counterpart Voice -->
             <div class="chat-inspector-bubble">
               <div class="chat-avatar" style="color: var(--accent-blue);">🎙️</div>
               <div class="chat-bubble-content">
-                <div class="mono" style="font-size: 0.72rem; color: var(--text-muted); margin-bottom: 3px;" data-i18n="voiceInterviewerLabel">Интервьюер (Tech Lead):</div>
+                <div class="mono" style="font-size: 0.72rem; color: var(--text-muted); margin-bottom: 3px;" data-i18n="voiceInterviewerLabel">Собеседник / Оппонент (Lead Negotiator):</div>
                 <p class="chat-msg-text" data-i18n="voiceInterviewerMsg">
-                  «Как вы решали проблему деградации базы данных при резких всплесках трафика на прошлом проекте?»
+                  «Каковы ваши гарантии SLA при 5-кратном росте нагрузки, и почему ваша ставка на 30% выше конкурентов?»
                 </p>
               </div>
             </div>
 
-            <!-- AI Whisperer Hint Box -->
+            <!-- AI Tactical Hint Box -->
             <div class="inspector-breakdown-box" style="border-color: var(--border-blue); background: var(--accent-blue-subtle);">
               <div class="breakdown-header">
-                <span style="color: var(--accent-blue); font-size: 0.76rem;" data-i18n="voiceWhispererLabel">Подсказка суфлёра (голос кандидата):</span>
+                <span style="color: var(--accent-blue); font-size: 0.76rem;" data-i18n="voiceWhispererLabel">Тактический совет (в вашей манере):</span>
                 <span class="mono" style="font-size: 0.7rem; color: var(--accent-blue);">Gemini 3.8 Flash • 240ms</span>
               </div>
               <p class="chat-msg-text" style="color: var(--text-title); font-size: 0.85rem;" data-i18n="voiceWhispererHint">
-                «В микросервисах на Go мы вынесли кэш в Redis Cluster с LRU, сократив p99 latency с 450мс до 12мс при 20k RPS».
+                «В микросервисах на Go и Redis Cluster мы удерживаем p99 latency на 12мс при 20k RPS. Мы фиксируем 99.95% SLA в договоре с финансовой ответственностью, что окупает риски простоя уже в первый квартал».
               </p>
             </div>
 
@@ -244,7 +244,7 @@
                 <div class="mono" style="font-size: 0.86rem; font-weight: 600; color: var(--accent-blue);" data-i18n="voiceLatencyVal">&lt;300 мс (Deepgram)</div>
               </div>
               <div style="background: var(--bg-card-inner); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px;">
-                <div class="mono" style="font-size: 0.68rem; color: var(--text-muted); text-transform: uppercase;" data-i18n="voiceStealthLabel">Невидимость экрана:</div>
+                <div class="mono" style="font-size: 0.68rem; color: var(--text-muted); text-transform: uppercase;" data-i18n="voiceStealthLabel">Защита экрана (Zero-Leak):</div>
                 <div class="mono" style="font-size: 0.86rem; font-weight: 600; color: var(--text-title);" data-i18n="voiceStealthVal">100% Zoom / Meet</div>
               </div>
             </div>
@@ -315,21 +315,21 @@
 
             <h3 class="product-title" data-i18n="tmmTitle">TellMeMore</h3>
             <p class="product-desc" data-i18n="tmmDesc">
-              Универсальный ИИ-суфлёр реального времени для онлайн-собеседований, live-кодинга и переговоров на macOS. Анализирует речь собеседника и делает мгновенный захват экрана с терминалом или IDE, подсказывая решения задач и точные формулировки прямо во время беседы.
+              Интеллектуальный ИИ-копилот реального времени для ключевых переговоров, презентаций и технических консультаций на macOS. Анализирует речь оппонента и проводит мульти-скриншотный захват экрана со слайдами, схемами или кодом, подсказывая аргументы, парирование возражений и точные формулировки прямо во время созвона.
             </p>
 
             <ul class="feature-checklist">
               <li>
                 <span class="feature-check-icon">✓</span>
-                <div data-i18n="tmmFeat1"><strong>Сверхбыстрый слух (&lt;300 мс):</strong> потоковая транскрибация вашего микрофона и звука собеседника через Deepgram Nova-2 / Flux.</div>
+                <div data-i18n="tmmFeat1"><strong>Сверхбыстрый слух (&lt;300 мс):</strong> двухпоточная потоковая транскрибация вашего микрофона и звука оппонента через Deepgram Nova-3 / Flux.</div>
               </li>
               <li>
                 <span class="feature-check-icon">✓</span>
-                <div data-i18n="tmmFeat2"><strong>Суфлёр от первого лица:</strong> подсказки голосом кандидата с учётом вашего опыта, резюме и целей встречи.</div>
+                <div data-i18n="tmmFeat2"><strong>Тактический советник от первого лица:</strong> подсказки с учётом вашего бэкграунда, досье оппонента и стратегических целей встречи.</div>
               </li>
               <li>
                 <span class="feature-check-icon">✓</span>
-                <div data-i18n="tmmFeat3"><strong>Универсальное зрение экрана (⌥2):</strong> делает мгновенный снимок IDE/терминала и выдаёт готовый код с объяснением алгоритма.</div>
+                <div data-i18n="tmmFeat3"><strong>Мульти-скриншотный анализ визуала (⌥2):</strong> делает снимок рабочих окон, презентации или диаграммы оппонента и выдаёт детальный аналитический разбор.</div>
               </li>
               <li>
                 <span class="feature-check-icon">✓</span>
@@ -337,7 +337,7 @@
               </li>
               <li>
                 <span class="feature-check-icon">✓</span>
-                <div data-i18n="tmmFeat5"><strong>100% невидимость:</strong> полностью скрыто от демонстрации экрана и записи в Zoom, Google Meet и Teams.</div>
+                <div data-i18n="tmmFeat5"><strong>Защита экрана спикера (Presenter Privacy):</strong> окно TellMeMore полностью скрыто от демонстрации экрана и записи в Zoom, Google Meet и Teams.</div>
               </li>
             </ul>
 
@@ -366,19 +366,19 @@
                     🧠 <span data-i18n="tmmTab3">LLM &amp; Память</span>
                   </button>
                   <button class="gallery-tab-btn" data-gallery="tmm" data-img="assets/screenshots/tt_ui.png" data-desc-key="tmmTab4Desc" role="tab" aria-selected="false">
-                    🔒 <span data-i18n="tmmTab4">Скрытность</span>
+                    🔒 <span data-i18n="tmmTab4">Приватность</span>
                   </button>
                 </div>
               </div>
               <div class="gallery-viewport" id="tmm-viewport" data-lightbox-src="assets/screenshots/tt_main.png" title="Нажмите для увеличения">
-                <img id="tmm-gallery-img" src="assets/screenshots/tt_main.png" alt="TellMeMore macOS Live Prompter" class="gallery-screenshot-img">
+                <img id="tmm-gallery-img" src="assets/screenshots/tt_main.png" alt="TellMeMore macOS Live Negotiation Copilot" class="gallery-screenshot-img">
                 <div class="gallery-zoom-hint">
                   <span>🔍 <span data-i18n="zoomHint">Нажмите для увеличения</span></span>
                 </div>
               </div>
               <div class="gallery-footer-bar">
                 <span id="tmm-gallery-desc" class="gallery-desc-text" data-i18n="tmmTab1Desc">
-                  Сверхбыстрый суфлёр поверх окон с ответом от первого лица и разделением спикеров
+                  Сверхбыстрый HUD поверх окон с тактическими подсказками от первого лица и разделением спикеров
                 </span>
               </div>
             </div>
@@ -554,7 +554,7 @@
         <span class="section-kicker-badge" data-i18n="roadmapPill">ПЛАН РАЗВИТИЯ</span>
         <h2 class="section-h2" data-i18n="roadmapTitle">Дорожная карта экосистемы</h2>
         <p class="section-p-sub" data-i18n="roadmapSub">
-          От локального суфлёра собеседований на macOS до глобальной мультиязычной платформы осознанной коммуникации.
+          От локального переговорного HUD на macOS до глобальной мультиязычной экосистемы осознанной коммуникации.
         </p>
       </div>
 
@@ -567,9 +567,9 @@
               <span class="timeline-quarter-text" data-i18n="q4Period">Q4 2026 • ЗАВЕРШЕНО</span>
               <span class="status-pill">v1.1 Universal Live</span>
             </div>
-            <h3 data-i18n="q4Title">TellMeMore macOS — Универсальный живой суфлёр</h3>
+            <h3 data-i18n="q4Title">TellMeMore macOS — Живой переговорный HUD</h3>
             <p data-i18n="q4Desc">
-              Потоковое распознавание Deepgram (&lt;300 мс), Gemini 3.8/Claude 3.5, решение задач с экрана (⌥2), скрытность в Zoom/Meet, автокомпрессия контекста.
+              Потоковое распознавание Deepgram (<300 мс), Gemini 3.8/Claude 3.5, мульти-скриншотный анализ визуала (⌥2), защита от демонстрации в Zoom/Meet, автокомпрессия контекста.
             </p>
           </div>
         </div>
@@ -614,7 +614,7 @@
             </div>
             <h3 data-i18n="q2Title">TellMeMore Desktop для Windows и Linux</h3>
             <p data-i18n="q2Desc">
-              Перенос универсального суфлёра и визуального анализатора экрана с macOS на Windows и Linux (WASAPI / PipeWire).
+              Перенос универсального копилота переговоров и визуального анализатора экрана с macOS на Windows и Linux (WASAPI / PipeWire).
             </p>
           </div>
         </div>
