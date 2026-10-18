@@ -48,6 +48,8 @@ class HelpPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _header(context),
+          if (session.pendingScreenshots.isNotEmpty)
+            _pendingScreenshotsStrip(context),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.only(left: 2, right: 4, top: 6),
@@ -128,6 +130,8 @@ class HelpPanel extends StatelessWidget {
                   ),
                   const SizedBox(width: 5),
                   _cameraButton(context),
+                  const SizedBox(width: 4),
+                  _addScreenshotButton(context),
 
                   const Spacer(),
 
@@ -194,12 +198,86 @@ class HelpPanel extends StatelessWidget {
 
   Widget _cameraButton(BuildContext context) {
     final enabled = !session.helpLoading;
+    final count = session.pendingScreenshots.length;
+    final tooltip = count > 0
+        ? '${S.t('sendQueuedScreenshots')} ($count)'
+        : S.t('screenshotAnswer');
     return Tooltip(
-      message: S.t('screenshotAnswer'),
+      message: tooltip,
       child: MouseRegion(
         cursor: enabled ? SystemMouseCursors.click : MouseCursor.defer,
         child: GestureDetector(
           onTap: enabled ? session.getHelpWithScreenshot : null,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                width: 30,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: count > 0
+                      ? Palette.blue.withValues(alpha: 0.2)
+                      : (enabled
+                          ? Palette.border.withValues(alpha: 0.5)
+                          : Palette.border.withValues(alpha: 0.2)),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: count > 0
+                        ? Palette.blue.withValues(alpha: 0.7)
+                        : (enabled
+                            ? Palette.border
+                            : Palette.border.withValues(alpha: 0.5)),
+                  ),
+                ),
+                alignment: Alignment.center,
+                child: Icon(
+                  Icons.camera_alt_outlined,
+                  size: 16,
+                  color: count > 0
+                      ? Palette.blue
+                      : (enabled
+                          ? Palette.pri
+                          : Palette.sec.withValues(alpha: 0.4)),
+                ),
+              ),
+              if (count > 0)
+                Positioned(
+                  top: -3,
+                  right: -3,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                    decoration: BoxDecoration(
+                      color: Palette.blue,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
+                    alignment: Alignment.center,
+                    child: Text(
+                      '$count',
+                      style: const TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                        height: 1.0,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _addScreenshotButton(BuildContext context) {
+    final enabled = !session.helpLoading && !session.isCapturingScreenshot;
+    return Tooltip(
+      message: S.t('addScreenshot'),
+      child: MouseRegion(
+        cursor: enabled ? SystemMouseCursors.click : MouseCursor.defer,
+        child: GestureDetector(
+          onTap: enabled ? session.addPendingScreenshot : null,
           child: Container(
             width: 30,
             height: 28,
@@ -215,13 +293,160 @@ class HelpPanel extends StatelessWidget {
               ),
             ),
             alignment: Alignment.center,
-            child: Icon(
-              Icons.camera_alt_outlined,
-              size: 16,
-              color: enabled ? Palette.pri : Palette.sec.withValues(alpha: 0.4),
-            ),
+            child: session.isCapturingScreenshot
+                ? const SizedBox(
+                    width: 12,
+                    height: 12,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 1.6,
+                      color: Palette.pri,
+                    ),
+                  )
+                : Icon(
+                    Icons.add,
+                    size: 17,
+                    color: enabled
+                        ? Palette.pri
+                        : Palette.sec.withValues(alpha: 0.4),
+                  ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _pendingScreenshotsStrip(BuildContext context) {
+    final count = session.pendingScreenshots.length;
+    return Container(
+      height: 52,
+      margin: const EdgeInsets.only(top: 6, bottom: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+      decoration: BoxDecoration(
+        color: Palette.card.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Palette.border.withValues(alpha: 0.6)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: count,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (context, index) {
+                final imgBytes = session.pendingScreenshots[index];
+                return Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Container(
+                      width: 62,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: Palette.border),
+                        color: Colors.black26,
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: Image.memory(
+                        imgBytes,
+                        fit: BoxFit.cover,
+                        filterQuality: FilterQuality.low,
+                      ),
+                    ),
+                    Positioned(
+                      left: 3,
+                      bottom: 3,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 3,
+                          vertical: 1,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.black87,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          '#${index + 1}',
+                          style: const TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white70,
+                          ),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      top: -3,
+                      right: -3,
+                      child: Tooltip(
+                        message: S.t('removeScreenshot'),
+                        child: MouseRegion(
+                          cursor: SystemMouseCursors.click,
+                          child: GestureDetector(
+                            onTap: () => session.removePendingScreenshot(index),
+                            child: Container(
+                              width: 16,
+                              height: 16,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF2C2D30),
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Palette.border,
+                                  width: 1,
+                                ),
+                              ),
+                              alignment: Alignment.center,
+                              child: const Icon(
+                                Icons.close,
+                                size: 10,
+                                color: Palette.pri,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+          const SizedBox(width: 6),
+          Tooltip(
+            message: S.t('clearScreenshots'),
+            child: MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                onTap: session.clearPendingScreenshots,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Palette.border.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.delete_outline, size: 13, color: Palette.sec),
+                      SizedBox(width: 3),
+                      Text(
+                        'Clear',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: Palette.sec,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

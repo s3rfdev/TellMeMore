@@ -76,14 +76,17 @@ class LlmService {
     required String model,
     required String prompt,
     Uint8List? imageBytes,
+    List<Uint8List>? images,
   }) async {
+    final imgs = images ??
+        (imageBytes != null && imageBytes.isNotEmpty ? [imageBytes] : null);
     switch (provider) {
       case LlmProvider.gemini:
         return _gemini(
           apiKey: apiKey,
           model: model,
           prompt: prompt,
-          imageBytes: imageBytes,
+          images: imgs,
         );
       case LlmProvider.zai:
         return _openAiCompatible(
@@ -91,7 +94,7 @@ class LlmService {
           apiKey: apiKey,
           model: model,
           prompt: prompt,
-          imageBytes: imageBytes,
+          images: imgs,
           maxTokensField: 'max_tokens',
         );
       case LlmProvider.openai:
@@ -100,7 +103,7 @@ class LlmService {
           apiKey: apiKey,
           model: model,
           prompt: prompt,
-          imageBytes: imageBytes,
+          images: imgs,
           maxTokensField: 'max_completion_tokens',
         );
       case LlmProvider.anthropic:
@@ -108,7 +111,7 @@ class LlmService {
           apiKey: apiKey,
           model: model,
           prompt: prompt,
-          imageBytes: imageBytes,
+          images: imgs,
         );
     }
   }
@@ -125,15 +128,18 @@ class LlmService {
     required String model,
     required String prompt,
     Uint8List? imageBytes,
+    List<Uint8List>? images,
     http.Client? client,
   }) async* {
+    final imgs = images ??
+        (imageBytes != null && imageBytes.isNotEmpty ? [imageBytes] : null);
     switch (provider) {
       case LlmProvider.gemini:
         yield* _geminiStream(
           apiKey: apiKey,
           model: model,
           prompt: prompt,
-          imageBytes: imageBytes,
+          images: imgs,
           client: client,
         );
       case LlmProvider.zai:
@@ -144,7 +150,7 @@ class LlmService {
           apiKey: apiKey,
           model: model,
           prompt: prompt,
-          imageBytes: imageBytes,
+          images: imgs,
         );
         yield answer;
     }
@@ -154,17 +160,21 @@ class LlmService {
     required String apiKey,
     required String model,
     required String prompt,
-    Uint8List? imageBytes,
+    List<Uint8List>? images,
     http.Client? client,
   }) async* {
     final parts = <Map<String, dynamic>>[];
-    if (imageBytes != null && imageBytes.isNotEmpty) {
-      parts.add({
-        'inline_data': {
-          'mime_type': 'image/jpeg',
-          'data': base64Encode(imageBytes),
-        },
-      });
+    if (images != null) {
+      for (final img in images) {
+        if (img.isNotEmpty) {
+          parts.add({
+            'inline_data': {
+              'mime_type': 'image/jpeg',
+              'data': base64Encode(img),
+            },
+          });
+        }
+      }
     }
     parts.add({'text': prompt});
 
@@ -248,16 +258,20 @@ class LlmService {
     required String apiKey,
     required String model,
     required String prompt,
-    Uint8List? imageBytes,
+    List<Uint8List>? images,
   }) async {
     final parts = <Map<String, dynamic>>[];
-    if (imageBytes != null && imageBytes.isNotEmpty) {
-      parts.add({
-        'inline_data': {
-          'mime_type': 'image/jpeg',
-          'data': base64Encode(imageBytes),
-        },
-      });
+    if (images != null) {
+      for (final img in images) {
+        if (img.isNotEmpty) {
+          parts.add({
+            'inline_data': {
+              'mime_type': 'image/jpeg',
+              'data': base64Encode(img),
+            },
+          });
+        }
+      }
     }
     parts.add({'text': prompt});
 
@@ -299,19 +313,23 @@ class LlmService {
     required String model,
     required String prompt,
     required String maxTokensField,
-    Uint8List? imageBytes,
+    List<Uint8List>? images,
   }) async {
     final dynamic content;
-    if (imageBytes != null && imageBytes.isNotEmpty) {
-      content = [
-        {'type': 'text', 'text': prompt},
-        {
+    final validImages =
+        images?.where((img) => img.isNotEmpty).toList() ?? const [];
+    if (validImages.isNotEmpty) {
+      final list = <Map<String, dynamic>>[];
+      list.add({'type': 'text', 'text': prompt});
+      for (final img in validImages) {
+        list.add({
           'type': 'image_url',
           'image_url': {
-            'url': 'data:image/jpeg;base64,${base64Encode(imageBytes)}',
+            'url': 'data:image/jpeg;base64,${base64Encode(img)}',
           },
-        },
-      ];
+        });
+      }
+      content = list;
     } else {
       content = prompt;
     }
@@ -325,7 +343,7 @@ class LlmService {
           },
           body: jsonEncode({
             'model': model,
-            maxTokensField: imageBytes != null ? 1500 : 500,
+            maxTokensField: validImages.isNotEmpty ? 1500 : 500,
             'temperature': 0.3,
             'messages': [
               {'role': 'user', 'content': content},
@@ -350,21 +368,25 @@ class LlmService {
     required String apiKey,
     required String model,
     required String prompt,
-    Uint8List? imageBytes,
+    List<Uint8List>? images,
   }) async {
     final dynamic content;
-    if (imageBytes != null && imageBytes.isNotEmpty) {
-      content = [
-        {
+    final validImages =
+        images?.where((img) => img.isNotEmpty).toList() ?? const [];
+    if (validImages.isNotEmpty) {
+      final list = <Map<String, dynamic>>[];
+      for (final img in validImages) {
+        list.add({
           'type': 'image',
           'source': {
             'type': 'base64',
             'media_type': 'image/jpeg',
-            'data': base64Encode(imageBytes),
+            'data': base64Encode(img),
           },
-        },
-        {'type': 'text', 'text': prompt},
-      ];
+        });
+      }
+      list.add({'type': 'text', 'text': prompt});
+      content = list;
     } else {
       content = prompt;
     }
@@ -379,7 +401,7 @@ class LlmService {
           },
           body: jsonEncode({
             'model': model,
-            'max_tokens': imageBytes != null ? 1500 : 500,
+            'max_tokens': validImages.isNotEmpty ? 1500 : 500,
             'temperature': 0.3,
             'messages': [
               {'role': 'user', 'content': content},

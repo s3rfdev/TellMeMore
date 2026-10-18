@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -85,6 +86,12 @@ class Session extends ChangeNotifier {
   String? helpError;
   StreamSubscription<String>? _helpSub;
   http.Client? _activeHelpClient;
+
+  /// Закреплённые скриншоты в каретке для мульти-анализа задачи/кода.
+  final List<Uint8List> pendingScreenshots = [];
+
+  /// Флаг процесса захвата скриншота экрана (защита от дребезга кликов).
+  bool isCapturingScreenshot = false;
 
   /// Статус второго потока (голос собеседника).
   String? themError;
@@ -882,7 +889,7 @@ ${dialogueSliceBuf.toString().trim()}
     return buf.toString().trimRight();
   }
 
-  String _buildPrompt({bool withScreenshot = false}) {
+  String _buildPrompt({bool withScreenshot = false, int screenshotCount = 0}) {
     final situation = switch (lastSpeaker) {
       Speaker.me =>
         'Последнюю реплику говорил я. Помоги мне развить мысль, закончить формулировку или дополнить ответ сильными аргументами.',
@@ -939,8 +946,10 @@ $situation
 ${withScreenshot ? '''
 
 <screen_context>
-К этому запросу прикреплён актуальный скриншот экрана (IDE, окно терминала, веб-платформа с заданием, условие задачи или кодовая база).
-ЭТО ВОПРОС ТЕХНИЧЕСКОГО ХАРАКТЕРА! На изображении находится условие задачи, код, архитектурная схема, ошибка или технический вопрос, который решает пользователь прямо сейчас.
+${screenshotCount > 1 ? '''К этому запросу прикреплено $screenshotCount скриншотов экрана кандидата (пролистанный код, условие задачи или несколько окон/файлов).
+ЭТО ВОПРОС ТЕХНИЧЕСКОГО ХАРАКТЕРА! На изображениях находится условие задачи, код, архитектурная схема, ошибка или технический вопрос, который решает кандидат.
+Все прикреплённые изображения относятся к одной задаче/контексту в хронологическом порядке просмотра. Сопоставь их вместе.''' : '''К этому запросу прикреплён актуальный скриншот экрана (IDE, окно терминала, веб-платформа с заданием, условие задачи или кодовая база).
+ЭТО ВОПРОС ТЕХНИЧЕСКОГО ХАРАКТЕРА! На изображении находится условие задачи, код, архитектурная схема, ошибка или технический вопрос, который решает пользователь прямо сейчас.'''}
 </screen_context>
 ''' : ''}
 <instructions>
@@ -948,7 +957,7 @@ ${withScreenshot ? '''
 2. Строго опирайся на навыки и опыт из <candidate_profile>, если он указан. Не противоречь опыту и не выдумывай несуществующие факты.
 3. Учитывай цели из <interview_goals> и особенности оппонента из <interviewer_profile>.
 ${hasSummary ? '4. Опирайся на контекст из <conversation_summary> (сохранённое резюме предыдущей части собеседования) и актуальные реплики из <live_transcript>.\n' : ''}${withScreenshot ? '''
-4. ВНИМАТЕЛЬНО ИЗУЧИ ПРИКРЕПЛЁННЫЙ СКРИНШОТ ЭКРАНА! Распознай код, сигнатуры функций, контекст IDE, условие задачи или ошибку.
+${screenshotCount > 1 ? '4. ВНИМАТЕЛЬНО ИЗУЧИ ВСЕ ПРИКРЕПЛЁННЫЕ СКРИНШОТЫ ЭКРАНА! Распознай код, сигнатуры функций, контекст IDE, условие задачи или ошибку, объединив информацию со всех кадров.' : '4. ВНИМАТЕЛЬНО ИЗУЧИ ПРИКРЕПЛЁННЫЙ СКРИНШОТ ЭКРАНА! Распознай код, сигнатуры функций, контекст IDE, условие задачи или ошибку.'}
 5. Если кандидат решает задачу по программированию / алгоритмам / архитектуре / SQL — ДАЙ ГОТОВЫЙ РАБОЧИЙ КОД И ЧЁТКОЕ РЕШЕНИЕ с лаконичным объяснением (почему именно так).
 6. Если на экране видна ошибка или упавший тест — объясни причину в одном предложении и дай готовый исправленный код / команду.
 7. Кандидат может вслух произнести лишь короткую фразу (например: "вот у меня тут код" или "как это решить?"), поэтому всё необходимое для полного решения бери прямо со скриншота!
@@ -962,8 +971,11 @@ ${hasSummary ? '4. Опирайся на контекст из <conversation_sum
   }
 
   @visibleForTesting
-  String buildPrompt({bool withScreenshot = false}) =>
-      _buildPrompt(withScreenshot: withScreenshot);
+  String buildPrompt({bool withScreenshot = false, int screenshotCount = 0}) =>
+      _buildPrompt(
+        withScreenshot: withScreenshot,
+        screenshotCount: screenshotCount,
+      );
 
   /// Остановка текущей потоковой генерации ответа пользователем.
   void stopHelp() {
@@ -981,12 +993,56 @@ ${hasSummary ? '4. Опирайся на контекст из <conversation_sum
     _activeHelpClient = null;
   }
 
+  /// Добавить текущий снимок экрана в каретку закреплённых скриншотов.
+  Future<void> addPendingScreenshot() async {
+    if (isCapturingScreenshot || helpLoading) return;
+    isCapturingScreenshot = true;
+    notifyListeners();
+    try {
+      final imageBytes = await WindowService.captureScreen(
+        remoteMacHost: config.remoteMacHost,
+        remoteMacUser: config.remoteMacUser,
+      );
+      if (imageBytes == null || imageBytes.isEmpty) {
+        throw Exception(
+          S.lang == 'ru'
+              ? 'Не удалось сделать скриншот экрана. Проверьте разрешение «Запись экрана».'
+              : 'Failed to capture screen. Please check screen recording permissions.',
+        );
+      }
+      pendingScreenshots.add(imageBytes);
+    } catch (e) {
+      debugPrint('[SCREENSHOT] capture error: $e');
+      helpError = '$e';
+    } finally {
+      isCapturingScreenshot = false;
+      notifyListeners();
+    }
+  }
+
+  /// Удалить скриншот из каретки по индексу.
+  void removePendingScreenshot(int index) {
+    if (index >= 0 && index < pendingScreenshots.length) {
+      pendingScreenshots.removeAt(index);
+      notifyListeners();
+    }
+  }
+
+  /// Полностью очистить каретку скриншотов.
+  void clearPendingScreenshots() {
+    if (pendingScreenshots.isNotEmpty) {
+      pendingScreenshots.clear();
+      notifyListeners();
+    }
+  }
+
   Future<void> _streamHelp({
     required LlmProvider provider,
     required String apiKey,
     required String model,
     required String prompt,
     Uint8List? imageBytes,
+    List<Uint8List>? images,
   }) async {
     await _cancelHelpStream();
     helpLoading = true;
@@ -1005,6 +1061,7 @@ ${hasSummary ? '4. Опирайся на контекст из <conversation_sum
         model: model,
         prompt: prompt,
         imageBytes: imageBytes,
+        images: images,
         client: client,
       );
 
@@ -1071,6 +1128,8 @@ ${hasSummary ? '4. Опирайся на контекст из <conversation_sum
   }
 
   /// Получить подсказку с анализом скриншота экрана кандидата (для задач по коду / IDE).
+  /// Если в каретке (pendingScreenshots) закреплено 1 или более фоток, берутся они.
+  /// Если ничего не закреплено, делается 1 свежий скриншот экрана и отправляется.
   Future<void> getHelpWithScreenshot() async {
     if (helpLoading) return;
     final provider = config.provider;
@@ -1085,24 +1144,33 @@ ${hasSummary ? '4. Опирайся на контекст из <conversation_sum
     helpError = null;
     notifyListeners();
     try {
-      final imageBytes = await WindowService.captureScreen(
-        remoteMacHost: config.remoteMacHost,
-        remoteMacUser: config.remoteMacUser,
-      );
-      if (imageBytes == null || imageBytes.isEmpty) {
-        throw Exception(
-          S.lang == 'ru'
-              ? 'Не удалось сделать скриншот экрана. Проверьте разрешение «Запись экрана» в Системных настройках macOS.'
-              : 'Failed to capture screen. Please check "Screen Recording" permission in macOS System Settings.',
+      final List<Uint8List> imagesToSend;
+      if (pendingScreenshots.isNotEmpty) {
+        imagesToSend = List<Uint8List>.from(pendingScreenshots);
+      } else {
+        final imageBytes = await WindowService.captureScreen(
+          remoteMacHost: config.remoteMacHost,
+          remoteMacUser: config.remoteMacUser,
         );
+        if (imageBytes == null || imageBytes.isEmpty) {
+          throw Exception(
+            S.lang == 'ru'
+                ? 'Не удалось сделать скриншот экрана. Проверьте разрешение «Запись экрана» в Системных настройках macOS.'
+                : 'Failed to capture screen. Please check "Screen Recording" permission in macOS System Settings.',
+          );
+        }
+        imagesToSend = [imageBytes];
       }
 
       await _streamHelp(
         provider: provider,
         apiKey: apiKey,
         model: config.modelFor(provider),
-        prompt: _buildPrompt(withScreenshot: true),
-        imageBytes: imageBytes,
+        prompt: _buildPrompt(
+          withScreenshot: true,
+          screenshotCount: imagesToSend.length,
+        ),
+        images: imagesToSend,
       );
     } on PlatformException catch (e) {
       helpError = e.message ?? e.code;

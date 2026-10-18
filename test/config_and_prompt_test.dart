@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tellmemore/services/config_store.dart';
 import 'package:tellmemore/services/deepgram_stream.dart';
@@ -222,6 +224,39 @@ void main() {
       expect(prompt, contains('ЭТО ВОПРОС ТЕХНИЧЕСКОГО ХАРАКТЕРА!'));
       expect(prompt, contains('ВНИМАТЕЛЬНО ИЗУЧИ ПРИКРЕПЛЁННЫЙ СКРИНШОТ ЭКРАНА!'));
       expect(prompt, contains('ДАЙ ГОТОВЫЙ РАБОЧИЙ КОД И ЧЁТКОЕ РЕШЕНИЕ'));
+    });
+
+    test('Prompt includes multi-screenshot count and consolidated instructions when screenshotCount > 1', () {
+      final session = Session();
+      session.config.myProfile = 'Fullstack Engineer';
+      session.turns.add(TranscriptTurn(
+        speaker: Speaker.them,
+        text: 'Look at both files on screen',
+      ));
+
+      final prompt = session.buildPrompt(withScreenshot: true, screenshotCount: 2);
+      expect(prompt, contains('К этому запросу прикреплено 2 скриншотов экрана кандидата'));
+      expect(prompt, contains('ВНИМАТЕЛЬНО ИЗУЧИ ВСЕ ПРИКРЕПЛЁННЫЕ СКРИНШОТЫ ЭКРАНА!'));
+      expect(prompt, contains('объединив информацию со всех кадров'));
+    });
+
+    test('Session pendingScreenshots queue add, remove and clear operations', () {
+      final session = Session();
+      expect(session.pendingScreenshots.isEmpty, isTrue);
+
+      final dummy1 = Uint8List.fromList([1, 2, 3]);
+      final dummy2 = Uint8List.fromList([4, 5, 6]);
+
+      session.pendingScreenshots.add(dummy1);
+      session.pendingScreenshots.add(dummy2);
+      expect(session.pendingScreenshots.length, 2);
+
+      session.removePendingScreenshot(0);
+      expect(session.pendingScreenshots.length, 1);
+      expect(session.pendingScreenshots[0], dummy2);
+
+      session.clearPendingScreenshots();
+      expect(session.pendingScreenshots.isEmpty, isTrue);
     });
 
     test('TranscriptTurn serialization toJson and fromJson roundtrip', () {

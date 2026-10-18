@@ -89,6 +89,42 @@ void main() {
       expect(tokens, equals(['Answer with image']));
     });
 
+    test('Gemini stream with multiple images adds multiple inline_data parts', () async {
+      final img1 = Uint8List.fromList([1, 2]);
+      final img2 = Uint8List.fromList([3, 4]);
+      var checkedParts = false;
+
+      final client = _FakeStreamClient((request) async {
+        if (request is http.Request) {
+          final body = jsonDecode(request.body) as Map<String, dynamic>;
+          final contents = body['contents'] as List<dynamic>;
+          final parts = contents[0]['parts'] as List<dynamic>;
+          expect(parts.length, equals(3));
+          expect(parts[0]['inline_data']['data'], equals(base64Encode(img1)));
+          expect(parts[1]['inline_data']['data'], equals(base64Encode(img2)));
+          expect(parts[2]['text'], equals('Explain 2 screenshots'));
+          checkedParts = true;
+        }
+
+        final stream = Stream<List<int>>.fromIterable([
+          utf8.encode('data: {"candidates":[{"content":{"parts":[{"text":"Answer with 2 images"}]}}]}\n\n'),
+        ]);
+        return http.StreamedResponse(stream, 200);
+      });
+
+      final tokens = await LlmService.askStream(
+        provider: LlmProvider.gemini,
+        apiKey: 'test-key',
+        model: 'gemini-3.8-flash',
+        prompt: 'Explain 2 screenshots',
+        images: [img1, img2],
+        client: client,
+      ).toList();
+
+      expect(checkedParts, isTrue);
+      expect(tokens, equals(['Answer with 2 images']));
+    });
+
     test('Gemini stream throws on non-200 HTTP status', () async {
       final client = _FakeStreamClient((request) async {
         final stream = Stream<List<int>>.fromIterable([

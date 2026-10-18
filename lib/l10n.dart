@@ -27,6 +27,26 @@ const Map<String, Map<String, String>> _d = {
     'ru': 'Скриншот экрана + подсказка (⌥2) (для задач по коду)',
     'en': 'Screen capture + hint (⌥2) (for code challenges)',
   },
+  'addScreenshot': {
+    'ru': 'Добавить скриншот в каретку (+)',
+    'en': 'Add screenshot to queue (+)',
+  },
+  'sendQueuedScreenshots': {
+    'ru': 'Отправить закреплённые скриншоты на анализ (⌥2)',
+    'en': 'Send queued screenshots for analysis (⌥2)',
+  },
+  'clearScreenshots': {
+    'ru': 'Очистить каретку скриншотов',
+    'en': 'Clear screenshot queue',
+  },
+  'removeScreenshot': {
+    'ru': 'Удалить скриншот',
+    'en': 'Remove screenshot',
+  },
+  'screenshotsAttached': {
+    'ru': 'Скриншотов в каретке',
+    'en': 'Screenshots in queue',
+  },
   'chatHistoryMenu': {
     'ru': 'История чата (очистка, экспорт, импорт)',
     'en': 'Chat history (clear, export, import)',
