@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 class Palette {
   static const bg = Color(0xFF0E1013);
   static const panel = Color(0xFF15181C);
+  static const card = Color(0xFF1A1D24);
   static const border = Color(0xFF262A31);
   static const sec = Color(0xFF8B9199);
   static const faint = Color(0xFF5A6069);
@@ -10,6 +11,7 @@ class Palette {
   static const green = Color(0xFF2FBF71);
   static const red = Color(0xFFE5484D);
   static const them = Color(0xFF5B9DFF);
+  static const blue = Color(0xFF5B9DFF);
   static const amber = Color(0xFFF5A524);
   static const inputBorder = Color(0xFF33383F);
   static const dialogBg = Color(0xFF1A1E23);

@@ -67,8 +67,41 @@ extension LlmProviderMeta on LlmProvider {
   );
 }
 
+/// Сообщение в истории диалога с LLM для многоходовых подсказок и уточнений.
+class LlmMessage {
+  const LlmMessage({
+    required this.role,
+    required this.text,
+    this.images = const [],
+  });
+
+  /// 'user' или 'assistant' (в Gemini автоматически преобразуется в 'model')
+  final String role;
+  final String text;
+  final List<Uint8List> images;
+}
+
 class LlmService {
   static const _timeout = Duration(seconds: 35);
+
+  static List<LlmMessage> _combineMessages({
+    required String prompt,
+    List<Uint8List>? images,
+    List<LlmMessage>? history,
+  }) {
+    final list = <LlmMessage>[];
+    if (history != null && history.isNotEmpty) {
+      list.addAll(history);
+    }
+    list.add(
+      LlmMessage(
+        role: 'user',
+        text: prompt,
+        images: images != null && images.isNotEmpty ? images : const [],
+      ),
+    );
+    return list;
+  }
 
   static Future<String> ask({
     required LlmProvider provider,
@@ -77,24 +110,28 @@ class LlmService {
     required String prompt,
     Uint8List? imageBytes,
     List<Uint8List>? images,
+    List<LlmMessage>? history,
   }) async {
     final imgs = images ??
         (imageBytes != null && imageBytes.isNotEmpty ? [imageBytes] : null);
+    final messages = _combineMessages(
+      prompt: prompt,
+      images: imgs,
+      history: history,
+    );
     switch (provider) {
       case LlmProvider.gemini:
         return _gemini(
           apiKey: apiKey,
           model: model,
-          prompt: prompt,
-          images: imgs,
+          messages: messages,
         );
       case LlmProvider.zai:
         return _openAiCompatible(
           url: 'https://api.z.ai/api/paas/v4/chat/completions',
           apiKey: apiKey,
           model: model,
-          prompt: prompt,
-          images: imgs,
+          messages: messages,
           maxTokensField: 'max_tokens',
         );
       case LlmProvider.openai:
@@ -102,16 +139,14 @@ class LlmService {
           url: 'https://api.openai.com/v1/chat/completions',
           apiKey: apiKey,
           model: model,
-          prompt: prompt,
-          images: imgs,
+          messages: messages,
           maxTokensField: 'max_completion_tokens',
         );
       case LlmProvider.anthropic:
         return _anthropic(
           apiKey: apiKey,
           model: model,
-          prompt: prompt,
-          images: imgs,
+          messages: messages,
         );
     }
   }
@@ -129,17 +164,22 @@ class LlmService {
     required String prompt,
     Uint8List? imageBytes,
     List<Uint8List>? images,
+    List<LlmMessage>? history,
     http.Client? client,
   }) async* {
     final imgs = images ??
         (imageBytes != null && imageBytes.isNotEmpty ? [imageBytes] : null);
+    final messages = _combineMessages(
+      prompt: prompt,
+      images: imgs,
+      history: history,
+    );
     switch (provider) {
       case LlmProvider.gemini:
         yield* _geminiStream(
           apiKey: apiKey,
           model: model,
-          prompt: prompt,
-          images: imgs,
+          messages: messages,
           client: client,
         );
       case LlmProvider.zai:
@@ -151,6 +191,7 @@ class LlmService {
           model: model,
           prompt: prompt,
           images: imgs,
+          history: history,
         );
         yield answer;
     }
@@ -159,13 +200,13 @@ class LlmService {
   static Stream<String> _geminiStream({
     required String apiKey,
     required String model,
-    required String prompt,
-    List<Uint8List>? images,
+    required List<LlmMessage> messages,
     http.Client? client,
   }) async* {
-    final parts = <Map<String, dynamic>>[];
-    if (images != null) {
-      for (final img in images) {
+    final contents = <Map<String, dynamic>>[];
+    for (final m in messages) {
+      final parts = <Map<String, dynamic>>[];
+      for (final img in m.images) {
         if (img.isNotEmpty) {
           parts.add({
             'inline_data': {
@@ -175,8 +216,14 @@ class LlmService {
           });
         }
       }
+      if (m.text.isNotEmpty) {
+        parts.add({'text': m.text});
+      }
+      contents.add({
+        'role': m.role == 'assistant' ? 'model' : 'user',
+        'parts': parts,
+      });
     }
-    parts.add({'text': prompt});
 
     final httpClient = client ?? http.Client();
     final shouldCloseClient = client == null;
@@ -191,9 +238,7 @@ class LlmService {
       request.headers['Content-Type'] = 'application/json';
       request.headers['x-goog-api-key'] = apiKey;
       request.body = jsonEncode({
-        'contents': [
-          {'parts': parts},
-        ],
+        'contents': contents,
         'generationConfig': {'temperature': 0.3, 'maxOutputTokens': 1500},
       });
 
@@ -257,12 +302,12 @@ class LlmService {
   static Future<String> _gemini({
     required String apiKey,
     required String model,
-    required String prompt,
-    List<Uint8List>? images,
+    required List<LlmMessage> messages,
   }) async {
-    final parts = <Map<String, dynamic>>[];
-    if (images != null) {
-      for (final img in images) {
+    final contents = <Map<String, dynamic>>[];
+    for (final m in messages) {
+      final parts = <Map<String, dynamic>>[];
+      for (final img in m.images) {
         if (img.isNotEmpty) {
           parts.add({
             'inline_data': {
@@ -272,8 +317,14 @@ class LlmService {
           });
         }
       }
+      if (m.text.isNotEmpty) {
+        parts.add({'text': m.text});
+      }
+      contents.add({
+        'role': m.role == 'assistant' ? 'model' : 'user',
+        'parts': parts,
+      });
     }
-    parts.add({'text': prompt});
 
     final resp = await http
         .post(
@@ -285,9 +336,7 @@ class LlmService {
             'x-goog-api-key': apiKey,
           },
           body: jsonEncode({
-            'contents': [
-              {'parts': parts},
-            ],
+            'contents': contents,
             'generationConfig': {'temperature': 0.3, 'maxOutputTokens': 1500},
           }),
         )
@@ -311,27 +360,45 @@ class LlmService {
     required String url,
     required String apiKey,
     required String model,
-    required String prompt,
+    required List<LlmMessage> messages,
     required String maxTokensField,
-    List<Uint8List>? images,
   }) async {
-    final dynamic content;
-    final validImages =
-        images?.where((img) => img.isNotEmpty).toList() ?? const [];
-    if (validImages.isNotEmpty) {
-      final list = <Map<String, dynamic>>[];
-      list.add({'type': 'text', 'text': prompt});
-      for (final img in validImages) {
-        list.add({
-          'type': 'image_url',
-          'image_url': {
-            'url': 'data:image/jpeg;base64,${base64Encode(img)}',
-          },
+    final openAiMessages = <Map<String, dynamic>>[];
+    var hasAnyImages = false;
+
+    for (final m in messages) {
+      if (m.role == 'assistant') {
+        openAiMessages.add({
+          'role': 'assistant',
+          'content': m.text,
         });
+      } else {
+        final validImages = m.images.where((img) => img.isNotEmpty).toList();
+        if (validImages.isNotEmpty) {
+          hasAnyImages = true;
+          final list = <Map<String, dynamic>>[];
+          if (m.text.isNotEmpty) {
+            list.add({'type': 'text', 'text': m.text});
+          }
+          for (final img in validImages) {
+            list.add({
+              'type': 'image_url',
+              'image_url': {
+                'url': 'data:image/jpeg;base64,${base64Encode(img)}',
+              },
+            });
+          }
+          openAiMessages.add({
+            'role': 'user',
+            'content': list,
+          });
+        } else {
+          openAiMessages.add({
+            'role': 'user',
+            'content': m.text,
+          });
+        }
       }
-      content = list;
-    } else {
-      content = prompt;
     }
 
     final resp = await http
@@ -343,11 +410,9 @@ class LlmService {
           },
           body: jsonEncode({
             'model': model,
-            maxTokensField: validImages.isNotEmpty ? 1500 : 500,
+            maxTokensField: hasAnyImages ? 1500 : 500,
             'temperature': 0.3,
-            'messages': [
-              {'role': 'user', 'content': content},
-            ],
+            'messages': openAiMessages,
           }),
         )
         .timeout(_timeout);
@@ -367,28 +432,46 @@ class LlmService {
   static Future<String> _anthropic({
     required String apiKey,
     required String model,
-    required String prompt,
-    List<Uint8List>? images,
+    required List<LlmMessage> messages,
   }) async {
-    final dynamic content;
-    final validImages =
-        images?.where((img) => img.isNotEmpty).toList() ?? const [];
-    if (validImages.isNotEmpty) {
-      final list = <Map<String, dynamic>>[];
-      for (final img in validImages) {
-        list.add({
-          'type': 'image',
-          'source': {
-            'type': 'base64',
-            'media_type': 'image/jpeg',
-            'data': base64Encode(img),
-          },
+    final anthropicMessages = <Map<String, dynamic>>[];
+    var hasAnyImages = false;
+
+    for (final m in messages) {
+      if (m.role == 'assistant') {
+        anthropicMessages.add({
+          'role': 'assistant',
+          'content': m.text,
         });
+      } else {
+        final validImages = m.images.where((img) => img.isNotEmpty).toList();
+        if (validImages.isNotEmpty) {
+          hasAnyImages = true;
+          final list = <Map<String, dynamic>>[];
+          for (final img in validImages) {
+            list.add({
+              'type': 'image',
+              'source': {
+                'type': 'base64',
+                'media_type': 'image/jpeg',
+                'data': base64Encode(img),
+              },
+            });
+          }
+          if (m.text.isNotEmpty) {
+            list.add({'type': 'text', 'text': m.text});
+          }
+          anthropicMessages.add({
+            'role': 'user',
+            'content': list,
+          });
+        } else {
+          anthropicMessages.add({
+            'role': 'user',
+            'content': m.text,
+          });
+        }
       }
-      list.add({'type': 'text', 'text': prompt});
-      content = list;
-    } else {
-      content = prompt;
     }
 
     final resp = await http
@@ -401,11 +484,9 @@ class LlmService {
           },
           body: jsonEncode({
             'model': model,
-            'max_tokens': validImages.isNotEmpty ? 1500 : 500,
+            'max_tokens': hasAnyImages ? 1500 : 500,
             'temperature': 0.3,
-            'messages': [
-              {'role': 'user', 'content': content},
-            ],
+            'messages': anthropicMessages,
           }),
         )
         .timeout(_timeout);

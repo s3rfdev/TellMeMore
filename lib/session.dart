@@ -93,6 +93,17 @@ class Session extends ChangeNotifier {
   /// Флаг процесса захвата скриншота экрана (защита от дребезга кликов).
   bool isCapturingScreenshot = false;
 
+  /// История предыдущих раундов подсказок (многоходовой диалог для уточнений и исправлений).
+  final List<LlmMessage> llmHistory = [];
+
+  /// Сбросить контекст уточнений LLM (начать новую задачу с чистого листа).
+  void resetLlmHistory() {
+    if (llmHistory.isNotEmpty) {
+      llmHistory.clear();
+      notifyListeners();
+    }
+  }
+
   /// Статус второго потока (голос собеседника).
   String? themError;
   bool get themActive => _themStream != null;
@@ -338,6 +349,8 @@ ${dialogueSliceBuf.toString().trim()}
     isCompressing = false;
     interimMe = '';
     interimThem = '';
+    resetLlmHistory();
+    clearPendingScreenshots();
     await HistoryStore.clear();
     notifyListeners();
   }
@@ -899,6 +912,9 @@ ${dialogueSliceBuf.toString().trim()}
         'Разговор только начинается. Помоги уверенно начать диалог.',
     };
 
+    final isFollowUp = llmHistory.isNotEmpty;
+    final followUpRound = isFollowUp ? (llmHistory.length ~/ 2 + 1) : 1;
+
     final my = config.myProfile.trim();
     final them = config.interviewerProfile.trim();
     final goals = config.goals.trim();
@@ -943,6 +959,15 @@ ${_transcriptForPrompt()}
 <current_situation>
 $situation
 </current_situation>
+${isFollowUp ? '''
+
+<follow_up_context>
+ЭТО УТОЧНЕНИЕ ПРЕДЫДУЩЕГО ОТВЕТА (РАУНД $followUpRound)!
+Кандидат и интервьюер продолжают обсуждать ту же задачу/код.
+Внимательно сопоставь предыдущее обсуждение, свои предыдущие ответы и новые реплики из <live_transcript>.
+Если интервьюер или кандидат просят исправить ошибку, оптимизировать сложность алгоритма (например, сделать за O(1) памяти), обработать краевые случаи или объяснить подробнее — дай чёткое исправленное решение/код с учётом всех требований.
+</follow_up_context>
+''' : ''}
 ${withScreenshot ? '''
 
 <screen_context>
@@ -1053,6 +1078,7 @@ ${screenshotCount > 1 ? '4. ВНИМАТЕЛЬНО ИЗУЧИ ВСЕ ПРИКР�
     final client = http.Client();
     _activeHelpClient = client;
     final completer = Completer<void>();
+    final currentHistory = List<LlmMessage>.from(llmHistory);
 
     try {
       final stream = LlmService.askStream(
@@ -1062,6 +1088,7 @@ ${screenshotCount > 1 ? '4. ВНИМАТЕЛЬНО ИЗУЧИ ВСЕ ПРИКР�
         prompt: prompt,
         imageBytes: imageBytes,
         images: images,
+        history: currentHistory,
         client: client,
       );
 
@@ -1084,6 +1111,31 @@ ${screenshotCount > 1 ? '4. ВНИМАТЕЛЬНО ИЗУЧИ ВСЕ ПРИКР�
         onDone: () {
           if ((helpAnswer ?? '').trim().isEmpty && helpError == null) {
             helpError = 'LLM вернул пустой ответ';
+          } else if (helpAnswer != null &&
+              helpAnswer!.trim().isNotEmpty &&
+              helpError == null) {
+            final sentImages = images ??
+                (imageBytes != null && imageBytes.isNotEmpty
+                    ? [imageBytes]
+                    : const <Uint8List>[]);
+            llmHistory.add(LlmMessage(
+              role: 'user',
+              text: prompt,
+              images: sentImages,
+            ));
+            llmHistory.add(LlmMessage(
+              role: 'assistant',
+              text: helpAnswer!.trim(),
+            ));
+            // Ограничиваем историю (до 8 сообщений = 4 раунда):
+            // сохраняем базовый контекст задачи (0-1 с картинками) и 2 последних раунда уточнений
+            if (llmHistory.length > 8) {
+              final baseUser = llmHistory[0];
+              final baseAssistant = llmHistory[1];
+              final tail = llmHistory.sublist(llmHistory.length - 4);
+              llmHistory.clear();
+              llmHistory.addAll([baseUser, baseAssistant, ...tail]);
+            }
           }
           helpLoading = false;
           _activeHelpClient = null;
@@ -1114,16 +1166,29 @@ ${screenshotCount > 1 ? '4. ВНИМАТЕЛЬНО ИЗУЧИ ВСЕ ПРИКР�
     }
     if (turns.isEmpty &&
         interimMe.trim().isEmpty &&
-        interimThem.trim().isEmpty) {
+        interimThem.trim().isEmpty &&
+        llmHistory.isEmpty) {
       helpError = S.t('errEmptyTranscript');
       notifyListeners();
       return;
     }
+    final List<Uint8List>? imagesToSend;
+    if (pendingScreenshots.isNotEmpty) {
+      imagesToSend = List<Uint8List>.from(pendingScreenshots);
+      clearPendingScreenshots();
+    } else {
+      imagesToSend = null;
+    }
+
     await _streamHelp(
       provider: provider,
       apiKey: apiKey,
       model: config.modelFor(provider),
-      prompt: _buildPrompt(),
+      prompt: _buildPrompt(
+        withScreenshot: imagesToSend != null && imagesToSend.isNotEmpty,
+        screenshotCount: imagesToSend?.length ?? 0,
+      ),
+      images: imagesToSend,
     );
   }
 
@@ -1147,6 +1212,7 @@ ${screenshotCount > 1 ? '4. ВНИМАТЕЛЬНО ИЗУЧИ ВСЕ ПРИКР�
       final List<Uint8List> imagesToSend;
       if (pendingScreenshots.isNotEmpty) {
         imagesToSend = List<Uint8List>.from(pendingScreenshots);
+        clearPendingScreenshots();
       } else {
         final imageBytes = await WindowService.captureScreen(
           remoteMacHost: config.remoteMacHost,

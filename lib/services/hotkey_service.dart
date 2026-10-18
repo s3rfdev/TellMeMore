@@ -22,12 +22,20 @@ class HotkeyService {
     scope: HotKeyScope.system,
   );
 
+  /// ⌥ 3 — добавить скриншот в каретку без отправки
+  static final HotKey hotKeyAddScreenshot = HotKey(
+    key: LogicalKeyboardKey.digit3,
+    modifiers: [HotKeyModifier.alt],
+    scope: HotKeyScope.system,
+  );
+
   static bool _registered = false;
 
-  /// Регистрация глобальных хоткеев: ⌥1 и ⌥2
+  /// Регистрация глобальных хоткеев: ⌥1, ⌥2 и ⌥3
   static Future<void> registerGlobalHotkeys({
     required VoidCallback onGetAnswer,
     required VoidCallback onGetAnswerWithScreenshot,
+    required VoidCallback onAddScreenshot,
   }) async {
     try {
       await hotKeyManager.unregisterAll();
@@ -46,8 +54,15 @@ class HotkeyService {
         },
       );
 
+      await hotKeyManager.register(
+        hotKeyAddScreenshot,
+        keyDownHandler: (_) {
+          onAddScreenshot();
+        },
+      );
+
       _registered = true;
-      debugPrint('[HotkeyService] Registered ⌥1 and ⌥2 global hotkeys');
+      debugPrint('[HotkeyService] Registered ⌥1, ⌥2 and ⌥3 global hotkeys');
     } catch (e) {
       debugPrint('[HotkeyService] Failed to register global hotkeys: $e');
     }

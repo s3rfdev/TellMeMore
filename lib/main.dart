@@ -40,6 +40,9 @@ Future<void> main() async {
         session.getHelpWithScreenshot();
       }
     },
+    onAddScreenshot: () {
+      session.addPendingScreenshot();
+    },
   );
   runApp(TellMeMoreApp(session: session));
 }

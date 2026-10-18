@@ -132,6 +132,10 @@ class HelpPanel extends StatelessWidget {
                   _cameraButton(context),
                   const SizedBox(width: 4),
                   _addScreenshotButton(context),
+                  if (session.llmHistory.isNotEmpty) ...[
+                    const SizedBox(width: 4),
+                    _resetHistoryButton(context),
+                  ],
 
                   const Spacer(),
 
@@ -315,6 +319,44 @@ class HelpPanel extends StatelessWidget {
     );
   }
 
+  Widget _resetHistoryButton(BuildContext context) {
+    final round = session.llmHistory.length ~/ 2 + 1;
+    return Tooltip(
+      message: '${S.t('newFollowUpTask')} (${S.t('followUpRound')} $round)',
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          onTap: session.resetLlmHistory,
+          child: Container(
+            height: 28,
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            decoration: BoxDecoration(
+              color: Palette.border.withValues(alpha: 0.25),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Palette.border.withValues(alpha: 0.6)),
+            ),
+            alignment: Alignment.center,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.restart_alt, size: 14, color: Palette.sec),
+                const SizedBox(width: 4),
+                Text(
+                  'R$round',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: Palette.sec,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _pendingScreenshotsStrip(BuildContext context) {
     final count = session.pendingScreenshots.length;
     return Container(
@@ -464,6 +506,9 @@ class HelpPanel extends StatelessWidget {
       offset: const Offset(0, 24),
       onSelected: (value) {
         switch (value) {
+          case 'reset_history':
+            session.resetLlmHistory();
+            break;
           case 'clear':
             _confirmClearChat(context);
             break;
@@ -476,6 +521,23 @@ class HelpPanel extends StatelessWidget {
         }
       },
       itemBuilder: (context) => [
+        if (session.llmHistory.isNotEmpty) ...[
+          PopupMenuItem(
+            value: 'reset_history',
+            height: 34,
+            child: Row(
+              children: [
+                const Icon(Icons.restart_alt, size: 15, color: Palette.sec),
+                const SizedBox(width: 8),
+                Text(
+                  S.t('newFollowUpTask'),
+                  style: const TextStyle(fontSize: 12, color: Palette.pri),
+                ),
+              ],
+            ),
+          ),
+          const PopupMenuDivider(height: 1),
+        ],
         PopupMenuItem(
           value: 'clear',
           height: 34,

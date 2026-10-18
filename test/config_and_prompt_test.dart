@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tellmemore/services/config_store.dart';
 import 'package:tellmemore/services/deepgram_stream.dart';
+import 'package:tellmemore/services/llm_service.dart';
 import 'package:tellmemore/session.dart';
 
 void main() {
@@ -238,6 +239,22 @@ void main() {
       expect(prompt, contains('К этому запросу прикреплено 2 скриншотов экрана кандидата'));
       expect(prompt, contains('ВНИМАТЕЛЬНО ИЗУЧИ ВСЕ ПРИКРЕПЛЁННЫЕ СКРИНШОТЫ ЭКРАНА!'));
       expect(prompt, contains('объединив информацию со всех кадров'));
+    });
+
+    test('Prompt includes follow_up_context when llmHistory is not empty', () {
+      final session = Session();
+      session.llmHistory.add(LlmMessage(role: 'user', text: 'Task 1'));
+      session.llmHistory.add(LlmMessage(role: 'assistant', text: 'Answer 1'));
+      session.turns.add(TranscriptTurn(
+        speaker: Speaker.them,
+        text: 'Can we optimize memory to O(1)?',
+      ));
+
+      final prompt = session.buildPrompt();
+      expect(prompt, contains('<follow_up_context>'));
+      expect(prompt, contains('ЭТО УТОЧНЕНИЕ ПРЕДЫДУЩЕГО ОТВЕТА (РАУНД 2)!'));
+      expect(prompt, contains('Кандидат и интервьюер продолжают обсуждать ту же задачу/код.'));
+      expect(prompt, contains('Внимательно сопоставь предыдущее обсуждение, свои предыдущие ответы'));
     });
 
     test('Session pendingScreenshots queue add, remove and clear operations', () {
