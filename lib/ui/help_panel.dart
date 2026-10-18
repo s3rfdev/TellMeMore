@@ -23,7 +23,7 @@ class _WindowDragArea extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Listener(
-      behavior: HitTestBehavior.translucent,
+      behavior: HitTestBehavior.opaque,
       onPointerDown: (_) => _drag(),
     );
   }
@@ -142,15 +142,28 @@ class HelpPanel extends StatelessWidget {
                   // Правая часть: переключение языка и настройки
                   if (!isUltraNarrow) ...[
                     _langToggle(),
-                    const SizedBox(width: 2),
+                    const SizedBox(width: 4),
                   ],
-                  IconButton(
-                    tooltip: S.t('settings'),
-                    icon: const Icon(Icons.tune, size: 18, color: Palette.sec),
-                    onPressed: () => showSettingsDialog(context, session),
-                    visualDensity: VisualDensity.compact,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                  Tooltip(
+                    message: S.t('settings'),
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () => showSettingsDialog(context, session),
+                        child: Container(
+                          width: 30,
+                          height: 28,
+                          decoration: BoxDecoration(
+                            color: Palette.border.withValues(alpha: 0.3),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Palette.border),
+                          ),
+                          alignment: Alignment.center,
+                          child: const Icon(Icons.tune, size: 16, color: Palette.sec),
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -741,17 +754,21 @@ class HelpPanel extends StatelessWidget {
   }) {
     return Tooltip(
       message: tooltip,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(6),
-        child: Container(
-          width: 18,
-          height: 18,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: Palette.border),
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: onTap,
+          child: Container(
+            width: 18,
+            height: 18,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Palette.border.withValues(alpha: 0.15),
+              border: Border.all(color: Palette.border),
+            ),
+            child: Icon(icon, size: 10, color: Palette.sec),
           ),
-          child: Icon(icon, size: 10, color: Palette.sec),
         ),
       ),
     );
@@ -761,20 +778,29 @@ class HelpPanel extends StatelessWidget {
     final next = session.config.uiLang == 'ru' ? 'en' : 'ru';
     return Tooltip(
       message: next == 'en' ? 'English' : 'Русский',
-      child: TextButton(
-        onPressed: () => session.setUiLang(next),
-        style: TextButton.styleFrom(
-          foregroundColor: Palette.sec,
-          padding: const EdgeInsets.symmetric(horizontal: 6),
-          minimumSize: const Size(30, 26),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-            side: const BorderSide(color: Palette.border),
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => session.setUiLang(next),
+          child: Container(
+            width: 30,
+            height: 28,
+            decoration: BoxDecoration(
+              color: Palette.border.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Palette.border),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              session.config.uiLang.toUpperCase(),
+              style: const TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: Palette.sec,
+              ),
+            ),
           ),
-        ),
-        child: Text(
-          session.config.uiLang.toUpperCase(),
-          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700),
         ),
       ),
     );

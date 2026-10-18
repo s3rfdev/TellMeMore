@@ -306,7 +306,12 @@ class Session extends ChangeNotifier {
   Future<void> setUiLang(String lang) async {
     S.lang = lang;
     config.uiLang = lang;
-    await saveConfig();
+    notifyListeners();
+    try {
+      await saveConfig();
+    } catch (e) {
+      debugPrint('[SESSION] error saving config in setUiLang: $e');
+    }
   }
 
   /// Живое применение конфига из диалога (без записи на диск).
