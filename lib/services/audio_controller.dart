@@ -22,6 +22,7 @@ class AudioController {
   AudioRecorder? _recorder;
   AudioRecorder? _themRecorder;
   Socket? _remoteSocket;
+  Socket? _remoteMicSocket;
   Process? _remoteAudioProcess;
   Process? _remoteMicAudioProcess;
   DeepgramStream? _micStream;
@@ -199,12 +200,28 @@ class AudioController {
     }
   }
 
+  Future<void> _ensureRemoteRelayRunning(AppConfig config) async {
+    if (config.remoteMacHost.isEmpty) return;
+    try {
+      final user =
+          config.remoteMacUser.isNotEmpty ? config.remoteMacUser : 'vanmac';
+      await Process.run('ssh', [
+        '-T',
+        '-q',
+        '-o',
+        'StrictHostKeyChecking=no',
+        '$user@${config.remoteMacHost}',
+        'launchctl load ~/Library/LaunchAgents/com.tellmemore.audiorelay.plist 2>/dev/null; nohup python3 /Users/vanmac/sobes123/audio_relay_server.py >/dev/null 2>&1 &',
+      ]).timeout(const Duration(milliseconds: 1500));
+    } catch (_) {}
+  }
+
   Future<void> _startRemoteMacMicStream({
     required AppConfig config,
     required void Function(String) onMicError,
   }) async {
     try {
-      debugPrint('[MIC remote] ssh mic stream starting from ${config.remoteMacHost}...');
+      debugPrint('[MIC remote] connecting to TCP ${config.remoteMacHost}:5006...');
       var micChunks = 0;
       final micBuffer = BytesBuilder(copy: false);
       const targetChunkSize = 3200; // 100ms at 16kHz 16-bit mono
@@ -225,34 +242,36 @@ class AudioController {
         }
       }
 
-      final user =
-          config.remoteMacUser.isNotEmpty ? config.remoteMacUser : 'vanmac';
-      _remoteMicAudioProcess = await Process.start('ssh', [
-        '-T',
-        '-q',
-        '-o',
-        'StrictHostKeyChecking=no',
-        '$user@${config.remoteMacHost}',
-        "/usr/local/bin/ffmpeg -nostdin -loglevel error -f avfoundation -i :default -ar 16000 -ac 1 -f s16le -",
-      ]);
-      _remoteMicAudioProcess!.stderr.listen((err) {
-        final msg = String.fromCharCodes(err).trim();
-        debugPrint('[MIC remote stderr] $msg');
-        if (msg.isNotEmpty) {
-          onMicError('Микрофон (Mac): $msg');
+      Socket? socket;
+      try {
+        socket = await Socket.connect(
+          config.remoteMacHost,
+          5006,
+          timeout: const Duration(milliseconds: 2000),
+        );
+      } catch (_) {
+        debugPrint('[MIC remote] TCP connect failed, waking relay on Mac...');
+        await _ensureRemoteRelayRunning(config);
+        try {
+          socket = await Socket.connect(
+            config.remoteMacHost,
+            5006,
+            timeout: const Duration(milliseconds: 2500),
+          );
+        } catch (e) {
+          onMicError(
+              'Микрофон (Mac): не удалось подключиться к аудио-серверу на ${config.remoteMacHost}:5006 ($e)');
+          return;
         }
-      });
-      _remoteMicAudioProcess!.exitCode.then((code) {
-        debugPrint('[MIC remote] ssh exited with code $code');
-        if (code != 0) {
-          onMicError('Микрофон (Mac): ssh завершился с кодом $code');
-        }
-      });
-      _remoteMicSub = _remoteMicAudioProcess!.stdout.listen(
+      }
+
+      _remoteMicSocket = socket;
+      debugPrint('[MIC remote] TCP connected successfully!');
+      _remoteMicSub = socket.listen(
         handleData,
-        onError: (Object e) => onMicError('Микрофон (Mac): $e'),
+        onError: (Object e) => onMicError('Микрофон (Mac TCP): $e'),
+        onDone: () => debugPrint('[MIC remote] TCP disconnected'),
       );
-      debugPrint('[MIC remote] ssh mic stream started');
     } catch (e) {
       onMicError('Микрофон (Mac): $e');
     }
@@ -264,7 +283,7 @@ class AudioController {
     required void Function(String) onThemError,
   }) async {
     try {
-      debugPrint('[THEM remote] ssh stream starting from ${config.remoteMacHost}...');
+      debugPrint('[THEM remote] stream starting from ${config.remoteMacHost}...');
       _themStream = DeepgramStream(
         source: Speaker.them,
         token: config.deepgramToken,
@@ -297,50 +316,36 @@ class AudioController {
         }
       }
 
+      Socket? socket;
       try {
-        debugPrint('[THEM remote] connecting to TCP ${config.remoteMacHost}:5005...');
-        final socket = await Socket.connect(
+        socket = await Socket.connect(
           config.remoteMacHost,
           5005,
-          timeout: const Duration(milliseconds: 500),
+          timeout: const Duration(milliseconds: 2000),
         );
-        _remoteSocket = socket;
-        debugPrint('[THEM remote] TCP connected successfully!');
-        _themAudioSub = socket.listen(
-          handleData,
-          onError: (Object e) => onThemError('Собеседник (Mac TCP): $e'),
-          onDone: () => debugPrint('[THEM remote] TCP disconnected'),
-        );
-      } catch (e) {
-        debugPrint('[THEM remote] TCP connect failed ($e), falling back to SSH...');
-        final user =
-            config.remoteMacUser.isNotEmpty ? config.remoteMacUser : 'vanmac';
-        _remoteAudioProcess = await Process.start('ssh', [
-          '-T',
-          '-q',
-          '-o',
-          'StrictHostKeyChecking=no',
-          '$user@${config.remoteMacHost}',
-          "/usr/local/bin/ffmpeg -nostdin -loglevel error -f avfoundation -i :BlackHole -ar 16000 -ac 1 -f s16le -",
-        ]);
-        _remoteAudioProcess!.stderr.listen((err) {
-          final msg = String.fromCharCodes(err).trim();
-          debugPrint('[THEM remote stderr] $msg');
-          if (msg.isNotEmpty) {
-            onThemError('Собеседник (Mac): $msg');
-          }
-        });
-        _remoteAudioProcess!.exitCode.then((code) {
-          debugPrint('[THEM remote] ssh exited with code $code');
-          if (code != 0) {
-            onThemError('Собеседник (Mac): ssh завершился с кодом $code');
-          }
-        });
-        _themAudioSub = _remoteAudioProcess!.stdout.listen(
-          handleData,
-          onError: (Object e) => onThemError('Собеседник (Mac): $e'),
-        );
+      } catch (_) {
+        debugPrint('[THEM remote] TCP connect failed, waking relay on Mac...');
+        await _ensureRemoteRelayRunning(config);
+        try {
+          socket = await Socket.connect(
+            config.remoteMacHost,
+            5005,
+            timeout: const Duration(milliseconds: 2500),
+          );
+        } catch (e) {
+          onThemError(
+              'Собеседник (Mac): не удалось подключиться к аудио-серверу на ${config.remoteMacHost}:5005 ($e)');
+          return;
+        }
       }
+
+      _remoteSocket = socket;
+      debugPrint('[THEM remote] TCP connected successfully!');
+      _themAudioSub = socket.listen(
+        handleData,
+        onError: (Object e) => onThemError('Собеседник (Mac TCP): $e'),
+        onDone: () => debugPrint('[THEM remote] TCP disconnected'),
+      );
     } catch (e) {
       onThemError('Собеседник (Mac): $e');
     }
@@ -429,6 +434,11 @@ class AudioController {
       _remoteSocket?.destroy();
     } catch (_) {}
     _remoteSocket = null;
+
+    try {
+      _remoteMicSocket?.destroy();
+    } catch (_) {}
+    _remoteMicSocket = null;
 
     try {
       _remoteAudioProcess?.kill();
