@@ -34,6 +34,13 @@ class WindowService {
     } catch (_) {}
   }
 
+  /// Установить прозрачность нативного окна (0.1..1.0)
+  static Future<void> setWindowOpacity(double opacity) async {
+    try {
+      await _channel.invokeMethod('setWindowOpacity', {'opacity': opacity});
+    } catch (_) {}
+  }
+
   /// Сделать скриншот экрана без окна TellMeMore.
   /// При указании remoteMacHost выполняет удалённый захват экрана Mac через SSH.
   /// Возвращает JPEG байты (Uint8List).

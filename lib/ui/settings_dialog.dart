@@ -258,7 +258,12 @@ class _SettingsDialogState extends State<SettingsDialog>
         TextButton(
           onPressed: () {
             widget.session.applyConfig(_orig);
-            Navigator.of(context).pop();
+            final nav = Navigator.of(context, rootNavigator: true);
+            if (nav.canPop()) {
+              nav.pop();
+            } else {
+              Navigator.of(context).pop();
+            }
           },
           child: Text(S.t('cancel')),
         ),
@@ -268,13 +273,23 @@ class _SettingsDialogState extends State<SettingsDialog>
           height: 34,
           fontSize: 12,
           onTap: () async {
+            final nav = Navigator.of(context, rootNavigator: true);
             c.deepgramToken = _deepgram.text.trim();
             c.setKeyFor(c.provider, _key.text.trim());
             c.myProfile = _myProfile.text.trim();
             c.interviewerProfile = _interviewerProfile.text.trim();
             c.goals = _goals.text.trim();
-            await widget.session.saveConfig();
-            if (context.mounted) Navigator.of(context).pop();
+            try {
+              await widget.session.saveConfig();
+            } catch (e) {
+              debugPrint('[SETTINGS] save error: $e');
+            } finally {
+              if (nav.canPop()) {
+                nav.pop();
+              } else if (context.mounted) {
+                Navigator.of(context).pop();
+              }
+            }
           },
         ),
       ],

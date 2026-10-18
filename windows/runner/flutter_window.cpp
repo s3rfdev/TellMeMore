@@ -148,6 +148,32 @@ void FlutterWindow::RegisterWindowChannel() {
                            SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
           }
           result->Success();
+        } else if (method == "setWindowOpacity") {
+          double opacity = 1.0;
+          if (call.arguments()) {
+            const auto* args = std::get_if<flutter::EncodableMap>(call.arguments());
+            if (args) {
+              auto it = args->find(flutter::EncodableValue("opacity"));
+              if (it != args->end()) {
+                if (const auto* d = std::get_if<double>(&it->second)) {
+                  opacity = *d;
+                }
+              }
+            }
+          }
+          if (hwnd) {
+            LONG_PTR exStyle = ::GetWindowLongPtr(hwnd, GWL_EXSTYLE);
+            if (opacity >= 0.999) {
+              ::SetWindowLongPtr(hwnd, GWL_EXSTYLE, exStyle & ~WS_EX_LAYERED);
+              ::RedrawWindow(hwnd, nullptr, nullptr, RDW_ERASE | RDW_INVALIDATE | RDW_FRAME | RDW_ALLCHILDREN);
+            } else {
+              ::SetWindowLongPtr(hwnd, GWL_EXSTYLE, exStyle | WS_EX_LAYERED);
+              double clamped = opacity < 0.1 ? 0.1 : (opacity > 1.0 ? 1.0 : opacity);
+              BYTE alpha = static_cast<BYTE>(clamped * 255.0);
+              ::SetLayeredWindowAttributes(hwnd, 0, alpha, LWA_ALPHA);
+            }
+          }
+          result->Success();
         } else if (method == "closeWindow") {
           if (hwnd) {
             ::PostMessage(hwnd, WM_CLOSE, 0, 0);

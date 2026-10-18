@@ -52,6 +52,8 @@ class MainFlutterWindow: NSWindow {
         let onTop = (call.arguments as? [String: Any])?["alwaysOnTop"] as? Bool ?? false
         self.level = onTop ? .floating : .normal
         result(nil)
+      case "setWindowOpacity":
+        result(nil)
       case "captureScreen":
         if #available(macOS 10.15, *) {
           if !CGPreflightScreenCaptureAccess() {

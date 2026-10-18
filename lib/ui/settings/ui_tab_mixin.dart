@@ -101,6 +101,7 @@ mixin UiTabMixin on SharedWidgetsMixin {
               max: 1.0,
               onChanged: (v) {
                 setState(() => c.windowOpacity = v);
+                session.applyWindowSettings();
                 session.changed();
               },
               onChangeEnd: (_) => session.saveConfig(),

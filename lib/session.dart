@@ -271,10 +271,11 @@ class Session extends ChangeNotifier {
     await applyWindowSettings();
   }
 
-  /// Применяет настройки нативного окна: скрытие от захвата экрана и поверх всех окон
+  /// Применяет настройки нативного окна: скрытие от захвата экрана, поверх всех окон и прозрачность
   Future<void> applyWindowSettings() async {
     await WindowService.setScreenShareHidden(config.hideFromScreenShare);
     await WindowService.setAlwaysOnTop(config.alwaysOnTop);
+    await WindowService.setWindowOpacity(config.windowOpacity);
   }
 
   /// Синхронизирует шапку окна с настройкой: прозрачная / плотная / скрытая
