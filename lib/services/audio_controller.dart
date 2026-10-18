@@ -14,9 +14,8 @@ import '../l10n.dart';
 import 'config_store.dart';
 import 'deepgram_stream.dart';
 
-const kRemoteMacDeviceId = '__remote_mac__';
-const kRemoteMacMicDeviceId = '__remote_mac_mic__';
-const kSystemAudioDeviceId = '__sckit__';
+export 'config_store.dart'
+    show kRemoteMacDeviceId, kRemoteMacMicDeviceId, kSystemAudioDeviceId;
 
 /// Controller responsible for all audio hardware, sockets, and Deepgram streams.
 class AudioController {
@@ -62,6 +61,9 @@ class AudioController {
       if (config.myDeviceId.isNotEmpty &&
           !devices.any((d) => d.id == config.myDeviceId)) {
         config.myDeviceId = '';
+      }
+      if (config.remoteMacHost.isNotEmpty && config.myDeviceId.isEmpty) {
+        config.myDeviceId = kRemoteMacMicDeviceId;
       }
       _ensureDefaultThemDevice(config, devices);
       return devices;
@@ -231,13 +233,20 @@ class AudioController {
         '-o',
         'StrictHostKeyChecking=no',
         '$user@${config.remoteMacHost}',
-        "/usr/local/bin/ffmpeg -nostdin -loglevel error -f avfoundation -i ':default' -ar 16000 -ac 1 -f s16le -",
+        "/usr/local/bin/ffmpeg -nostdin -loglevel error -f avfoundation -i :default -ar 16000 -ac 1 -f s16le -",
       ]);
       _remoteMicAudioProcess!.stderr.listen((err) {
-        debugPrint('[MIC remote stderr] ${String.fromCharCodes(err)}');
+        final msg = String.fromCharCodes(err).trim();
+        debugPrint('[MIC remote stderr] $msg');
+        if (msg.isNotEmpty) {
+          onMicError('Микрофон (Mac): $msg');
+        }
       });
       _remoteMicAudioProcess!.exitCode.then((code) {
         debugPrint('[MIC remote] ssh exited with code $code');
+        if (code != 0) {
+          onMicError('Микрофон (Mac): ssh завершился с кодом $code');
+        }
       });
       _remoteMicSub = _remoteMicAudioProcess!.stdout.listen(
         handleData,
@@ -293,7 +302,7 @@ class AudioController {
         final socket = await Socket.connect(
           config.remoteMacHost,
           5005,
-          timeout: const Duration(milliseconds: 2000),
+          timeout: const Duration(milliseconds: 500),
         );
         _remoteSocket = socket;
         debugPrint('[THEM remote] TCP connected successfully!');
@@ -312,13 +321,20 @@ class AudioController {
           '-o',
           'StrictHostKeyChecking=no',
           '$user@${config.remoteMacHost}',
-          "/usr/local/bin/ffmpeg -nostdin -loglevel error -f avfoundation -i ':BlackHole 2ch' -ar 16000 -ac 1 -f s16le -",
+          "/usr/local/bin/ffmpeg -nostdin -loglevel error -f avfoundation -i :BlackHole -ar 16000 -ac 1 -f s16le -",
         ]);
         _remoteAudioProcess!.stderr.listen((err) {
-          debugPrint('[THEM remote stderr] ${String.fromCharCodes(err)}');
+          final msg = String.fromCharCodes(err).trim();
+          debugPrint('[THEM remote stderr] $msg');
+          if (msg.isNotEmpty) {
+            onThemError('Собеседник (Mac): $msg');
+          }
         });
         _remoteAudioProcess!.exitCode.then((code) {
           debugPrint('[THEM remote] ssh exited with code $code');
+          if (code != 0) {
+            onThemError('Собеседник (Mac): ssh завершился с кодом $code');
+          }
         });
         _themAudioSub = _remoteAudioProcess!.stdout.listen(
           handleData,
@@ -384,6 +400,10 @@ class AudioController {
       _themRecorder?.stop();
       _themRecorder?.dispose();
       _themRecorder = null;
+      _remoteAudioProcess?.kill();
+      _remoteAudioProcess = null;
+      _remoteSocket?.destroy();
+      _remoteSocket = null;
     } catch (_) {}
   }
 

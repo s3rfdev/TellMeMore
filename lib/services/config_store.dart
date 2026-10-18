@@ -8,6 +8,8 @@ import 'llm_service.dart';
 
 /// Специальное значение themDeviceId: системный звук через ScreenCaptureKit (устаревшее).
 const kSystemAudioDeviceId = '__sckit__';
+const kRemoteMacDeviceId = '__remote_mac__';
+const kRemoteMacMicDeviceId = '__remote_mac_mic__';
 
 class AppConfig {
   AppConfig({
@@ -315,9 +317,20 @@ class AppConfig {
         (((j['titlebarTransparent'] as bool?) ?? true)
             ? 'transparent'
             : 'opaque'),
-    myDeviceId: (j['myDeviceId'] as String?) ?? '',
+    myDeviceId: () {
+      final dev = (j['myDeviceId'] as String?) ?? '';
+      final host = (j['remoteMacHost'] as String?) ?? '';
+      if (dev.isEmpty && host.isNotEmpty) {
+        return kRemoteMacMicDeviceId;
+      }
+      return dev;
+    }(),
     themDeviceId: () {
       final dev = (j['themDeviceId'] as String?) ?? '';
+      final host = (j['remoteMacHost'] as String?) ?? '';
+      if (dev.isEmpty && host.isNotEmpty) {
+        return kRemoteMacDeviceId;
+      }
       return dev == '__sckit__' ? '' : dev;
     }(),
     remoteMacHost: (j['remoteMacHost'] as String?) ?? '',
