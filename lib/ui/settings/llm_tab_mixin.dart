@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:record/record.dart';
 
 import '../../l10n.dart';
+import '../../services/audio_controller.dart';
 import '../../services/llm_service.dart';
 import '../../session.dart';
 import '../theme.dart';
@@ -616,7 +617,11 @@ mixin LlmTabMixin on SharedWidgetsMixin {
   // ── Audio device dropdowns ─────────────────────────────────────────────────
 
   Widget _mySourceRow() {
-    final myDevices = themDevices.where((d) => !d.label.toLowerCase().contains('blackhole')).toList();
+    final myDevices = themDevices
+        .where((d) =>
+            !d.label.toLowerCase().contains('blackhole') &&
+            d.id != kRemoteMacDeviceId)
+        .toList();
     final rawItems = <DropdownMenuItem<String>>[
       DropdownMenuItem(
         value: '',
@@ -651,8 +656,11 @@ mixin LlmTabMixin on SharedWidgetsMixin {
   }
 
   Widget _themSourceRow() {
+    final availableThem = themDevices
+        .where((d) => d.id != kRemoteMacMicDeviceId)
+        .toList();
     final rawItems = <DropdownMenuItem<String>>[
-      for (final d in themDevices)
+      for (final d in availableThem)
         DropdownMenuItem(
           value: d.id,
           child: Text(d.label, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13)),
@@ -666,7 +674,7 @@ mixin LlmTabMixin on SharedWidgetsMixin {
           style: const TextStyle(fontSize: 13, color: Palette.sec),
         ),
       ),
-      if (c.themDeviceId.isNotEmpty && !themDevices.any((d) => d.id == c.themDeviceId))
+      if (c.themDeviceId.isNotEmpty && !availableThem.any((d) => d.id == c.themDeviceId))
         DropdownMenuItem(
           value: c.themDeviceId,
           child: Text(

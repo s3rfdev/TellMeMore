@@ -14,16 +14,22 @@ import '../l10n.dart';
 import 'config_store.dart';
 import 'deepgram_stream.dart';
 
+const kRemoteMacDeviceId = '__remote_mac__';
+const kRemoteMacMicDeviceId = '__remote_mac_mic__';
+const kSystemAudioDeviceId = '__sckit__';
+
 /// Controller responsible for all audio hardware, sockets, and Deepgram streams.
 class AudioController {
   AudioRecorder? _recorder;
   AudioRecorder? _themRecorder;
   Socket? _remoteSocket;
   Process? _remoteAudioProcess;
+  Process? _remoteMicAudioProcess;
   DeepgramStream? _micStream;
   DeepgramStream? _themStream;
   StreamSubscription<Uint8List>? _audioSub;
   StreamSubscription<dynamic>? _themAudioSub;
+  StreamSubscription<dynamic>? _remoteMicSub;
   final _eventSubs = <StreamSubscription<dynamic>>[];
 
   int _sessionGeneration = 0;
@@ -41,7 +47,14 @@ class AudioController {
         devices.insert(
           0,
           const InputDevice(
-            id: '__remote_mac__',
+            id: kRemoteMacMicDeviceId,
+            label: 'Микрофон с Mac (по SSH)',
+          ),
+        );
+        devices.insert(
+          1,
+          const InputDevice(
+            id: kRemoteMacDeviceId,
             label: 'Звук с Mac (BlackHole по SSH)',
           ),
         );
@@ -62,7 +75,7 @@ class AudioController {
     List<InputDevice> audioDevices,
   ) {
     if (config.remoteMacHost.isNotEmpty) {
-      config.themDeviceId = '__remote_mac__';
+      config.themDeviceId = kRemoteMacDeviceId;
       return;
     }
     final currentThemExists = config.themDeviceId.isNotEmpty &&
@@ -109,14 +122,19 @@ class AudioController {
   }) async {
     final gen = ++_sessionGeneration;
     try {
-      _recorder = AudioRecorder();
-      final granted = await _recorder!.hasPermission();
-      if (_sessionGeneration != gen) {
-        await teardown();
-        return;
-      }
-      if (!granted) {
-        throw Exception(S.t('errMicDenied'));
+      final isRemoteMic = config.remoteMacHost.isNotEmpty &&
+          config.myDeviceId == kRemoteMacMicDeviceId;
+
+      if (!isRemoteMic) {
+        _recorder = AudioRecorder();
+        final granted = await _recorder!.hasPermission();
+        if (_sessionGeneration != gen) {
+          await teardown();
+          return;
+        }
+        if (!granted) {
+          throw Exception(S.t('errMicDenied'));
+        }
       }
 
       _micStream = DeepgramStream(
@@ -130,29 +148,36 @@ class AudioController {
       _eventSubs.add(_micStream!.errors.listen(onMicError));
       await _micStream!.start();
 
-      final audio = await _recorder!.startStream(
-        RecordConfig(
-          encoder: AudioEncoder.pcm16bits,
-          sampleRate: 16000,
-          numChannels: 1,
-          device: config.myDeviceId.isNotEmpty
-              ? InputDevice(id: config.myDeviceId, label: config.myDeviceId)
-              : null,
-        ),
-      );
-      var micChunks = 0;
-      debugPrint('[AUDIO me] stream started');
-      _audioSub = audio.listen((chunk) {
-        micChunks++;
-        if (micChunks % 50 == 1) {
-          debugPrint('[AUDIO me] chunk #$micChunks ${chunk.length}B');
-        }
-        _micStream?.send(chunk);
-      }, onError: (Object e) => onMicError('Микрофон: $e'));
+      if (isRemoteMic) {
+        await _startRemoteMacMicStream(
+          config: config,
+          onMicError: onMicError,
+        );
+      } else {
+        final audio = await _recorder!.startStream(
+          RecordConfig(
+            encoder: AudioEncoder.pcm16bits,
+            sampleRate: 16000,
+            numChannels: 1,
+            device: config.myDeviceId.isNotEmpty
+                ? InputDevice(id: config.myDeviceId, label: config.myDeviceId)
+                : null,
+          ),
+        );
+        var micChunks = 0;
+        debugPrint('[AUDIO me] stream started');
+        _audioSub = audio.listen((chunk) {
+          micChunks++;
+          if (micChunks % 50 == 1) {
+            debugPrint('[AUDIO me] chunk #$micChunks ${chunk.length}B');
+          }
+          _micStream?.send(chunk);
+        }, onError: (Object e) => onMicError('Микрофон: $e'));
+      }
 
       // Второй поток — голос собеседника (BlackHole, Remote Mac через SSH или выбранное аудиоустройство).
       if (config.remoteMacHost.isNotEmpty &&
-          config.themDeviceId == '__remote_mac__') {
+          config.themDeviceId == kRemoteMacDeviceId) {
         await _startRemoteMacStream(
           config: config,
           onTurnEvent: onTurnEvent,
@@ -169,6 +194,58 @@ class AudioController {
     } catch (e) {
       await teardown();
       rethrow;
+    }
+  }
+
+  Future<void> _startRemoteMacMicStream({
+    required AppConfig config,
+    required void Function(String) onMicError,
+  }) async {
+    try {
+      debugPrint('[MIC remote] ssh mic stream starting from ${config.remoteMacHost}...');
+      var micChunks = 0;
+      final micBuffer = BytesBuilder(copy: false);
+      const targetChunkSize = 3200; // 100ms at 16kHz 16-bit mono
+
+      void handleData(List<int> chunk) {
+        micBuffer.add(chunk);
+        while (micBuffer.length >= targetChunkSize) {
+          final bytes = micBuffer.takeBytes();
+          final toSend = bytes.sublist(0, targetChunkSize);
+          if (bytes.length > targetChunkSize) {
+            micBuffer.add(bytes.sublist(targetChunkSize));
+          }
+          micChunks++;
+          if (micChunks % 50 == 1) {
+            debugPrint('[AUDIO me remote] chunk #$micChunks ${toSend.length}B');
+          }
+          _micStream?.send(toSend);
+        }
+      }
+
+      final user =
+          config.remoteMacUser.isNotEmpty ? config.remoteMacUser : 'vanmac';
+      _remoteMicAudioProcess = await Process.start('ssh', [
+        '-T',
+        '-q',
+        '-o',
+        'StrictHostKeyChecking=no',
+        '$user@${config.remoteMacHost}',
+        "/usr/local/bin/ffmpeg -nostdin -loglevel error -f avfoundation -i ':default' -ar 16000 -ac 1 -f s16le -",
+      ]);
+      _remoteMicAudioProcess!.stderr.listen((err) {
+        debugPrint('[MIC remote stderr] ${String.fromCharCodes(err)}');
+      });
+      _remoteMicAudioProcess!.exitCode.then((code) {
+        debugPrint('[MIC remote] ssh exited with code $code');
+      });
+      _remoteMicSub = _remoteMicAudioProcess!.stdout.listen(
+        handleData,
+        onError: (Object e) => onMicError('Микрофон (Mac): $e'),
+      );
+      debugPrint('[MIC remote] ssh mic stream started');
+    } catch (e) {
+      onMicError('Микрофон (Mac): $e');
     }
   }
 
@@ -324,6 +401,11 @@ class AudioController {
     _themAudioSub = null;
 
     try {
+      await _remoteMicSub?.cancel();
+    } catch (_) {}
+    _remoteMicSub = null;
+
+    try {
       _remoteSocket?.destroy();
     } catch (_) {}
     _remoteSocket = null;
@@ -332,6 +414,11 @@ class AudioController {
       _remoteAudioProcess?.kill();
     } catch (_) {}
     _remoteAudioProcess = null;
+
+    try {
+      _remoteMicAudioProcess?.kill();
+    } catch (_) {}
+    _remoteMicAudioProcess = null;
 
     final mic = _micStream;
     _micStream = null;
