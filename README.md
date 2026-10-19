@@ -14,8 +14,9 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/s3rfdev/TellMeMore/releases"><img src="https://img.shields.io/github/v/release/s3rfdev/TellMeMore?color=2FBF71&label=Release" alt="Release"></a>
+  <a href="https://github.com/s3rfdev/TellMeMore/releases"><img src="https://img.shields.io/github/v/release/s3rfdev/TellMeMore?color=2FBF71&label=Release%20v1.2" alt="Release v1.2"></a>
   <img src="https://img.shields.io/badge/Platform-macOS%2013%2B-blue?logo=apple" alt="macOS 13+">
+  <img src="https://img.shields.io/badge/Vision-Apple%20Vision%20Framework-purple" alt="Apple Vision">
   <img src="https://img.shields.io/badge/Flutter-3.29%2B-02569B?logo=flutter" alt="Flutter">
   <img src="https://img.shields.io/badge/STT-Deepgram%20Nova--3%20%7C%20Flux-green" alt="Deepgram STT">
   <img src="https://img.shields.io/badge/LLMs-Gemini%20%7C%20Claude%20%7C%20OpenAI%20%7C%20GLM-orange" alt="LLMs">
@@ -31,9 +32,10 @@ High-stakes calls — whether commercial negotiations, architecture reviews, ent
 **TellMeMore** acts as your augmented intelligence co-pilot:
 1. **Listens in real time:** Captures both your microphone and your counterpart's voice via isolated, independent audio streams.
 2. **Maintains a chronological live transcript:** Accurately separates speakers in real time ("Me" vs. "Opponent / Counterpart").
-3. **Synthesizes tactical insights on demand (`⌥ 1` / `Get advice`):** Delivers calibrated, first-person talking points, objection counters, and value anchors tailored to your background, the counterpart's profile, and your strategic meeting goals.
-4. **Inspects multi-screenshot visual context (`⌥ 2`):** Instantly captures one or multiple screenshots of diagrams, slide decks, competitor offers, or code on screen, feeding multi-modal LLMs for immediate situational analysis.
-5. **Guarantees Presenter Privacy (`NSWindow.SharingType.none`):** When you share your screen to present slides, software demos, or financial models in Zoom, Google Meet, Microsoft Teams, or Slack, TellMeMore's floating HUD and private strategic notes remain completely invisible to attendees and video recordings.
+3. **Decodes real-time non-verbal & facial micro-cues:** Native on-device Apple Vision Framework tracks 76 facial landmarks, detecting FACS micro-reactions (AU4 brow furrow, AU24 lip compression, AU14 smirk), eye gaze aversion, blink rate stress spikes, and head pose leakage (e.g., shaking 'no' while verbally agreeing).
+4. **Delivers dual Chain-of-Thought tactical guidance (`⌥ 1` / `Get answer`):** Instantly displays a high-contrast tactical psychological alert card (`<dossier>`, e.g., manipulation/deception warnings) alongside calibrated, first-person spoken arguments (`<speech>`).
+5. **Inspects multi-screenshot visual context (`⌥ 2`):** Instantly captures one or multiple screenshots of diagrams, slide decks, competitor offers, or code on screen, feeding multi-modal LLMs for immediate situational analysis.
+6. **Guarantees Presenter Privacy (`NSWindow.SharingType.none`):** When you share your screen to present slides, software demos, or financial models in Zoom, Google Meet, Microsoft Teams, or Slack, TellMeMore's floating HUD and private strategic notes remain completely invisible to attendees and video recordings.
 
 ---
 
@@ -43,9 +45,9 @@ High-stakes calls — whether commercial negotiations, architecture reviews, ent
   <table>
     <tr>
       <td width="50%">
-        <img src="assets/screenshots/main.png" alt="Live Dialogue & Tactical HUD" /><br />
-        <b>1. Live Dialogue & Real-Time Tactical HUD</b><br />
-        <i>Real-time dual-stream transcription, instant first-person response generation, and live LLM engine status.</i>
+        <img src="assets/screenshots/main.png" alt="Live Dialogue, Non-Verbal Cues & Tactical HUD" /><br />
+        <b>1. Live Dialogue, Non-Verbal Cues & Tactical HUD</b><br />
+        <i>Real-time dual-stream transcription, Apple Vision facial micro-cues, automated deception/manipulation detection banner, and calibrated first-person responses.</i>
       </td>
       <td width="50%">
         <img src="assets/screenshots/1.png" alt="Context & Strategy Profile" /><br />
@@ -72,6 +74,12 @@ High-stakes calls — whether commercial negotiations, architecture reviews, ent
 
 ## Key Features
 
+- **Real-Time Non-Verbal & Facial Micro-Expression Intelligence:**
+  - **100% On-Device & Zero Latency:** Built directly on macOS native Apple Vision Framework (`VNDetectFaceLandmarksRequest` with 76 2D points). Runs locally on Apple Silicon (M1/M2/M3/M4) and Intel with no external C++ dependencies and zero cloud telemetry.
+  - **FACS & Micro-Cue Analysis:** Monitors AU4 (brow furrow / skepticism), AU24 (lip compression / suppressed stress), AU14 (unilateral smirk / asymmetry), Eye Aspect Ratio (EAR blink frequency and eye blocking >350ms), pupil gaze offset, and head pose (pitch/yaw/roll leakage).
+  - **3-Level Temporal Filtering & Behavioral Clustering:** Filters raw camera/screen crop signals through a dynamic exponential moving average baseline (EMA $\alpha=0.01$) to group transient micro-events into behavioral patterns: *Suppressed Stress*, *Skepticism*, *Cognitive Search*, and *False Agreement*. For technical architecture details, see [NONVERBAL_AI_ARCHITECTURE.md](NONVERBAL_AI_ARCHITECTURE.md).
+  - **Dual Chain-of-Thought (CoT) Output:** Generates a real-time psychological dossier (`<dossier>`) with alert badges (e.g. `⚠️ DECEPTION DETECTED`) paired with natural, first-person spoken replies (`<speech>`).
+  - **Vector HUD Micro-Badges:** Minimalist, unobtrusive SVG indicators with instant hover tooltips positioned directly beneath counterpart turns without cluttering the transcription view.
 - **Dual-Stream Audio Isolation (100% Speaker Separation):**
   - Your voice is captured directly from your hardware microphone.
   - The counterpart's voice is captured via [BlackHole](https://existential.audio/blackhole/) (a lightweight, open-source macOS virtual audio driver).

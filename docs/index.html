@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TellMeMore Ecosystem — ИИ-копилот для сложных переговоров</title>
-  <meta name="description" content="Интеллектуальный ИИ-копилот и плавающий HUD для ключевых переговоров, презентаций и переписок в Telegram и Facebook. Двухпоточный слух, мульти-скриншотный анализ и защита от манипуляций.">
+  <meta name="description" content="Интеллектуальный ИИ-копилот и плавающий HUD для ключевых переговоров, созвонов и переписок. Двухпоточный слух, нативное компьютерное зрение Apple Vision, распознавание мимики и защита от манипуляций.">
   <link rel="stylesheet" href="styles.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>👁️</text></svg>">
   <script>
@@ -226,6 +226,19 @@
               </div>
             </div>
 
+            <!-- Real-Time Apple Vision Nonverbal Cues Strip -->
+            <div style="display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap;">
+              <span class="mono" style="font-size: 0.7rem; padding: 2px 7px; border-radius: 4px; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3);" data-i18n="tagLipCompression">⚠️ AU24 Сжатие губ</span>
+              <span class="mono" style="font-size: 0.7rem; padding: 2px 7px; border-radius: 4px; background: rgba(234, 179, 8, 0.15); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.3);" data-i18n="tagGazeAversion">👁️ Увод взгляда</span>
+              <span class="mono" style="font-size: 0.7rem; padding: 2px 7px; border-radius: 4px; background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3);" data-i18n="tagSkepticism">🤨 Скептицизм: 78%</span>
+            </div>
+
+            <!-- Tactical Deception / Manipulation Alert Banner -->
+            <div style="background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.35); border-radius: var(--radius-sm); padding: 9px 12px; margin-bottom: 12px;">
+              <div style="font-size: 0.72rem; font-weight: 700; color: #ef4444; letter-spacing: 0.04em; margin-bottom: 2px;" data-i18n="voiceDeceptionTitle">⚠️ ВНИМАНИЕ: СКРЫТАЯ МАНИПУЛЯЦИЯ</div>
+              <div style="font-size: 0.78rem; color: var(--text-title); line-height: 1.35;" data-i18n="voiceDeceptionDesc">Давление ценой и искусственное сомнение. Рекомендация: перевести разговор на факты и финансовые гарантии SLA.</div>
+            </div>
+
             <!-- AI Tactical Hint Box -->
             <div class="inspector-breakdown-box" style="border-color: var(--border-blue); background: var(--accent-blue-subtle);">
               <div class="breakdown-header">
@@ -309,13 +322,13 @@
         <div class="product-showcase-grid">
           <div class="product-text-side">
             <div class="product-badge-row">
-              <span class="status-pill" data-i18n="tmmBadgeStatus">v1.1 Универсальный • Голос + Экран</span>
+              <span class="status-pill" data-i18n="tmmBadgeStatus">v1.2 Релиз • Невербалика + Голос + Экран</span>
               <span class="platform-badge-pill">macOS</span>
             </div>
 
             <h3 class="product-title" data-i18n="tmmTitle">TellMeMore</h3>
             <p class="product-desc" data-i18n="tmmDesc">
-              Интеллектуальный ИИ-копилот реального времени для ключевых переговоров, презентаций и технических консультаций на macOS. Анализирует речь оппонента и проводит мульти-скриншотный захват экрана со слайдами, схемами или кодом, подсказывая аргументы, парирование возражений и точные формулировки прямо во время созвона.
+              Интеллектуальный ИИ-копилот реального времени для ключевых переговоров, презентаций и технических консультаций на macOS. Анализирует речь оппонента, нативно отслеживает мимику по 76 точкам (Apple Vision) и проводит мульти-скриншотный захват экрана со слайдами, схемами или кодом, подсказывая аргументы, парирование возражений и точные формулировки прямо во время созвона.
             </p>
 
             <ul class="feature-checklist">
@@ -325,7 +338,11 @@
               </li>
               <li>
                 <span class="feature-check-icon">✓</span>
-                <div data-i18n="tmmFeat2"><strong>Тактический советник от первого лица:</strong> подсказки с учётом вашего бэкграунда, досье оппонента и стратегических целей встречи.</div>
+                <div data-i18n="tmmFeatNonverbal"><strong>Детекция невербалики (Apple Vision):</strong> нативный трекинг 76 точек лица, микромимики (AU4 брови, AU24 губы, AU14 ухмылка), увода взгляда и алерты скрытых манипуляций.</div>
+              </li>
+              <li>
+                <span class="feature-check-icon">✓</span>
+                <div data-i18n="tmmFeat2"><strong>Тактический советник от первого лица:</strong> двойной CoT (досье оппонента + готовая речь) с учётом вашего бэкграунда, досье оппонента и стратегических целей встречи.</div>
               </li>
               <li>
                 <span class="feature-check-icon">✓</span>
@@ -565,7 +582,7 @@
           <div class="timeline-card-content">
             <div class="timeline-badge-bar">
               <span class="timeline-quarter-text" data-i18n="q4Period">Q4 2026 • ЗАВЕРШЕНО</span>
-              <span class="status-pill">v1.1 Universal Live</span>
+              <span class="status-pill">v1.2 Live • Невербалика</span>
             </div>
             <h3 data-i18n="q4Title">TellMeMore macOS — Живой переговорный HUD</h3>
             <p data-i18n="q4Desc">
