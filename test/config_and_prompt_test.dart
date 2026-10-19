@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tellmemore/services/config_store.dart';
 import 'package:tellmemore/services/deepgram_stream.dart';
@@ -430,6 +431,64 @@ void main() {
       expect(session2.summarizedUpToTurn, equals(3));
     });
   });
+
+  group('PromptMode and Presets tests', () {
+    test('AppConfig promptMode defaults to full and roundtrips via JSON', () {
+      final cfg = AppConfig();
+      expect(cfg.promptMode, equals('full'));
+
+      cfg.promptMode = 'bullets';
+      final json = cfg.toJson();
+      expect(json['promptMode'], equals('bullets'));
+
+      final restored = AppConfig.fromJson(json);
+      expect(restored.promptMode, equals('bullets'));
+
+      final cloned = cfg.clone();
+      expect(cloned.promptMode, equals('bullets'));
+    });
+
+    test('Session togglePromptMode switches between full and bullets', () {
+      final session = Session();
+      expect(session.config.promptMode, equals('full'));
+
+      session.togglePromptMode();
+      expect(session.config.promptMode, equals('bullets'));
+
+      session.togglePromptMode();
+      expect(session.config.promptMode, equals('full'));
+    });
+
+    test('PromptBuilder injects CUE CARD formatting when promptMode is bullets', () {
+      final session = Session();
+      session.turns.add(TranscriptTurn(speaker: Speaker.them, text: 'What is B-Tree?'));
+
+      // 1. Full mode without dossier
+      session.config.promptMode = 'full';
+      final promptFull = session.buildPrompt();
+      expect(promptFull, contains('Дай готовую, ёмкую и психологически выверенную фразу'));
+      expect(promptFull, isNot(contains('ТЕЗИСНАЯ ШПАРГАЛКА (CUE CARD)')));
+
+      // 2. Bullets mode without dossier
+      session.config.promptMode = 'bullets';
+      final promptBullets = session.buildPrompt();
+      expect(promptBullets, contains('ТЕЗИСНАЯ ШПАРГАЛКА (CUE CARD)'));
+      expect(promptBullets, contains('🎯'));
+      expect(promptBullets, contains('⚡ Ключевые тезисы'));
+      expect(promptBullets, contains('⚠️'));
+      expect(promptBullets, contains('💡'));
+
+      // 3. Bullets mode with dossier (when vision is active)
+      session.setVisionMode(VisionMode.screenCrop);
+      session.latestCropImageBytes = Uint8List.fromList([1, 2, 3]);
+      session.config.showPsychologicalDossier = true;
+      final promptBulletsWithDossier = session.buildPrompt();
+      expect(promptBulletsWithDossier, contains('<dossier>'));
+      expect(promptBulletsWithDossier, contains('<speech>'));
+      expect(promptBulletsWithDossier, contains('🎯'));
+    });
+  });
 }
+
 
 

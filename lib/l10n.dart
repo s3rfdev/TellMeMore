@@ -51,6 +51,30 @@ const Map<String, Map<String, String>> _d = {
     'ru': 'Новая задача (сбросить контекст)',
     'en': 'New task (reset context)',
   },
+  'promptModeFull': {
+    'ru': 'Текст',
+    'en': 'Speech',
+  },
+  'promptModeBullets': {
+    'ru': 'Тезисы',
+    'en': 'Bullets',
+  },
+  'promptModeToastFull': {
+    'ru': 'Режим подсказки: 💬 Развёрнутый текст',
+    'en': 'Prompt mode: 💬 Full speech',
+  },
+  'promptModeToastBullets': {
+    'ru': 'Режим подсказки: ⚡ Тезисная шпаргалка',
+    'en': 'Prompt mode: ⚡ Bulleted cue cards',
+  },
+  'promptModeTooltipFull': {
+    'ru': 'Режим подсказки: 💬 Развёрнутый текст (клик для ⚡ Тезисы)',
+    'en': 'Prompt mode: 💬 Full speech (click for ⚡ Bullets)',
+  },
+  'promptModeTooltipBullets': {
+    'ru': 'Режим подсказки: ⚡ Тезисы (клик для 💬 Текст)',
+    'en': 'Prompt mode: ⚡ Bullets (click for 💬 Full speech)',
+  },
   'followUpHelp': {
     'ru': 'Уточнить ответ (Раунд {0})',
     'en': 'Follow-up refinement (Round {0})',

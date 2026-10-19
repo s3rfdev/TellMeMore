@@ -25,6 +25,7 @@ class AppConfig {
     this.anthropicModel = kDefaultAnthropicModel,
     this.systemRole = defaultSystemRole,
     this.instructions = defaultInstructions,
+    this.promptMode = defaultPromptMode,
     this.videoPrompt = defaultVideoPrompt,
     this.goals = defaultGoals,
     this.myProfile = '',
@@ -67,11 +68,30 @@ class AppConfig {
       'Ты — интеллектуальный ко-пилот, психологический аналитик и персональный суфлёр в реальном времени (для переговоров, встреч, обсуждений и анализа видео). '
       'Твоя задача — анализировать речь собеседника и его невербальные реакции (мимику, микродвижения, взгляд, стресс) и мгновенно вооружать пользователя чёткими, уверенными и профессиональными ответами от первого лица.';
 
+  static const defaultPromptMode = 'full'; // 'full' | 'bullets'
+
   static const defaultInstructions =
       '1. Отвечай строго от первого лица ("я"), моим живым голосом — так, чтобы я мог сразу вслух произнести твою подсказку в разговор.\n'
       '2. ВНИМАТЕЛЬНО УЧИТЫВАЙ невербальные сигналы, стресс, мимику и визуальный кадр оппонента! Если слова оппонента расходятся с его мимикой (например, говорит нейтрально, но на лице скепсис, сомнение или стресс) — подскажи, как тактично это отработать и куда направить разговор.\n'
       '3. Формат подсказки: предельно ёмко, 1–3 предложения (или 2–3 коротких ключевых тезиса с готовой речевой фразой).\n'
       '4. Никаких преамбул, мета-комментариев и вступлений (ЗАПРЕЩЕНО писать: "Вот что сказать:", "Вы можете ответить:"). Сразу давай готовую реплику / суть ответа!';
+
+  static const bulletsInstructions =
+      '1. СТРОГО ЗАПРЕЩЕНО писать связный текст для монотонного чтения под копирку! Пользователь говорит сам живым голосом.\n'
+      '2. Дай структурированную шпаргалку (когнитивные якоря) с визуальными маркерами:\n'
+      '🎯 [1 ключевая речевая фраза-тезис от первого лица ("я"), чтобы сразу уверенно начать говорить]\n'
+      '⚡ Ключевые термины и стек (3–4 буллета, самое важное выдели **жирным**):\n'
+      '• **[Термин / Концепт]**: суть в 2–3 словах\n'
+      '• **[Стек / Паттерн / Сложность]**: почему именно так\n'
+      '⚠️ **Подводный камень:** грабли, узкое место или ограничение, о котором важно предупредить\n'
+      '💡 **Итог / Вердикт:** краткое резюме для завершения мысли\n'
+      '3. ВНИМАТЕЛЬНО УЧИТЫВАЙ невербальные реакции оппонента, стресс и мимику.\n'
+      '4. Никаких вводных слов и преамбул.';
+
+  static const punchlineInstructions =
+      '1. Отвечай предельно кратко: 1–2 отточенных предложения от первого лица ("я"), бьющих точно в суть вопроса.\n'
+      '2. Никаких длинных пояснений, списков, кода и вводных слов. Только готовый речевой панчлайн.\n'
+      '3. Если вопрос предполагает выбор (А или Б) — сразу назови выбор и 1 главный аргумент.';
 
   static const defaultVideoPrompt =
       'К ЭТОМУ ЗАПРОСУ ПРИКРЕПЛЁН СВЕЖИЙ КАДР ЛИЦА СОБЕСЕДНИКА ИЗ ВИДЕОПОТОКА (Zoom/Meet/YouTube)!\n'
@@ -100,6 +120,9 @@ class AppConfig {
 
   String systemRole;
   String instructions;
+
+  /// Режим ответа подсказки: 'full' (развернутый текст) | 'bullets' (краткие тезисы/шпаргалка).
+  String promptMode;
   String videoPrompt;
   String goals;
   String myProfile;
@@ -229,6 +252,7 @@ class AppConfig {
     },
     systemRole: systemRole,
     instructions: instructions,
+    promptMode: promptMode,
     videoPrompt: videoPrompt,
     goals: goals,
     myProfile: myProfile,
@@ -272,6 +296,7 @@ class AppConfig {
     'customModels': customModels,
     'systemRole': systemRole,
     'instructions': instructions,
+    'promptMode': promptMode,
     'videoPrompt': videoPrompt,
     'goals': goals,
     'myProfile': myProfile,
@@ -317,6 +342,7 @@ class AppConfig {
     ),
     systemRole: (j['systemRole'] as String?) ?? defaultSystemRole,
     instructions: (j['instructions'] as String?) ?? defaultInstructions,
+    promptMode: (j['promptMode'] as String?) ?? defaultPromptMode,
     videoPrompt: (j['videoPrompt'] as String?) ?? defaultVideoPrompt,
     goals: () {
       final g = (j['goals'] as String?) ?? '';

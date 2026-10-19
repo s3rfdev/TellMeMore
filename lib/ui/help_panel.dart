@@ -134,6 +134,8 @@ class HelpPanel extends StatelessWidget {
                         : S.t('hintPlaceholder'),
                   ),
                   const SizedBox(width: 5),
+                  _promptModeButton(context, compact: isNarrow),
+                  const SizedBox(width: 4),
                   _cameraButton(context),
                   const SizedBox(width: 4),
                   _addScreenshotButton(context),
@@ -197,6 +199,74 @@ class HelpPanel extends StatelessWidget {
               ),
             ],
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _promptModeButton(BuildContext context, {bool compact = false}) {
+    final isBullets = session.config.promptMode == 'bullets';
+    final tooltip = isBullets
+        ? S.t('promptModeTooltipBullets')
+        : S.t('promptModeTooltipFull');
+
+    return Tooltip(
+      message: tooltip,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          onTap: () {
+            session.togglePromptMode();
+            final nowBullets = session.config.promptMode == 'bullets';
+            HudToast.show(
+              context,
+              nowBullets
+                  ? S.t('promptModeToastBullets')
+                  : S.t('promptModeToastFull'),
+              icon: nowBullets
+                  ? Icons.flash_on_rounded
+                  : Icons.chat_bubble_outline_rounded,
+            );
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            height: 28,
+            padding: EdgeInsets.symmetric(horizontal: compact ? 6 : 8),
+            decoration: BoxDecoration(
+              color: isBullets
+                  ? Palette.amber.withValues(alpha: 0.15)
+                  : Palette.border.withValues(alpha: 0.4),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: isBullets
+                    ? Palette.amber.withValues(alpha: 0.6)
+                    : Palette.border,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  isBullets
+                      ? Icons.flash_on_rounded
+                      : Icons.chat_bubble_outline_rounded,
+                  size: 14,
+                  color: isBullets ? Palette.amber : Palette.sec,
+                ),
+                if (!compact) ...[
+                  const SizedBox(width: 4),
+                  Text(
+                    isBullets ? S.t('promptModeBullets') : S.t('promptModeFull'),
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: isBullets ? FontWeight.w700 : FontWeight.w500,
+                      color: isBullets ? Palette.amber : Palette.sec,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
         ),
       ),
     );

@@ -35,6 +35,23 @@ mixin PromptsTabMixin on SharedWidgetsMixin {
             hint: 'Инструкции: первое лицо, краткость, реакция на невербалику',
             minLines: 4,
             maxLines: 8,
+            presets: [
+              (
+                label: '💬 Развёрнутый суфлёр',
+                text: AppConfig.defaultInstructions,
+                tooltip: 'Классическая связная речь от первого лица для чтения/суфлирования',
+              ),
+              (
+                label: '⚡ Тезисная шпаргалка',
+                text: AppConfig.bulletsInstructions,
+                tooltip: 'Когнитивные якоря: буллеты, стек, ловушка (для живого разговора)',
+              ),
+              (
+                label: '🎯 Прямой панчлайн',
+                text: AppConfig.punchlineInstructions,
+                tooltip: '1–2 ёмких предложения без вводных слов и преамбул',
+              ),
+            ],
           ),
           const SizedBox(height: 14),
           _fieldWithReset(
@@ -57,6 +74,7 @@ mixin PromptsTabMixin on SharedWidgetsMixin {
     required String hint,
     required int minLines,
     required int maxLines,
+    List<({String label, String text, String tooltip})>? presets,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -88,6 +106,25 @@ mixin PromptsTabMixin on SharedWidgetsMixin {
             ),
           ],
         ),
+        if (presets != null && presets.isNotEmpty) ...[
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 6,
+            runSpacing: 4,
+            children: [
+              for (final p in presets)
+                _presetChip(
+                  label: p.label,
+                  tooltip: p.tooltip,
+                  isSelected: controller.text.trim() == p.text.trim(),
+                  onTap: () {
+                    controller.text = p.text;
+                    onTouch();
+                  },
+                ),
+            ],
+          ),
+        ],
         const SizedBox(height: 5),
         settingsInput(
           controller,
@@ -96,6 +133,42 @@ mixin PromptsTabMixin on SharedWidgetsMixin {
           maxLines: maxLines,
         ),
       ],
+    );
+  }
+
+  Widget _presetChip({
+    required String label,
+    required String tooltip,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(6),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? Palette.blue.withValues(alpha: 0.18)
+                : Palette.border.withValues(alpha: 0.35),
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(
+              color: isSelected ? Palette.blue.withValues(alpha: 0.8) : Palette.border,
+            ),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+              color: isSelected ? Palette.blue : Palette.sec,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

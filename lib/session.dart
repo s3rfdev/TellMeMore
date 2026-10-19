@@ -63,6 +63,12 @@ class Session extends ChangeNotifier {
     }
   }
 
+  void togglePromptMode() {
+    config.promptMode = config.promptMode == 'bullets' ? 'full' : 'bullets';
+    saveConfig();
+    notifyListeners();
+  }
+
   void setCropRect(Rect rect) {
     cropRect = rect;
     notifyListeners();
