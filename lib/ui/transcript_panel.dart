@@ -5,6 +5,7 @@ import '../services/deepgram_stream.dart';
 import '../services/llm_service.dart';
 import '../session.dart';
 import 'theme.dart';
+import 'widgets/nonverbal_icons.dart';
 
 class TranscriptPanel extends StatefulWidget {
   const TranscriptPanel({super.key, required this.session});
@@ -176,7 +177,13 @@ class _TranscriptPanelState extends State<TranscriptPanel> {
     }
 
     final rows = <Widget>[
-      for (final t in s.turns) _turnRow(t.speaker, t.text, finalText: true),
+      for (final t in s.turns)
+        _turnRow(
+          t.speaker,
+          t.text,
+          finalText: true,
+          nonverbalTags: t.nonverbalTags,
+        ),
       if (s.interimMe.trim().isNotEmpty)
         _turnRow(Speaker.me, s.interimMe.trim(), finalText: false),
       if (s.interimThem.trim().isNotEmpty)
@@ -191,28 +198,47 @@ class _TranscriptPanelState extends State<TranscriptPanel> {
     );
   }
 
-  Widget _turnRow(Speaker speaker, String text, {required bool finalText}) {
+  Widget _turnRow(
+    Speaker speaker,
+    String text, {
+    required bool finalText,
+    List<String> nonverbalTags = const [],
+  }) {
     final c = widget.session.config;
     final isMe = speaker == Speaker.me;
     final color = isMe ? Palette.green : Palette.them;
     final label = isMe ? S.t('you') : S.t('interviewer');
     final alpha = finalText ? 1.0 : 0.55;
+    final isVisionActive = widget.session.visionMode != VisionMode.off;
+    final showIcons = !isMe && c.showNonverbalIcons && isVisionActive && nonverbalTags.isNotEmpty;
+
     return Padding(
       padding: EdgeInsets.symmetric(vertical: c.turnSpacing),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 92,
-            child: Text(
-              finalText ? label : '$label…',
-              style: TextStyle(
-                fontSize: c.fontSize - 2,
-                fontWeight: FontWeight.w700,
-                color: color.withValues(alpha: alpha),
-              ),
+            width: 106,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  finalText ? label : '$label…',
+                  style: TextStyle(
+                    fontSize: c.fontSize - 2,
+                    fontWeight: FontWeight.w700,
+                    color: color.withValues(alpha: alpha),
+                  ),
+                ),
+                if (showIcons) ...[
+                  const SizedBox(height: 3),
+                  NonverbalIconsBar(tags: nonverbalTags),
+                ],
+              ],
             ),
           ),
+          const SizedBox(width: 8),
           Expanded(
             child: SelectableText(
               text,

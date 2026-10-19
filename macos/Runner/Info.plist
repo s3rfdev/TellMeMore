@@ -34,5 +34,7 @@
 	<string>NSApplication</string>
 	<key>NSScreenCaptureUsageDescription</key>
 	<string>Приложение захватывает снимок экрана для анализа кода и системный звук звонка для транскрибации.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Приложение использует камеру для анализа мимики и взгляда собеседника во время переговоров.</string>
 </dict>
 </plist>

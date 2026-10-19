@@ -51,6 +51,18 @@ const Map<String, Map<String, String>> _d = {
     'ru': 'Новая задача (сбросить контекст)',
     'en': 'New task (reset context)',
   },
+  'followUpHelp': {
+    'ru': 'Уточнить ответ (Раунд {0})',
+    'en': 'Follow-up refinement (Round {0})',
+  },
+  'resetLlmContext': {
+    'ru': 'Сбросить раунды уточнений (R2…)',
+    'en': 'Reset follow-up rounds (R2…)',
+  },
+  'resetLlmContextSuccess': {
+    'ru': 'Контекст уточнений сброшен',
+    'en': 'Follow-up context reset',
+  },
   'followUpRound': {
     'ru': 'Раунд уточнения',
     'en': 'Follow-up round',
@@ -136,6 +148,7 @@ const Map<String, Map<String, String>> _d = {
   // --- Настройки ---
   'settingsTitle': {'ru': 'Настройки', 'en': 'Settings'},
   'tabContext': {'ru': 'Контекст', 'en': 'Context'},
+  'tabPrompts': {'ru': 'Промпты', 'en': 'Prompts'},
   'tabUi': {'ru': 'Вид', 'en': 'UI'},
   'sectionText': {'ru': 'ТЕКСТ', 'en': 'TEXT'},
   'sectionLlm': {'ru': 'НЕЙРОСЕТЬ ДЛЯ ПОДСКАЗОК', 'en': 'HINT PROVIDER'},

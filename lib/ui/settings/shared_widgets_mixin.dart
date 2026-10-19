@@ -27,6 +27,9 @@ mixin SharedWidgetsMixin {
   /// Live config shortcut — implemented by _SettingsDialogState.
   AppConfig get c;
 
+  /// Triggered on field touch/change — implemented by _SettingsDialogState.
+  void onTouch();
+
   // ── Slider theme ──────────────────────────────────────────────────────────
 
   SliderThemeData sliderTheme(BuildContext ctx) {

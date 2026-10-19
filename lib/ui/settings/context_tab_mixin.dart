@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 
 import '../../l10n.dart';
 import '../theme.dart';
+import '../widgets/hud_toast.dart';
 import 'shared_widgets_mixin.dart';
 
 /// Builds the first settings tab (profile/interviewer/goals text fields).
@@ -111,9 +112,7 @@ mixin ContextTabMixin on SharedWidgetsMixin {
       setState(() => controller.text = text.trim());
     } catch (_) {
       if (mounted && context.mounted) {
-        ScaffoldMessenger.maybeOf(
-          context,
-        )?.showSnackBar(SnackBar(content: Text(S.t('loadFailed'))));
+        HudToast.show(context, S.t('loadFailed'), isError: true);
       }
     }
   }

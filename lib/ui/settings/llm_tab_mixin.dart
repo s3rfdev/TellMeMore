@@ -26,7 +26,6 @@ mixin LlmTabMixin on SharedWidgetsMixin {
   bool get checking;
   List<InputDevice> get themDevices;
 
-  void onTouch();
   void onSwitchProvider(LlmProvider p);
   void onAddCustomModel();
   void onDeleteCustomModel();

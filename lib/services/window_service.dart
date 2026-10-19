@@ -67,6 +67,46 @@ class WindowService {
     return _channel.invokeMethod<Uint8List>('captureScreen');
   }
 
+  /// Захватить конкретную прямоугольную область экрана (x, y, w, h).
+  static Future<Uint8List?> captureCrop({
+    required double x,
+    required double y,
+    required double width,
+    required double height,
+  }) async {
+    try {
+      return await _channel.invokeMethod<Uint8List>('captureCrop', {
+        'x': x,
+        'y': y,
+        'width': width,
+        'height': height,
+      });
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Нативный анализ лица через Apple Vision Framework (Revision 3) на macOS.
+  /// Возвращает словарь с 14 нормализованными геометрическими метриками (или detected: false).
+  static Future<Map<String, dynamic>?> analyzeFaceCrop({
+    required double x,
+    required double y,
+    required double width,
+    required double height,
+  }) async {
+    try {
+      final res = await _channel.invokeMethod<Map>('analyzeFaceCrop', {
+        'x': x,
+        'y': y,
+        'width': width,
+        'height': height,
+      });
+      return res?.cast<String, dynamic>();
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// Открыть раздел настроек macOS: Запись экрана
   static Future<void> openScreenCaptureSettings() async {
     try {

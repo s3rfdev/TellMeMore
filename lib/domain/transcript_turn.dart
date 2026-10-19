@@ -6,16 +6,20 @@ class TranscriptTurn {
     required this.speaker,
     required this.text,
     DateTime? timestamp,
-  }) : timestamp = timestamp ?? DateTime.now();
+    List<String>? nonverbalTags,
+  })  : timestamp = timestamp ?? DateTime.now(),
+        nonverbalTags = nonverbalTags ?? const [];
 
   final Speaker speaker;
   final String text;
   final DateTime timestamp;
+  final List<String> nonverbalTags;
 
   Map<String, dynamic> toJson() => {
     'speaker': speaker.name,
     'text': text,
     'timestamp': timestamp.toIso8601String(),
+    'nonverbalTags': nonverbalTags,
   };
 
   factory TranscriptTurn.fromJson(Map<String, dynamic> json) {
@@ -25,6 +29,13 @@ class TranscriptTurn {
     final text = (json['text'] as String?) ?? '';
     final timeStr = (json['timestamp'] as String?) ?? '';
     final timestamp = DateTime.tryParse(timeStr) ?? DateTime.now();
-    return TranscriptTurn(speaker: speaker, text: text, timestamp: timestamp);
+    final rawTags = json['nonverbalTags'] as List<dynamic>?;
+    final tags = rawTags?.map((e) => e.toString()).toList() ?? const [];
+    return TranscriptTurn(
+      speaker: speaker,
+      text: text,
+      timestamp: timestamp,
+      nonverbalTags: tags,
+    );
   }
 }

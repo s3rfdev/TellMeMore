@@ -11,6 +11,9 @@ import '../session.dart';
 import 'formatted_answer.dart';
 import 'settings_dialog.dart';
 import 'theme.dart';
+import 'widgets/context_inspector_dialog.dart';
+import 'widgets/crop_selector_dialog.dart';
+import 'widgets/hud_toast.dart';
 
 /// Виджет для плавного перетаскивания окна macOS при клике и движении мыши.
 class _WindowDragArea extends StatelessWidget {
@@ -80,31 +83,33 @@ class HelpPanel extends StatelessWidget {
 
               Row(
                 children: [
-                  // Левая часть: кнопка закрытия, сворачивания, меню чата (...), плашка модели
-                  _winButton(
-                    icon: Icons.close,
-                    tooltip: S.t('winClose'),
-                    onTap: () {
-                      if (Platform.isMacOS) {
-                        WindowManipulator.closeWindow();
-                      } else {
-                        WindowService.close();
-                      }
-                    },
-                  ),
-                  const SizedBox(width: 5),
-                  _winButton(
-                    icon: Icons.remove,
-                    tooltip: S.t('winMinimize'),
-                    onTap: () {
-                      if (Platform.isMacOS) {
-                        WindowManipulator.miniaturizeWindow();
-                      } else {
-                        WindowService.minimize();
-                      }
-                    },
-                  ),
-                  const SizedBox(width: 6),
+                  // Левая часть: кнопка закрытия, сворачивания (только в прозрачном/скрытом режиме), меню чата (...), плашка модели
+                  if (session.config.titlebarMode != 'opaque') ...[
+                    _winButton(
+                      icon: Icons.close,
+                      tooltip: S.t('winClose'),
+                      onTap: () {
+                        if (Platform.isMacOS) {
+                          WindowManipulator.closeWindow();
+                        } else {
+                          WindowService.close();
+                        }
+                      },
+                    ),
+                    const SizedBox(width: 5),
+                    _winButton(
+                      icon: Icons.remove,
+                      tooltip: S.t('winMinimize'),
+                      onTap: () {
+                        if (Platform.isMacOS) {
+                          WindowManipulator.miniaturizeWindow();
+                        } else {
+                          WindowService.minimize();
+                        }
+                      },
+                    ),
+                    const SizedBox(width: 6),
+                  ],
                   _chatMenuButton(context),
                   if (!isUltraNarrow) ...[
                     const SizedBox(width: 6),
@@ -134,37 +139,21 @@ class HelpPanel extends StatelessWidget {
                   _addScreenshotButton(context),
                   if (session.llmHistory.isNotEmpty) ...[
                     const SizedBox(width: 4),
-                    _resetHistoryButton(context),
+                    _followUpButton(context),
                   ],
 
                   const Spacer(),
 
-                  // Правая часть: переключение языка и настройки
+                  // Правая часть: мини-кнопка видеозахвата, язык, инспектор, настройки
                   if (!isUltraNarrow) ...[
+                    _videoCaptureButton(context),
+                    const SizedBox(width: 4),
                     _langToggle(),
                     const SizedBox(width: 4),
                   ],
-                  Tooltip(
-                    message: S.t('settings'),
-                    child: MouseRegion(
-                      cursor: SystemMouseCursors.click,
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: () => showSettingsDialog(context, session),
-                        child: Container(
-                          width: 30,
-                          height: 28,
-                          decoration: BoxDecoration(
-                            color: Palette.border.withValues(alpha: 0.3),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Palette.border),
-                          ),
-                          alignment: Alignment.center,
-                          child: const Icon(Icons.tune, size: 16, color: Palette.sec),
-                        ),
-                      ),
-                    ),
-                  ),
+                  _inspectorButton(context),
+                  const SizedBox(width: 4),
+                  _settingsButton(context),
                 ],
               ),
             ],
@@ -332,34 +321,39 @@ class HelpPanel extends StatelessWidget {
     );
   }
 
-  Widget _resetHistoryButton(BuildContext context) {
+  Widget _followUpButton(BuildContext context) {
     final round = session.llmHistory.length ~/ 2 + 1;
+    final enabled = !session.helpLoading;
     return Tooltip(
-      message: '${S.t('newFollowUpTask')} (${S.t('followUpRound')} $round)',
+      message: S.t('followUpHelp', '$round'),
       child: MouseRegion(
-        cursor: SystemMouseCursors.click,
+        cursor: enabled ? SystemMouseCursors.click : MouseCursor.defer,
         child: GestureDetector(
-          onTap: session.resetLlmHistory,
+          onTap: enabled ? session.getFollowUpHelp : null,
           child: Container(
             height: 28,
-            padding: const EdgeInsets.symmetric(horizontal: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 7),
             decoration: BoxDecoration(
-              color: Palette.border.withValues(alpha: 0.25),
+              color: Palette.blue.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Palette.border.withValues(alpha: 0.6)),
+              border: Border.all(color: Palette.blue.withValues(alpha: 0.5)),
             ),
             alignment: Alignment.center,
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.restart_alt, size: 14, color: Palette.sec),
+                const Icon(
+                  Icons.auto_awesome_rounded,
+                  size: 13,
+                  color: Palette.blue,
+                ),
                 const SizedBox(width: 4),
                 Text(
                   'R$round',
                   style: const TextStyle(
                     fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: Palette.sec,
+                    fontWeight: FontWeight.w700,
+                    color: Palette.blue,
                   ),
                 ),
               ],
@@ -387,7 +381,7 @@ class HelpPanel extends StatelessWidget {
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: count,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              separatorBuilder: (_, index) => const SizedBox(width: 8),
               itemBuilder: (context, index) {
                 final imgBytes = session.pendingScreenshots[index];
                 return Stack(
@@ -521,6 +515,7 @@ class HelpPanel extends StatelessWidget {
         switch (value) {
           case 'reset_history':
             session.resetLlmHistory();
+            HudToast.show(context, S.t('resetLlmContextSuccess'));
             break;
           case 'clear':
             _confirmClearChat(context);
@@ -537,61 +532,89 @@ class HelpPanel extends StatelessWidget {
         if (session.llmHistory.isNotEmpty) ...[
           PopupMenuItem(
             value: 'reset_history',
-            height: 34,
+            height: 30,
+            padding: const EdgeInsets.symmetric(horizontal: 10),
             child: Row(
               children: [
-                const Icon(Icons.restart_alt, size: 15, color: Palette.sec),
+                const Icon(Icons.restart_alt, size: 14, color: Palette.sec),
                 const SizedBox(width: 8),
                 Text(
-                  S.t('newFollowUpTask'),
-                  style: const TextStyle(fontSize: 12, color: Palette.pri),
+                  S.t('resetLlmContext'),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w400,
+                    letterSpacing: -0.1,
+                    color: Palette.pri,
+                  ),
                 ),
               ],
             ),
           ),
-          const PopupMenuDivider(height: 1),
+          const _ChatMenuDivider(),
         ],
         PopupMenuItem(
           value: 'clear',
-          height: 34,
+          height: 30,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
           child: Row(
             children: [
-              const Icon(Icons.delete_outline, size: 15, color: Palette.red),
+              Icon(
+                Icons.delete_outline,
+                size: 14,
+                color: Palette.red.withValues(alpha: 0.85),
+              ),
               const SizedBox(width: 8),
               Text(
                 S.t('clearChat'),
-                style: const TextStyle(fontSize: 12, color: Palette.pri),
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w400,
+                  letterSpacing: -0.1,
+                  color: Palette.pri,
+                ),
               ),
             ],
           ),
         ),
-        const PopupMenuDivider(height: 1),
+        const _ChatMenuDivider(),
         PopupMenuItem(
           value: 'export',
-          height: 34,
+          height: 30,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
           child: Row(
             children: [
               const Icon(Icons.file_upload_outlined,
-                  size: 15, color: Palette.sec),
+                  size: 14, color: Palette.sec),
               const SizedBox(width: 8),
               Text(
                 S.t('exportChat'),
-                style: const TextStyle(fontSize: 12, color: Palette.pri),
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w400,
+                  letterSpacing: -0.1,
+                  color: Palette.pri,
+                ),
               ),
             ],
           ),
         ),
         PopupMenuItem(
           value: 'import',
-          height: 34,
+          height: 30,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
           child: Row(
             children: [
               const Icon(Icons.file_download_outlined,
-                  size: 15, color: Palette.sec),
+                  size: 14, color: Palette.sec),
               const SizedBox(width: 8),
               Text(
                 S.t('importChat'),
-                style: const TextStyle(fontSize: 12, color: Palette.pri),
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w400,
+                  letterSpacing: -0.1,
+                  color: Palette.pri,
+                ),
               ),
             ],
           ),
@@ -620,34 +643,74 @@ class HelpPanel extends StatelessWidget {
       builder: (ctx) => AlertDialog(
         backgroundColor: Palette.dialogBg,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(12),
           side: const BorderSide(color: Palette.border),
         ),
+        contentPadding: const EdgeInsets.fromLTRB(18, 14, 18, 14),
+        actionsPadding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+        titlePadding: const EdgeInsets.fromLTRB(18, 16, 18, 6),
         title: Text(
           S.t('clearChatTitle'),
           style: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
             color: Palette.pri,
           ),
         ),
         content: Text(
           S.t('clearChatConfirm'),
-          style: const TextStyle(fontSize: 13, color: Palette.sec),
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w400,
+            color: Palette.sec,
+            height: 1.35,
+          ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child:
-                Text(S.t('cancel'), style: const TextStyle(color: Palette.sec)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Palette.red,
-              foregroundColor: Colors.white,
+          MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => Navigator.of(ctx).pop(false),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: Palette.border),
+                ),
+                child: Text(
+                  S.t('cancel'),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w400,
+                    color: Palette.sec,
+                  ),
+                ),
+              ),
             ),
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(S.t('clearAction')),
+          ),
+          const SizedBox(width: 8),
+          MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => Navigator.of(ctx).pop(true),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                decoration: BoxDecoration(
+                  color: Palette.red.withValues(alpha: 0.85),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  S.t('clearAction'),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -655,23 +718,17 @@ class HelpPanel extends StatelessWidget {
     if (ok == true) {
       await session.clearChat();
       if (context.mounted) {
-        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-          SnackBar(
-            content: Text(S.t('chatCleared')),
-            duration: const Duration(seconds: 2),
-          ),
-        );
+        HudToast.show(context, S.t('chatCleared'));
       }
     }
   }
 
   Future<void> _exportChat(BuildContext context) async {
     if (session.turns.isEmpty) {
-      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-        SnackBar(
-          content: Text(S.t('chatEmptyExport')),
-          duration: const Duration(seconds: 2),
-        ),
+      HudToast.show(
+        context,
+        S.t('chatEmptyExport'),
+        icon: Icons.info_outline_rounded,
       );
       return;
     }
@@ -691,20 +748,14 @@ class HelpPanel extends StatelessWidget {
       final file = File(location.path);
       await file.writeAsString(json);
       if (context.mounted) {
-        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-          SnackBar(
-            content: Text(S.t('exportSuccess')),
-            duration: const Duration(seconds: 2),
-          ),
-        );
+        HudToast.show(context, S.t('exportSuccess'));
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-          SnackBar(
-            content: Text('${S.t('exportFailed')}: $e'),
-            backgroundColor: Palette.red,
-          ),
+        HudToast.show(
+          context,
+          '${S.t('exportFailed')}: $e',
+          isError: true,
         );
       }
     }
@@ -728,20 +779,17 @@ class HelpPanel extends StatelessWidget {
         summarizedUpToTurn: parsed.summarizedUpToTurn,
       );
       if (context.mounted) {
-        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-          SnackBar(
-            content: Text(S.t('importSuccess', '${parsed.turns.length}')),
-            duration: const Duration(seconds: 2),
-          ),
+        HudToast.show(
+          context,
+          S.t('importSuccess', '${parsed.turns.length}'),
         );
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-          SnackBar(
-            content: Text('${S.t('importFailed')}: $e'),
-            backgroundColor: Palette.red,
-          ),
+        HudToast.show(
+          context,
+          '${S.t('importFailed')}: $e',
+          isError: true,
         );
       }
     }
@@ -806,6 +854,171 @@ class HelpPanel extends StatelessWidget {
     );
   }
 
+  Widget _videoCaptureButton(BuildContext context) {
+    final active = session.visionMode == VisionMode.screenCrop;
+    return Tooltip(
+      message: active
+          ? 'Захват кропа активен. Клик: управление рамкой'
+          : 'Захват области экрана (кроп лица оппонента)',
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () {
+            if (!active) {
+              CropSelectorDialog.show(context, session);
+            } else {
+              _showCaptureMenu(context);
+            }
+          },
+          child: Container(
+            width: 30,
+            height: 28,
+            decoration: BoxDecoration(
+              color: active
+                  ? Palette.green.withValues(alpha: 0.15)
+                  : Palette.border.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: active
+                    ? Palette.green.withValues(alpha: 0.8)
+                    : Palette.border,
+              ),
+            ),
+            alignment: Alignment.center,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Icon(
+                  Icons.crop_free_rounded,
+                  size: 15,
+                  color: active ? Palette.green : Palette.sec,
+                ),
+                if (active)
+                  Positioned(
+                    top: -1,
+                    right: -1,
+                    child: Container(
+                      width: 5,
+                      height: 5,
+                      decoration: const BoxDecoration(
+                        color: Palette.green,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showCaptureMenu(BuildContext context) async {
+    final renderBox = context.findRenderObject() as RenderBox?;
+    final offset = renderBox?.localToGlobal(Offset.zero) ?? Offset.zero;
+    final choice = await showMenu<String>(
+      context: context,
+      position: RelativeRect.fromLTRB(
+        offset.dx,
+        offset.dy + 40,
+        offset.dx + 40,
+        offset.dy + 80,
+      ),
+      color: Palette.dialogBg,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: const BorderSide(color: Palette.border),
+      ),
+      elevation: 6,
+      items: const [
+        PopupMenuItem(
+          value: 'reframe',
+          height: 32,
+          child: Row(
+            children: [
+              Icon(Icons.aspect_ratio_rounded, size: 14, color: Palette.green),
+              SizedBox(width: 8),
+              Text(
+                'Изменить рамку...',
+                style: TextStyle(fontSize: 12, color: Palette.pri),
+              ),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          value: 'stop',
+          height: 32,
+          child: Row(
+            children: [
+              Icon(Icons.stop_circle_outlined, size: 14, color: Palette.red),
+              SizedBox(width: 8),
+              Text(
+                'Остановить захват',
+                style: TextStyle(fontSize: 12, color: Palette.red),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+    if (!context.mounted) return;
+    if (choice == 'reframe') {
+      CropSelectorDialog.show(context, session);
+    } else if (choice == 'stop') {
+      session.setVisionMode(VisionMode.off);
+    }
+  }
+
+  Widget _inspectorButton(BuildContext context) {
+    return Tooltip(
+      message: 'Инспектор импульсов: Что видит нейросеть прямо сейчас',
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => ContextInspectorDialog.show(context, session),
+          child: Container(
+            width: 30,
+            height: 28,
+            decoration: BoxDecoration(
+              color: Palette.border.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Palette.border),
+            ),
+            alignment: Alignment.center,
+            child: const Icon(Icons.psychology_outlined, size: 16, color: Palette.sec),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _settingsButton(BuildContext context) {
+    return Tooltip(
+      message: S.t('settings'),
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => showSettingsDialog(context, session),
+          child: Container(
+            width: 30,
+            height: 28,
+            decoration: BoxDecoration(
+              color: Palette.border.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Palette.border),
+            ),
+            alignment: Alignment.center,
+            child: const Icon(Icons.tune, size: 16, color: Palette.sec),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _body() {
     if (session.helpError != null) {
       return SingleChildScrollView(
@@ -817,13 +1030,64 @@ class HelpPanel extends StatelessWidget {
     }
     if (session.helpAnswer != null && session.helpAnswer!.isNotEmpty) {
       final c = session.config;
+      final (dossier, speech) = _splitDossierAndSpeech(session.helpAnswer!);
+      final isVisionActive = session.visionMode != VisionMode.off;
+      final showDossier = c.showPsychologicalDossier && isVisionActive && dossier != null && dossier.isNotEmpty;
+
       return Stack(
         children: [
-          FormattedAnswerView(
-            text: session.helpAnswer!,
-            baseColor: Color(c.hintColor),
-            fontSize: c.fontSize,
-            isBold: c.boldText,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (showDossier) ...[
+                Container(
+                  margin: const EdgeInsets.only(bottom: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Palette.amber.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: Palette.amber.withValues(alpha: 0.25),
+                    ),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.only(top: 2),
+                        child: Icon(
+                          Icons.psychology_outlined,
+                          size: 13,
+                          color: Palette.amber,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: SelectableText(
+                          dossier,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            height: 1.35,
+                            color: Palette.amber,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+              Expanded(
+                child: FormattedAnswerView(
+                  text: speech.isNotEmpty
+                      ? speech
+                      : (showDossier ? '…' : session.helpAnswer!),
+                  baseColor: Color(c.hintColor),
+                  fontSize: c.fontSize,
+                  isBold: c.boldText,
+                ),
+              ),
+            ],
           ),
           if (session.helpLoading)
             const Positioned(
@@ -847,6 +1111,31 @@ class HelpPanel extends StatelessWidget {
       S.t('hintPlaceholder'),
       style: const TextStyle(color: Palette.sec, fontSize: 13, height: 1.4),
     );
+  }
+
+  static (String?, String) _splitDossierAndSpeech(String text) {
+    final dossierMatch = RegExp(
+      r'<dossier>([\s\S]*?)(?:<\/dossier>|$)',
+      caseSensitive: false,
+    ).firstMatch(text);
+    final speechMatch = RegExp(
+      r'<speech>([\s\S]*?)(?:<\/speech>|$)',
+      caseSensitive: false,
+    ).firstMatch(text);
+
+    if (dossierMatch != null) {
+      final dossier = dossierMatch.group(1)?.trim();
+      final speech = speechMatch != null
+          ? speechMatch.group(1)?.trim() ?? ''
+          : text
+              .replaceAll(
+                RegExp(r'<dossier>[\s\S]*?(?:<\/dossier>|$)', caseSensitive: false),
+                '',
+              )
+              .trim();
+      return (dossier, speech);
+    }
+    return (null, text);
   }
 }
 
@@ -911,6 +1200,30 @@ class _StreamingBadgeState extends State<_StreamingBadge>
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Тонкий разделитель для контекстного меню чата с деликатной границей Palette.border.
+class _ChatMenuDivider extends PopupMenuEntry<Never> {
+  const _ChatMenuDivider();
+
+  @override
+  double get height => 1;
+
+  @override
+  bool represents(void value) => false;
+
+  @override
+  State<_ChatMenuDivider> createState() => _ChatMenuDividerState();
+}
+
+class _ChatMenuDividerState extends State<_ChatMenuDivider> {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 1,
+      color: Palette.border.withValues(alpha: 0.6),
     );
   }
 }

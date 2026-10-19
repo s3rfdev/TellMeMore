@@ -10,21 +10,22 @@ import 'ui/help_panel.dart';
 import 'ui/theme.dart';
 import 'ui/transcript_panel.dart';
 
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final session = Session();
   await session.loadConfig();
   await session.loadAudioDevices();
+
   // Настоящая per-pixel прозрачность окна macOS: фон и титлбар полностью
-  // прозрачны (0%), сквозь окно виден рабочий стол. Без этого движок Flutter
-  // рисует непрозрачную поверхность.
+  // прозрачны (0%), сквозь окно виден рабочий стол.
   if (Platform.isMacOS) {
     try {
       WindowManipulator.initialize();
       WindowManipulator.makeWindowFullyTransparent();
       WindowManipulator.disableShadow();
     } catch (_) {
-      /* без прозрачности приложение работает как раньше */
+      /* работаем в стандартном режиме */
     }
     session.applyTitlebar();
   }
@@ -44,18 +45,18 @@ Future<void> main() async {
       session.addPendingScreenshot();
     },
   );
-  runApp(TellMeMoreApp(session: session));
+  runApp(MimicApp(session: session));
 }
 
-class TellMeMoreApp extends StatelessWidget {
-  const TellMeMoreApp({super.key, required this.session});
+class MimicApp extends StatelessWidget {
+  const MimicApp({super.key, required this.session});
 
   final Session session;
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'TellMeMore',
+      title: 'MIMIC',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
@@ -75,7 +76,7 @@ class TellMeMoreApp extends StatelessWidget {
             border: Border.all(color: Palette.border),
           ),
           textStyle: const TextStyle(fontSize: 11, color: Palette.pri),
-          waitDuration: const Duration(milliseconds: 500),
+          waitDuration: const Duration(milliseconds: 400),
         ),
       ),
       home: ListenableBuilder(
@@ -91,15 +92,20 @@ class TellMeMoreApp extends StatelessWidget {
                   final topH = totalH * session.config.splitRatio;
                   return Column(
                     children: [
+                      // Верхняя тактическая панель подсказок LLM
                       SizedBox(
                         height: topH,
                         child: HelpPanel(session: session),
                       ),
-                      _DragDivider(
+
+                      // Тонкий прозрачный разделитель высоты (бегунок)
+                      _ResizeDivider(
                         session: session,
                         topHeight: topH,
                         totalHeight: totalH,
                       ),
+
+                      // Нижняя панель стека транскрипта диалога
                       Expanded(child: TranscriptPanel(session: session)),
                     ],
                   );
@@ -113,9 +119,9 @@ class TellMeMoreApp extends StatelessWidget {
   }
 }
 
-/// Тонкая полоска-разделитель: тянется вертикально, пропорция сохраняется.
-class _DragDivider extends StatefulWidget {
-  const _DragDivider({
+/// Минималистичный прозрачный бегунок изменения пропорций панелей
+class _ResizeDivider extends StatefulWidget {
+  const _ResizeDivider({
     required this.session,
     required this.topHeight,
     required this.totalHeight,
@@ -126,10 +132,10 @@ class _DragDivider extends StatefulWidget {
   final double totalHeight;
 
   @override
-  State<_DragDivider> createState() => _DragDividerState();
+  State<_ResizeDivider> createState() => _ResizeDividerState();
 }
 
-class _DragDividerState extends State<_DragDivider> {
+class _ResizeDividerState extends State<_ResizeDivider> {
   bool _hover = false;
 
   @override
@@ -148,17 +154,19 @@ class _DragDividerState extends State<_DragDivider> {
         onVerticalDragEnd: (_) => widget.session.saveConfig(),
         child: Tooltip(
           message: S.t('resizeHint'),
-          child: SizedBox(
-            height: 16,
-            child: Center(
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 120),
-                width: 44,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: _hover ? Palette.faint : Palette.border,
-                  borderRadius: BorderRadius.circular(2),
-                ),
+          child: Container(
+            height: 10,
+            color: Colors.transparent,
+            alignment: Alignment.center,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 120),
+              width: _hover ? 48 : 32,
+              height: 3,
+              decoration: BoxDecoration(
+                color: _hover
+                    ? Palette.green.withValues(alpha: 0.9)
+                    : Palette.border.withValues(alpha: 0.7),
+                borderRadius: BorderRadius.circular(2),
               ),
             ),
           ),

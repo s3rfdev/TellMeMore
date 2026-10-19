@@ -42,6 +42,9 @@ class AudioController {
       final rec = AudioRecorder();
       final list = await rec.listInputDevices();
       await rec.dispose();
+      debugPrint(
+        '[AUDIO] Discovered devices: ${list.map((d) => "${d.label} [${d.id}]").toList()}',
+      );
       final devices = list.where(_isUserFacingDevice).toList();
       if (config.remoteMacHost.isNotEmpty) {
         devices.insert(
@@ -157,18 +160,36 @@ class AudioController {
           onMicError: onMicError,
         );
       } else {
-        final audio = await _recorder!.startStream(
-          RecordConfig(
-            encoder: AudioEncoder.pcm16bits,
-            sampleRate: 16000,
-            numChannels: 1,
-            device: config.myDeviceId.isNotEmpty
-                ? InputDevice(id: config.myDeviceId, label: config.myDeviceId)
-                : null,
-          ),
-        );
+        Stream<Uint8List> audio;
+        try {
+          debugPrint(
+            '[AUDIO me] starting stream with device: ${config.myDeviceId.isNotEmpty ? config.myDeviceId : "default"}',
+          );
+          audio = await _recorder!.startStream(
+            RecordConfig(
+              encoder: AudioEncoder.pcm16bits,
+              sampleRate: 16000,
+              numChannels: 1,
+              device: config.myDeviceId.isNotEmpty
+                  ? InputDevice(id: config.myDeviceId, label: config.myDeviceId)
+                  : null,
+            ),
+          );
+        } catch (err) {
+          debugPrint(
+            '[AUDIO me] Failed with device "${config.myDeviceId}": $err. Retrying with default device...',
+          );
+          audio = await _recorder!.startStream(
+            const RecordConfig(
+              encoder: AudioEncoder.pcm16bits,
+              sampleRate: 16000,
+              numChannels: 1,
+              device: null,
+            ),
+          );
+        }
         var micChunks = 0;
-        debugPrint('[AUDIO me] stream started');
+        debugPrint('[AUDIO me] stream started successfully');
         _audioSub = audio.listen((chunk) {
           micChunks++;
           if (micChunks % 50 == 1) {
@@ -194,7 +215,8 @@ class AudioController {
           onThemError: onThemError,
         );
       }
-    } catch (e) {
+    } catch (e, st) {
+      debugPrint('[AUDIO startStream FATAL]: $e\n$st');
       await teardown();
       rethrow;
     }

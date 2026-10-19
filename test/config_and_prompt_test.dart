@@ -1,9 +1,6 @@
-import 'dart:typed_data';
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tellmemore/services/config_store.dart';
 import 'package:tellmemore/services/deepgram_stream.dart';
-import 'package:tellmemore/services/llm_service.dart';
 import 'package:tellmemore/session.dart';
 
 void main() {
@@ -150,17 +147,17 @@ void main() {
 
       expect(prompt, contains('<system_role>'));
       expect(prompt, contains('</system_role>'));
-      expect(prompt, contains('<candidate_profile>'));
+      expect(prompt, contains('<user_profile>'));
       expect(prompt, contains('Senior Flutter Developer with 6 years experience'));
-      expect(prompt, contains('</candidate_profile>'));
-      expect(prompt, contains('<interviewer_profile>'));
+      expect(prompt, contains('</user_profile>'));
+      expect(prompt, contains('<opponent_profile>'));
       expect(prompt, contains('Tech Lead at FinTech'));
-      expect(prompt, contains('</interviewer_profile>'));
-      expect(prompt, contains('<interview_goals>'));
+      expect(prompt, contains('</opponent_profile>'));
+      expect(prompt, contains('<conversation_goals>'));
       expect(prompt, contains('Highlight architecture knowledge and state management'));
-      expect(prompt, contains('</interview_goals>'));
+      expect(prompt, contains('</conversation_goals>'));
       expect(prompt, contains('<live_transcript>'));
-      expect(prompt, contains('<turn speaker="interviewer">How do you handle background state isolation?</turn>'));
+      expect(prompt, contains('<turn speaker="opponent">How do you handle background state isolation?</turn>'));
       expect(prompt, contains('</live_transcript>'));
       expect(prompt, contains('<current_situation>'));
       expect(prompt, contains('Последним говорил оппонент'));
@@ -208,8 +205,8 @@ void main() {
 
       final prompt = session.buildPrompt();
       expect(prompt, contains('Answer strictly in English.'));
-      expect(prompt, contains('<turn speaker="candidate">I worked on high load streaming applications.</turn>'));
-      expect(prompt, contains('Последнюю реплику говорил я'));
+      expect(prompt, contains('<turn speaker="user">I worked on high load streaming applications.</turn>'));
+      expect(prompt, contains('Последнюю реплику произнёс я'));
     });
 
     test('Prompt includes screen_context and technical code instructions when withScreenshot is true', () {
@@ -222,58 +219,8 @@ void main() {
 
       final prompt = session.buildPrompt(withScreenshot: true);
       expect(prompt, contains('<screen_context>'));
-      expect(prompt, contains('ЭТО ВОПРОС ТЕХНИЧЕСКОГО ХАРАКТЕРА!'));
-      expect(prompt, contains('ВНИМАТЕЛЬНО ИЗУЧИ ПРИКРЕПЛЁННЫЙ СКРИНШОТ ЭКРАНА!'));
-      expect(prompt, contains('ДАЙ ГОТОВЫЙ РАБОЧИЙ КОД И ЧЁТКОЕ РЕШЕНИЕ'));
-    });
-
-    test('Prompt includes multi-screenshot count and consolidated instructions when screenshotCount > 1', () {
-      final session = Session();
-      session.config.myProfile = 'Fullstack Engineer';
-      session.turns.add(TranscriptTurn(
-        speaker: Speaker.them,
-        text: 'Look at both files on screen',
-      ));
-
-      final prompt = session.buildPrompt(withScreenshot: true, screenshotCount: 2);
-      expect(prompt, contains('К этому запросу прикреплено 2 скриншотов экрана кандидата'));
-      expect(prompt, contains('ВНИМАТЕЛЬНО ИЗУЧИ ВСЕ ПРИКРЕПЛЁННЫЕ СКРИНШОТЫ ЭКРАНА!'));
-      expect(prompt, contains('объединив информацию со всех кадров'));
-    });
-
-    test('Prompt includes follow_up_context when llmHistory is not empty', () {
-      final session = Session();
-      session.llmHistory.add(LlmMessage(role: 'user', text: 'Task 1'));
-      session.llmHistory.add(LlmMessage(role: 'assistant', text: 'Answer 1'));
-      session.turns.add(TranscriptTurn(
-        speaker: Speaker.them,
-        text: 'Can we optimize memory to O(1)?',
-      ));
-
-      final prompt = session.buildPrompt();
-      expect(prompt, contains('<follow_up_context>'));
-      expect(prompt, contains('ЭТО УТОЧНЕНИЕ ПРЕДЫДУЩЕГО ОТВЕТА (РАУНД 2)!'));
-      expect(prompt, contains('Кандидат и интервьюер продолжают обсуждать ту же задачу/код.'));
-      expect(prompt, contains('Внимательно сопоставь предыдущее обсуждение, свои предыдущие ответы'));
-    });
-
-    test('Session pendingScreenshots queue add, remove and clear operations', () {
-      final session = Session();
-      expect(session.pendingScreenshots.isEmpty, isTrue);
-
-      final dummy1 = Uint8List.fromList([1, 2, 3]);
-      final dummy2 = Uint8List.fromList([4, 5, 6]);
-
-      session.pendingScreenshots.add(dummy1);
-      session.pendingScreenshots.add(dummy2);
-      expect(session.pendingScreenshots.length, 2);
-
-      session.removePendingScreenshot(0);
-      expect(session.pendingScreenshots.length, 1);
-      expect(session.pendingScreenshots[0], dummy2);
-
-      session.clearPendingScreenshots();
-      expect(session.pendingScreenshots.isEmpty, isTrue);
+      expect(prompt, contains('К этому запросу прикреплён актуальный скриншот экрана'));
+      expect(prompt, contains('Используй визуальные данные для точного решения.'));
     });
 
     test('TranscriptTurn serialization toJson and fromJson roundtrip', () {

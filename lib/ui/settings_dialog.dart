@@ -14,6 +14,7 @@ import '../services/config_store.dart';
 import '../services/llm_service.dart';
 import '../session.dart';
 import 'settings/context_tab_mixin.dart';
+import 'settings/prompts_tab_mixin.dart';
 import 'settings/llm_tab_mixin.dart';
 import 'settings/shared_widgets_mixin.dart';
 import 'settings/ui_tab_mixin.dart';
@@ -29,7 +30,7 @@ class SettingsDialog extends StatefulWidget {
 }
 
 class _SettingsDialogState extends State<SettingsDialog>
-    with SharedWidgetsMixin, ContextTabMixin, LlmTabMixin, UiTabMixin {
+    with SharedWidgetsMixin, ContextTabMixin, PromptsTabMixin, LlmTabMixin, UiTabMixin {
   // ── Snapshot for cancel/rollback ───────────────────────────────────────────
   late final AppConfig _orig = widget.session.config.clone();
 
@@ -49,6 +50,15 @@ class _SettingsDialogState extends State<SettingsDialog>
   );
   late final TextEditingController _goals = TextEditingController(
     text: widget.session.config.goals,
+  );
+  late final TextEditingController _systemRole = TextEditingController(
+    text: widget.session.config.systemRole,
+  );
+  late final TextEditingController _instructions = TextEditingController(
+    text: widget.session.config.instructions,
+  );
+  late final TextEditingController _videoPrompt = TextEditingController(
+    text: widget.session.config.videoPrompt,
   );
 
   // ── UI state ───────────────────────────────────────────────────────────────
@@ -73,6 +83,14 @@ class _SettingsDialogState extends State<SettingsDialog>
   TextEditingController get interviewerProfileCtrl => _interviewerProfile;
   @override
   TextEditingController get goalsCtrl => _goals;
+
+  // ── PromptsTabMixin requirements ───────────────────────────────────────────
+  @override
+  TextEditingController get systemRoleCtrl => _systemRole;
+  @override
+  TextEditingController get instructionsCtrl => _instructions;
+  @override
+  TextEditingController get videoPromptCtrl => _videoPrompt;
 
   // ── LlmTabMixin requirements ───────────────────────────────────────────────
   @override
@@ -163,6 +181,9 @@ class _SettingsDialogState extends State<SettingsDialog>
     _myProfile.dispose();
     _interviewerProfile.dispose();
     _goals.dispose();
+    _systemRole.dispose();
+    _instructions.dispose();
+    _videoPrompt.dispose();
     super.dispose();
   }
 
@@ -192,10 +213,10 @@ class _SettingsDialogState extends State<SettingsDialog>
         ],
       ),
       content: SizedBox(
-        width: 520,
-        height: math.min(540, MediaQuery.sizeOf(context).height * 0.74),
+        width: 540,
+        height: math.min(560, MediaQuery.sizeOf(context).height * 0.78),
         child: DefaultTabController(
-          length: 3,
+          length: 4,
           child: Column(
             children: [
               TabBar(
@@ -214,6 +235,17 @@ class _SettingsDialogState extends State<SettingsDialog>
                         const Icon(Icons.person_outline, size: 14),
                         const SizedBox(width: 6),
                         Text(S.t('tabContext')),
+                      ],
+                    ),
+                  ),
+                  Tab(
+                    height: 36,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.psychology_outlined, size: 14),
+                        const SizedBox(width: 6),
+                        Text(S.t('tabPrompts')),
                       ],
                     ),
                   ),
@@ -245,6 +277,7 @@ class _SettingsDialogState extends State<SettingsDialog>
                 child: TabBarView(
                   children: [
                     buildContextTab(),
+                    buildPromptsTab(),
                     buildLlmTab(),
                     buildUiTab(),
                   ],
@@ -279,6 +312,9 @@ class _SettingsDialogState extends State<SettingsDialog>
             c.myProfile = _myProfile.text.trim();
             c.interviewerProfile = _interviewerProfile.text.trim();
             c.goals = _goals.text.trim();
+            c.systemRole = _systemRole.text.trim();
+            c.instructions = _instructions.text.trim();
+            c.videoPrompt = _videoPrompt.text.trim();
             try {
               await widget.session.saveConfig();
             } catch (e) {

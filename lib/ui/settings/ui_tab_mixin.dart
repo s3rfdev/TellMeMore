@@ -15,8 +15,6 @@ import 'shared_widgets_mixin.dart';
 mixin UiTabMixin on SharedWidgetsMixin {
   Session get session;
 
-  void onTouch();
-
   // ── Tab root ───────────────────────────────────────────────────────────────
 
   Widget buildUiTab() {
@@ -62,6 +60,26 @@ mixin UiTabMixin on SharedWidgetsMixin {
               onTouch();
             },
             subtitle: S.t('alwaysOnTopSub'),
+          ),
+          const SizedBox(height: 4),
+          switchRow(
+            'Иконки невербалики в транскрипте',
+            c.showNonverbalIcons,
+            (v) {
+              c.showNonverbalIcons = v;
+              onTouch();
+            },
+            subtitle: 'Отображать векторные микро-иконки мимики и взгляда в колонке оппонента',
+          ),
+          const SizedBox(height: 4),
+          switchRow(
+            'Психологическое досье оппонента',
+            c.showPsychologicalDossier,
+            (v) {
+              c.showPsychologicalDossier = v;
+              onTouch();
+            },
+            subtitle: 'Отображать оранжевую плашку психологического разбора над подсказкой при активном видео',
           ),
           const SizedBox(height: 12),
           sectionHeader(S.t('sectionHotkeys')),

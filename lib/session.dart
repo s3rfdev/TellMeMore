@@ -18,14 +18,169 @@ import 'services/history_store.dart';
 import 'services/hotkey_service.dart';
 import 'services/llm_service.dart';
 import 'services/window_service.dart';
+import 'services/nonverbal/nonverbal_coordinator.dart';
+import 'domain/nonverbal/raw_signals.dart';
+
 
 export 'domain/chat_serializer.dart';
 export 'domain/transcript_turn.dart';
+export 'domain/nonverbal/raw_signals.dart';
+export 'domain/nonverbal/eye_metrics.dart';
+export 'domain/nonverbal/micro_events.dart';
+export 'domain/nonverbal/behavioral_cluster.dart';
+export 'services/nonverbal/temporal_detector.dart';
+export 'services/nonverbal/nonverbal_coordinator.dart';
 
 enum SessionStatus { idle, connecting, listening, error }
+enum VisionMode { off, screenCrop, simulator }
 
 class Session extends ChangeNotifier {
   AppConfig config = AppConfig();
+
+  final NonverbalCoordinator nonverbal = NonverbalCoordinator();
+  VisionMode visionMode = VisionMode.off;
+  Rect? cropRect;
+  bool isCropAnalyzing = false;
+  Timer? _cropTimer;
+  Uint8List? latestCropImageBytes;
+  String lastBuiltPrompt = '';
+
+  String getCurrentPromptForInspection() => _buildPrompt(
+        withScreenshot: latestCropImageBytes != null || pendingScreenshots.isNotEmpty,
+        screenshotCount: pendingScreenshots.isNotEmpty
+            ? pendingScreenshots.length
+            : (latestCropImageBytes != null ? 1 : 0),
+        isFaceCrop: visionMode == VisionMode.screenCrop && latestCropImageBytes != null,
+      );
+
+  void setVisionMode(VisionMode mode) {
+    if (visionMode != mode) {
+      visionMode = mode;
+      if (mode == VisionMode.off) {
+        _stopCropAnalysis();
+      }
+      notifyListeners();
+    }
+  }
+
+  void setCropRect(Rect rect) {
+    cropRect = rect;
+    notifyListeners();
+  }
+
+  void toggleCropAnalysis() {
+    if (isCropAnalyzing) {
+      _stopCropAnalysis();
+    } else {
+      _startCropAnalysis();
+    }
+  }
+
+  int _cropTick = 0;
+
+  void _startCropAnalysis() {
+    isCropAnalyzing = true;
+    notifyListeners();
+    _cropTimer?.cancel();
+    _cropTick = 0;
+    _cropTimer = Timer.periodic(const Duration(milliseconds: 450), (_) async {
+      if (!isCropAnalyzing) return;
+      if (cropRect != null) {
+        try {
+          final metrics = await WindowService.analyzeFaceCrop(
+            x: cropRect!.left,
+            y: cropRect!.top,
+            width: cropRect!.width,
+            height: cropRect!.height,
+          );
+          if (metrics != null) {
+            final snapshot = FaceFrameSnapshot.fromNativeAppleVision(metrics);
+            nonverbal.processFrame(snapshot);
+          }
+
+          // Раз в 3 такта (~1.3 сек) обновляем кадр для превью в инспекторе
+          if (_cropTick++ % 3 == 0) {
+            final bytes = await WindowService.captureCrop(
+              x: cropRect!.left,
+              y: cropRect!.top,
+              width: cropRect!.width,
+              height: cropRect!.height,
+            );
+            if (bytes != null && bytes.isNotEmpty) {
+              latestCropImageBytes = bytes;
+            }
+          }
+        } catch (_) {}
+      }
+    });
+  }
+
+  void _stopCropAnalysis() {
+    isCropAnalyzing = false;
+    _cropTimer?.cancel();
+    _cropTimer = null;
+    notifyListeners();
+  }
+
+  /// Симуляция невербальных сценариев (для экспресс-теста интерфейса и подсказок LLM)
+  void simulateScenario(String scenario) {
+    final now = DateTime.now();
+    switch (scenario) {
+      case 'skepticism':
+        nonverbal.processFrame(FaceFrameSnapshot(
+          timestamp: now,
+          hasFace: true,
+          confidence: 0.95,
+          blendshapes: const FaceBlendshapeScores({
+            'browDownLeft': 0.65,
+            'browDownRight': 0.60,
+            'mouthSmileLeft': 0.45,
+            'mouthSmileRight': 0.05,
+            'eyeSquintLeft': 0.50,
+            'eyeSquintRight': 0.50,
+          }),
+          gaze: GazeVector.center(),
+          headPose: const HeadPose(pitch: 5, yaw: -3, roll: 0),
+        ));
+        break;
+      case 'stress':
+        nonverbal.processFrame(FaceFrameSnapshot(
+          timestamp: now,
+          hasFace: true,
+          confidence: 0.94,
+          blendshapes: const FaceBlendshapeScores({
+            'mouthPressLeft': 0.65,
+            'mouthPressRight': 0.60,
+            'jawOpen': 0.0,
+            'eyeBlinkLeft': 0.85,
+            'eyeBlinkRight': 0.85,
+          }),
+          gaze: const GazeVector(yaw: 0.4, pitch: -0.3, direction: GazeDirectionType.averted),
+          headPose: const HeadPose(pitch: -5, yaw: 10, roll: 0),
+        ));
+        break;
+      case 'false_agreement':
+        nonverbal.processFrame(FaceFrameSnapshot(
+          timestamp: now,
+          hasFace: true,
+          confidence: 0.92,
+          blendshapes: const FaceBlendshapeScores({
+            'eyeBlinkLeft': 0.90,
+            'eyeBlinkRight': 0.90,
+            'mouthPressLeft': 0.50,
+            'mouthPressRight': 0.50,
+          }),
+          gaze: GazeVector.center(),
+          headPose: const HeadPose(pitch: 0, yaw: -8, roll: 0),
+        ));
+        break;
+      case 'reset':
+      default:
+        nonverbal.processFrame(FaceFrameSnapshot.empty());
+        break;
+    }
+    notifyListeners();
+  }
 
   SessionStatus status = SessionStatus.idle;
   String? statusMessage;
@@ -345,7 +500,15 @@ class Session extends ChangeNotifier {
         onThemError: _onThemError,
       );
       status = SessionStatus.listening;
-    } catch (e) {
+    } on PlatformException catch (e, st) {
+      debugPrint(
+        '[Session.startStream PlatformException]: code=${e.code}, message=${e.message}, details=${e.details}\n$st',
+      );
+      status = SessionStatus.error;
+      statusMessage =
+          '${e.message ?? e.code}${e.details != null ? ": ${e.details}" : ""}';
+    } catch (e, st) {
+      debugPrint('[Session.startStream Error]: $e\n$st');
       status = SessionStatus.error;
       statusMessage = '$e';
     }
@@ -385,10 +548,14 @@ class Session extends ChangeNotifier {
             (e.transcript.isNotEmpty ? e.transcript : _interimOf(e.source))
                 .trim();
         if (text.isNotEmpty) {
+          final tags = e.source == Speaker.them
+              ? nonverbal.getCurrentTurnTags()
+              : const <String>[];
           final newTurn = TranscriptTurn(
             speaker: e.source,
             text: text,
             timestamp: e.timestamp,
+            nonverbalTags: tags,
           );
           // Вставляем реплику по временной метке для сохранения строгой хронологии
           final insertIdx = turns.indexWhere(
@@ -426,8 +593,15 @@ class Session extends ChangeNotifier {
 
   Speaker? get lastSpeaker => turns.isEmpty ? null : turns.last.speaker;
 
-  String _buildPrompt({bool withScreenshot = false, int screenshotCount = 0}) {
-    return PromptBuilder.build(
+  String _buildPrompt({
+    bool withScreenshot = false,
+    int screenshotCount = 0,
+    bool isFaceCrop = false,
+  }) {
+    final isVisionActive = visionMode != VisionMode.off;
+    final includeDossier = config.showPsychologicalDossier && isVisionActive;
+
+    final prompt = PromptBuilder.build(
       config: config,
       turns: turns,
       lastSpeaker: lastSpeaker,
@@ -438,14 +612,24 @@ class Session extends ChangeNotifier {
       isFollowUp: llmHistory.isNotEmpty,
       withScreenshot: withScreenshot,
       screenshotCount: screenshotCount,
+      isFaceCrop: isFaceCrop,
+      nonverbalContext: isVisionActive ? nonverbal.getPromptContextForLlm() : '',
+      includeDossier: includeDossier,
     );
+    lastBuiltPrompt = prompt;
+    return prompt;
   }
 
   @visibleForTesting
-  String buildPrompt({bool withScreenshot = false, int screenshotCount = 0}) =>
+  String buildPrompt({
+    bool withScreenshot = false,
+    int screenshotCount = 0,
+    bool isFaceCrop = false,
+  }) =>
       _buildPrompt(
         withScreenshot: withScreenshot,
         screenshotCount: screenshotCount,
+        isFaceCrop: isFaceCrop,
       );
 
   /// Остановка текущей потоковой генерации ответа пользователем.
@@ -525,6 +709,10 @@ class Session extends ChangeNotifier {
     _activeHelpClient = client;
     final completer = Completer<void>();
     final currentHistory = List<LlmMessage>.from(llmHistory);
+
+    debugPrint('=== [MIMIC LLM REQUEST] Провайдер: ${provider.label}, Модель: $model ===');
+    debugPrint('[MIMIC] Отправлено изображений: ${images != null ? images.length : (imageBytes != null ? 1 : 0)}');
+    debugPrint('[MIMIC PROMPT]:\n$prompt\n=== [MIMIC END PROMPT] ===');
 
     try {
       final stream = LlmService.askStream(
@@ -613,17 +801,27 @@ class Session extends ChangeNotifier {
     if (turns.isEmpty &&
         interimMe.trim().isEmpty &&
         interimThem.trim().isEmpty &&
-        llmHistory.isEmpty) {
+        pendingScreenshots.isEmpty) {
       helpError = S.t('errEmptyTranscript');
       notifyListeners();
       return;
     }
+    // Get answer всегда начинает новую задачу с чистого листа
+    resetLlmHistory();
+
     final List<Uint8List>? imagesToSend;
+    final bool isFaceCrop;
     if (pendingScreenshots.isNotEmpty) {
       imagesToSend = List<Uint8List>.from(pendingScreenshots);
       clearPendingScreenshots();
+      isFaceCrop = false;
+    } else if (visionMode == VisionMode.screenCrop && latestCropImageBytes != null) {
+      // Автоматически прикрепляем свежий визуальный фрейм лица оппонента для мультимодальной оценки
+      imagesToSend = [latestCropImageBytes!];
+      isFaceCrop = true;
     } else {
       imagesToSend = null;
+      isFaceCrop = false;
     }
 
     await _streamHelp(
@@ -633,6 +831,7 @@ class Session extends ChangeNotifier {
       prompt: _buildPrompt(
         withScreenshot: imagesToSend != null && imagesToSend.isNotEmpty,
         screenshotCount: imagesToSend?.length ?? 0,
+        isFaceCrop: isFaceCrop,
       ),
       images: imagesToSend,
     );
@@ -650,6 +849,9 @@ class Session extends ChangeNotifier {
       notifyListeners();
       return;
     }
+    // Запрос со скриншотом также начинает новую независимую задачу с чистого листа
+    resetLlmHistory();
+
     helpLoading = true;
     helpAnswer = null;
     helpError = null;
@@ -693,6 +895,41 @@ class Session extends ChangeNotifier {
       helpLoading = false;
       notifyListeners();
     }
+  }
+
+  /// Запросить уточняющий раунд ответа (R2, R3...) с сохранением предыдущего контекста задачи.
+  Future<void> getFollowUpHelp() async {
+    if (helpLoading || llmHistory.isEmpty) return;
+    final provider = config.provider;
+    final apiKey = config.keyFor(provider).trim();
+    if (apiKey.isEmpty) {
+      helpError = S.t('errNoKey', provider.label);
+      notifyListeners();
+      return;
+    }
+
+    final List<Uint8List>? imagesToSend;
+    final bool isFaceCrop;
+    if (pendingScreenshots.isNotEmpty) {
+      imagesToSend = List<Uint8List>.from(pendingScreenshots);
+      clearPendingScreenshots();
+      isFaceCrop = false;
+    } else {
+      imagesToSend = null;
+      isFaceCrop = false;
+    }
+
+    await _streamHelp(
+      provider: provider,
+      apiKey: apiKey,
+      model: config.modelFor(provider),
+      prompt: _buildPrompt(
+        withScreenshot: imagesToSend != null && imagesToSend.isNotEmpty,
+        screenshotCount: imagesToSend?.length ?? 0,
+        isFaceCrop: isFaceCrop,
+      ),
+      images: imagesToSend,
+    );
   }
 
   @override
