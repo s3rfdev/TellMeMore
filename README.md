@@ -5,10 +5,6 @@
 </p>
 
 <p align="center">
-  <img src="assets/screenshots/main.png" alt="TellMeMore Main Window" width="880">
-</p>
-
-<p align="center">
   <strong>An intelligent, non-intrusive floating HUD and real-time copilot for high-stakes business negotiations, client calls, and technical consultations on macOS.</strong><br>
   Dual-stream live speech-to-text, multi-screenshot visual inspection, zero-latency tactical cues, presenter privacy mode, and multi-LLM orchestration.
 </p>
